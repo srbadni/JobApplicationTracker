@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from api.health import router as health_router
+from features.companies.router import router as companies_router
 from core.config import settings
 
 api_router = APIRouter(
@@ -7,3 +8,4 @@ api_router = APIRouter(
 )
 
 api_router.include_router(health_router)
+api_router.include_router(companies_router)
