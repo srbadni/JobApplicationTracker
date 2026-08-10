@@ -8,10 +8,12 @@ router = APIRouter(
     tags=["Health"],
 )
 
+
 class HealthResult(BaseModel):
     status: str
     service: str
     version: str
+
 
 @router.get(
     "/health",

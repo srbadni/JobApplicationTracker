@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     api_v1_prefix: str
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(".env.example", ".env"),
         env_file_encoding="utf-8",
     )
 
