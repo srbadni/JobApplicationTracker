@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from common.schemas.response import ApiResponse
+from core.config import settings
 
 router = APIRouter(
     tags=["Health"],
@@ -21,7 +22,7 @@ def health_check():
         message="Service is healthy",
         result=HealthResult(
             status="ok",
-            service="job-tracker-api",
-            version="1.0.0",
+            service=settings.app_name,
+            version=settings.app_version,
         ),
     )
