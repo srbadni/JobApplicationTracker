@@ -6,19 +6,11 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-
-DATABASE_URL = (
-    "postgresql+psycopg://"
-    "jobtracker_user:"
-    "jobtracker123@"
-    "localhost:5432/"
-    "jobtracker"
-)
-
+from core.config import settings
 
 engine = create_async_engine(
-    DATABASE_URL,
-    echo=True,
+    settings.database_url,
+    echo=settings.debug,
 )
 
 
