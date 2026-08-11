@@ -1,13 +1,5 @@
-from fastapi import FastAPI
+"""ASGI entry point kept at the repository root for ``uvicorn main:app``."""
 
-from api.router import api_router
-from core.config import settings
+from app.main import app, create_app
 
-app = FastAPI(
-    title=settings.app_name,
-    version=settings.app_version,
-)
-
-app.include_router(
-    api_router
-)
+__all__ = ["app", "create_app"]
