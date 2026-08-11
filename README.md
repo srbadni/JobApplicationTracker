@@ -7,7 +7,7 @@ A minimal FastAPI service for the Job Application Tracker project.
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install fastapi uvicorn pydantic-settings pytest httpx ruff
+python -m pip install -r requirements.txt
 ```
 
 On Windows, activate the virtual environment with:

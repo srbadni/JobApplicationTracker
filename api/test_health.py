@@ -19,3 +19,10 @@ def test_health_check_returns_service_status():
             "version": settings.app_version,
         },
     }
+
+
+def test_unknown_route_returns_404():
+    response = client.get("/unknown-route")
+
+    assert response.status_code == 404
+
