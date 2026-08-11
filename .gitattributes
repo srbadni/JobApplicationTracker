@@ -1,0 +1,3 @@
+requirements.txt text diff eol=lf
+*.py text eol=lf
+*.md text eol=lf
