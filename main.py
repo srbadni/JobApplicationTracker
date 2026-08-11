@@ -5,14 +5,17 @@ from fastapi import FastAPI
 
 from api.router import api_router
 from core.config import settings
-from db.database import engine
+from db.database import create_db_and_tables, engine
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-    """Release pooled database connections during graceful shutdown."""
-    yield
-    await engine.dispose()
+    """Initialize the schema and release connections during graceful shutdown."""
+    await create_db_and_tables()
+    try:
+        yield
+    finally:
+        await engine.dispose()
 
 
 def create_app() -> FastAPI:

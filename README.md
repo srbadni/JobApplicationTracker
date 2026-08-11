@@ -58,6 +58,12 @@ must be supplied through the deployment environment and must not be committed.
 uvicorn main:app --reload
 ```
 
+At application startup, SQLAlchemy connects using `DATABASE_URL` and creates any
+missing tables registered by the models (currently `companies`) in that PostgreSQL
+database. The database itself and the configured PostgreSQL user must already exist,
+and that user must have permission to create tables. `create_all()` only creates
+missing tables; use a migration tool such as Alembic for future schema changes.
+
 The liveness endpoint is available at `GET /api/v1/health`. It intentionally does not
 query PostgreSQL: liveness should continue to report whether the process can serve HTTP,
 independently of downstream readiness checks that may be added when database-backed

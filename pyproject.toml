@@ -1,6 +1,6 @@
 [tool.pytest.ini_options]
 addopts = "-ra --strict-markers"
-testpaths = ["api", "core", "features"]
+testpaths = ["api", "core", "db", "features"]
 
 [tool.ruff]
 target-version = "py314"
