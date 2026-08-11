@@ -19,7 +19,7 @@ class HealthResult(BaseModel):
     "/health",
     response_model=ApiResponse[HealthResult],
 )
-def health_check():
+def health_check() -> ApiResponse[HealthResult]:
     return ApiResponse(
         message="Service is healthy",
         result=HealthResult(
