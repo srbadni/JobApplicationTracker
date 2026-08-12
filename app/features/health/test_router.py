@@ -18,7 +18,6 @@ def test_health_check_returns_service_status():
     assert response.status_code == 200
     assert response.json() == {
         "success": True,
-        "message": "Service is healthy",
         "result": {
             "status": "ok",
             "service": settings.app_name,

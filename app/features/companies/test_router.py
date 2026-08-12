@@ -44,7 +44,6 @@ def test_create_company(client: TestClient):
     assert response.status_code == 201
     body = response.json()
     assert body["success"] is True
-    assert body["message"] == "Company created successfully"
     assert body["result"] == {
         "id": 1,
         "name": "OpenAI",
@@ -53,6 +52,53 @@ def test_create_company(client: TestClient):
         "created_at": body["result"]["created_at"],
         "updated_at": body["result"]["updated_at"],
     }
+
+
+def test_get_all_companies(client: TestClient):
+    first_company = client.post(
+        "/api/v1/companies",
+        json={"name": "OpenAI", "website": "https://openai.com"},
+    ).json()["result"]
+    second_company = client.post(
+        "/api/v1/companies",
+        json={"name": "Anthropic", "description": "AI safety company"},
+    ).json()["result"]
+
+    response = client.get("/api/v1/companies")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "success": True,
+        "result": [first_company, second_company],
+    }
+
+
+def test_get_company_by_id(client: TestClient):
+    company = client.post(
+        "/api/v1/companies",
+        json={
+            "name": "OpenAI",
+            "description": "AI research and deployment company",
+            "website": "https://openai.com",
+        },
+    ).json()["result"]
+
+    response = client.get(f"/api/v1/companies/{company['id']}")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "success": True,
+        "result": company,
+    }
+
+
+def test_get_company_by_id_returns_404_when_company_does_not_exist(
+    client: TestClient,
+):
+    response = client.get("/api/v1/companies/999")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Company not found"}
 
 
 @pytest.mark.parametrize(
