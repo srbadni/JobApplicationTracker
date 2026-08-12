@@ -20,6 +20,5 @@ def health_check(
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> ApiResponse[HealthResult]:
     return ApiResponse(
-        message="Service is healthy",
         result=get_health(settings),
     )

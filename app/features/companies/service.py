@@ -14,3 +14,6 @@ class CompanyService:
 
     def list_companies(self) -> List[Company]:
         return self.repository.list()
+
+    def get_company_by_id(self, data: int) -> Company | None:
+        return self.repository.get_by_id(data)
