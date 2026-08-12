@@ -1,6 +1,6 @@
-from typing import Annotated, List
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db_session
@@ -12,27 +12,30 @@ from app.schemas.response import ApiResponse
 router = APIRouter(prefix="/companies", tags=["Companies"])
 
 
-@router.get("", response_model=ApiResponse[List[CompanyResult]], summary="Get all companies")
+@router.get(
+    "", response_model=ApiResponse[list[CompanyResult]], summary="Get all companies"
+)
 def get_all_companies(session: Annotated[Session, Depends(get_db_session)]):
     companies = CompanyService(CompanyRepository(session)).list_companies()
     return ApiResponse(
-        result=[
-            CompanyResult.model_validate(company)
-            for company in companies
-        ]
+        result=[CompanyResult.model_validate(company) for company in companies]
     )
 
-@router.get("/{company_id}", response_model=ApiResponse[CompanyResult], summary="Get company")
-def get_company_by_id(company_id: int, session: Annotated[Session, Depends(get_db_session)]):
+
+@router.get(
+    "/{company_id}", response_model=ApiResponse[CompanyResult], summary="Get company"
+)
+def get_company_by_id(
+    company_id: int, session: Annotated[Session, Depends(get_db_session)]
+):
     company = CompanyService(CompanyRepository(session)).get_company_by_id(company_id)
     if company is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Company not found",
         )
-    return ApiResponse(
-        result=CompanyResult.model_validate(company)
-    )
+    return ApiResponse(result=CompanyResult.model_validate(company))
+
 
 @router.post(
     "",
@@ -41,8 +44,8 @@ def get_company_by_id(company_id: int, session: Annotated[Session, Depends(get_d
     summary="Create a company",
 )
 def create_company(
-        payload: CompanyCreate,
-        session: Annotated[Session, Depends(get_db_session)],
+    payload: CompanyCreate,
+    session: Annotated[Session, Depends(get_db_session)],
 ) -> ApiResponse[CompanyResult]:
     company = CompanyService(CompanyRepository(session)).create_company(payload)
     return ApiResponse(

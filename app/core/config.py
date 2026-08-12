@@ -10,11 +10,11 @@ class Settings(BaseSettings):
     app_name: str = "JobTracker API"
     app_version: str = "1.0.0"
     api_v1_prefix: str = "/api/v1"
-    db_username: str
-    db_password: str
-    db_host: str
-    db_port: int
-    db_name: str
+    db_username: str = "jobtracker_user"
+    db_password: str = "jobtracker123"
+    db_host: str = "localhost"
+    db_port: int = 5432
+    db_name: str = "jobtracker"
 
     @property
     def database_url(self) -> URL:

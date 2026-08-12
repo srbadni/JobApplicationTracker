@@ -54,6 +54,20 @@ def test_create_company(client: TestClient):
     }
 
 
+def test_create_company_rejects_whitespace_only_name(client: TestClient):
+    response = client.post("/api/v1/companies", json={"name": "   \t  "})
+
+    assert response.status_code == 422
+    assert any(error["loc"][-1] == "name" for error in response.json()["detail"])
+
+
+def test_create_company_trims_name(client: TestClient):
+    response = client.post("/api/v1/companies", json={"name": "  OpenAI  "})
+
+    assert response.status_code == 201
+    assert response.json()["result"]["name"] == "OpenAI"
+
+
 def test_get_all_companies(client: TestClient):
     first_company = client.post(
         "/api/v1/companies",

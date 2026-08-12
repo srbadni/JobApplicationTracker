@@ -1,5 +1,3 @@
-from typing import List
-
 from app.features.companies.model import Company
 from app.features.companies.repository import CompanyRepository
 from app.features.companies.schemas import CompanyCreate
@@ -12,7 +10,7 @@ class CompanyService:
     def create_company(self, data: CompanyCreate) -> Company:
         return self.repository.create(data)
 
-    def list_companies(self) -> List[Company]:
+    def list_companies(self) -> list[Company]:
         return self.repository.list()
 
     def get_company_by_id(self, data: int) -> Company | None:

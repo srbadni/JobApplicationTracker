@@ -1,4 +1,4 @@
-from typing import List, cast
+from typing import cast
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -11,7 +11,7 @@ class CompanyRepository:
     def __init__(self, session: Session) -> None:
         self.session = session
 
-    def list(self) -> List[Company]:
+    def list(self) -> list[Company]:
         stmt = select(Company)
 
         companies = self.session.scalars(stmt).all()

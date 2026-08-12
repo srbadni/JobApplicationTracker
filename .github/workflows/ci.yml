@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -r requirements.txt
+      - run: ruff check .
+      - run: ruff format --check .
+      - name: Test without an environment file or database variables
+        run: |
+          test ! -e .env
+          env -u DB_USERNAME -u DB_PASSWORD -u DB_HOST -u DB_PORT -u DB_NAME pytest
+
+  migrations:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: jobtracker_test
+          POSTGRES_PASSWORD: jobtracker_test
+          POSTGRES_DB: jobtracker_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U jobtracker_test -d jobtracker_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DB_USERNAME: jobtracker_test
+      DB_PASSWORD: jobtracker_test
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_NAME: jobtracker_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -r requirements.txt
+      - name: Verify migrations can upgrade and downgrade
+        run: |
+          alembic upgrade head
+          alembic downgrade base
+          alembic upgrade head

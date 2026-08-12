@@ -81,4 +81,9 @@ pytest
 
 ```bash
 ruff check .
+ruff format --check .
 ```
+
+CI runs both checks and the test suite. Its isolated PostgreSQL service also
+verifies the complete migration round trip (`upgrade head`, `downgrade base`,
+then `upgrade head`) without connecting to a development or production database.
