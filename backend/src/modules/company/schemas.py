@@ -21,6 +21,14 @@ class CompanyCreate(BaseModel):
         return value
 
 
+class CompanyCreateInternal(BaseModel):
+    """Normalized company data passed to the persistence layer."""
+
+    name: str
+    description: str | None = None
+    website: str | None = None
+
+
 class CompanyRead(BaseModel):
     """Public representation of a persisted company."""
 
