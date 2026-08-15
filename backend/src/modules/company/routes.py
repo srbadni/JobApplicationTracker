@@ -1,31 +1,45 @@
+from typing import Any
+
 from fastapi import APIRouter, HTTPException, status
-from sqlalchemy import select
 
 from ...infrastructure.dependencies import AsyncSessionDep
-from .models import Company
+from ..common.exceptions import ResourceNotFoundError
+from ..common.utils.error_handler import handle_exception
+from .dependencies import CompanyServiceDep
 from .schemas import CompanyCreate, CompanyRead
 
 router = APIRouter(tags=["Companies"])
 
 
 @router.post("", response_model=CompanyRead, status_code=status.HTTP_201_CREATED)
-async def create_company(payload: CompanyCreate, db: AsyncSessionDep) -> Company:
+async def create_company(
+    payload: CompanyCreate,
+    db: AsyncSessionDep,
+    company_service: CompanyServiceDep,
+) -> dict[str, Any]:
     """Create and persist a company profile."""
-    company = Company(
-        name=payload.name,
-        description=payload.description,
-        website=str(payload.website) if payload.website is not None else None,
-    )
-    db.add(company)
-    await db.commit()
-    await db.refresh(company)
-    return company
+    try:
+        return await company_service.create(payload, db)
+    except Exception as error:
+        http_exception = handle_exception(error)
+        if http_exception:
+            raise http_exception
+        raise HTTPException(status_code=500, detail="An unexpected error occurred")
 
 
 @router.get("/{company_id}", response_model=CompanyRead)
-async def get_company(company_id: int, db: AsyncSessionDep) -> Company:
+async def get_company(
+    company_id: int,
+    db: AsyncSessionDep,
+    company_service: CompanyServiceDep,
+) -> dict[str, Any]:
     """Return a company profile by its system-generated ID."""
-    company = await db.scalar(select(Company).where(Company.id == company_id))
-    if company is None:
+    try:
+        return await company_service.get_by_id(company_id, db)
+    except ResourceNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Company not found")
-    return company
+    except Exception as error:
+        http_exception = handle_exception(error)
+        if http_exception:
+            raise http_exception
+        raise HTTPException(status_code=500, detail="An unexpected error occurred")
