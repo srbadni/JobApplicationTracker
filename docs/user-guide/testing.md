@@ -1,6 +1,6 @@
 # Testing
 
-The boilerplate ships pytest configured against `backend/tests/`, with `testcontainers-postgres` available for real-database tests and `httpx` for HTTP-level tests against the FastAPI app. **No example tests ship yet** — this page covers the patterns you'll use when you add them.
+The project ships pytest configured against `backend/tests/`, with `testcontainers-postgres` available for real-database tests and `httpx` for HTTP-level tests against the FastAPI app. **No example tests ship yet** — this page covers the patterns you'll use when you add them.
 
 ## What's Configured
 
@@ -267,7 +267,7 @@ By default, `httpx.AsyncClient` carries cookies for the lifetime of the client f
 
 ## CSRF in Tests
 
-If `CSRF_ENABLED=true` (the default), state-changing requests need a CSRF token. The boilerplate's CSRF flow uses double-submit cookies — the server sets a cookie, and you echo the value back in a header.
+If `CSRF_ENABLED=true` (the default), state-changing requests need a CSRF token. The project's CSRF flow uses double-submit cookies — the server sets a cookie, and you echo the value back in a header.
 
 Either:
 

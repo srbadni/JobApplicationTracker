@@ -1,6 +1,6 @@
 # Sessions
 
-Sessions are the boilerplate's default authentication mechanism. All built-in API routes use session auth.
+Sessions are the project's default authentication mechanism. All built-in API routes use session auth.
 
 ## Auth Architecture
 
@@ -11,7 +11,7 @@ Authentication is provided by the [`crudauth`](https://pypi.org/project/crudauth
 auth = CRUDAuth(session=async_session, user_model=User, SECRET_KEY=settings.SECRET_KEY, ...)
 ```
 
-Routers and dependencies reference `auth` at import time, and the app lifespan calls `auth.initialize()` on startup and `auth.shutdown()` on teardown (wired in `app_factory`) to open and close the session backend connections. Everything below — the dependencies, login flow, CSRF, lockout, and session storage — is this singleton in action; the boilerplate only supplies the wiring and route handlers.
+Routers and dependencies reference `auth` at import time, and the app lifespan calls `auth.initialize()` on startup and `auth.shutdown()` on teardown (wired in `app_factory`) to open and close the session backend connections. Everything below — the dependencies, login flow, CSRF, lockout, and session storage — is this singleton in action; the project only supplies the wiring and route handlers.
 
 ## Protecting Routes
 
@@ -33,7 +33,7 @@ async def get_profile(
     return {"user_id": current_user["id"], "email": current_user["email"]}
 ```
 
-If the request doesn't have a valid session, the boilerplate returns `401 Unauthorized`.
+If the request doesn't have a valid session, the project returns `401 Unauthorized`.
 
 ### Available Dependencies
 
@@ -142,7 +142,7 @@ For dev/test environments where CSRF gets in the way, set `CSRF_ENABLED=false`.
 
 ## Device Tracking
 
-`crudauth` records session metadata (IP address, User-Agent, timestamps) internally as part of each session record. The boilerplate does **not** surface a device-listing route or a `SessionData` schema — that metadata lives inside the library's session store. If you need an "active sessions" UI, build it on crudauth's session APIs (`auth.sessions`) rather than expecting a ready-made dependency here.
+`crudauth` records session metadata (IP address, User-Agent, timestamps) internally as part of each session record. The project does **not** surface a device-listing route or a `SessionData` schema — that metadata lives inside the library's session store. If you need an "active sessions" UI, build it on crudauth's session APIs (`auth.sessions`) rather than expecting a ready-made dependency here.
 
 ## Login Lockout
 
@@ -161,7 +161,7 @@ Sessions are stored server-side. Configure via `SESSION_BACKEND`:
 | `redis` *(default)* | Production. Supports key expiration, pattern scans for cleanup, persists across restarts |
 | `memory` | Tests only. Cleared on restart, not safe for multi-process deploys |
 
-The backends ship inside the `crudauth` library, not the boilerplate — `setup.py` just selects `redis` or `memory` based on `SESSION_BACKEND`. (Memcached is no longer a session option; it remains available for the general cache and rate limiter.)
+The backends ship inside the `crudauth` library, not the project — `setup.py` just selects `redis` or `memory` based on `SESSION_BACKEND`. (Memcached is no longer a session option; it remains available for the general cache and rate limiter.)
 
 ## Configuration
 
@@ -248,7 +248,7 @@ Terminates the session and clears the cookies.
 | HTTP exceptions (fastcrud re-export) | `backend/src/infrastructure/auth/http_exceptions.py` |
 | Auth settings | `backend/src/infrastructure/config/settings.py` (`AuthSettings`) |
 
-Session storage, CSRF, and lockout themselves live in the `crudauth` library, not the boilerplate.
+Session storage, CSRF, and lockout themselves live in the `crudauth` library, not the project.
 
 ---
 

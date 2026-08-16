@@ -1,6 +1,6 @@
 # Database Models
 
-This page covers how SQLAlchemy 2.0 models are organized in the boilerplate, the patterns used for relationships and timestamps, and how to add a new model.
+This page covers how SQLAlchemy 2.0 models are organized in the project, the patterns used for relationships and timestamps, and how to add a new model.
 
 ## Where Models Live
 
@@ -39,7 +39,7 @@ Combining `DeclarativeBase` with `MappedAsDataclass` means each model behaves li
 
 ## Reusable Mixins
 
-The boilerplate ships three mixins in `infrastructure/database/models.py`. Compose them onto your model:
+The project ships three mixins in `infrastructure/database/models.py`. Compose them onto your model:
 
 ```python
 from ...infrastructure.database.models import (
@@ -73,7 +73,7 @@ When you add a new module, **add its models here** so Alembic's `--autogenerate`
 
 ## Relationships
 
-The boilerplate uses SQLAlchemy `relationship()` where it makes sense, with `lazy="selectin"` to avoid N+1 problems by fetching related rows in a single follow-up query.
+The project uses SQLAlchemy `relationship()` where it makes sense, with `lazy="selectin"` to avoid N+1 problems by fetching related rows in a single follow-up query.
 
 For example, `User.tier` and `Tier.users` are both wired up:
 
@@ -304,7 +304,7 @@ class Product(Base, TimestampMixin):
 
 ### Enum Fields
 
-The boilerplate prefers `StrEnum` (used in `OAuthProvider`, `EnvironmentOption`, etc.):
+The project prefers `StrEnum` (used in `OAuthProvider`, `EnvironmentOption`, etc.):
 
 ```python
 from enum import StrEnum

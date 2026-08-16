@@ -1,12 +1,12 @@
 # API Development
 
-Learn how to build REST APIs with the FastAPI Boilerplate. This section covers everything you need to create robust, production-ready APIs.
+Learn how to build REST APIs with the job-tracker. This section covers everything you need to create robust, production-ready APIs.
 
 ## What You'll Learn
 
 - **[Endpoints](endpoints.md)** - Create endpoints with authentication and validation
 - **[Pagination](pagination.md)** - Add pagination to list endpoints
-- **[Exception Handling](exceptions.md)** - Handle errors with the boilerplate's exception types
+- **[Exception Handling](exceptions.md)** - Handle errors with the project's exception types
 - **[API Versioning](versioning.md)** - Version your APIs and maintain backward compatibility
 
 ## Quick Overview
@@ -73,7 +73,7 @@ For superuser-only endpoints, swap in `get_current_superuser`. See [Authenticati
 
 ### Easy Pagination
 
-The boilerplate uses FastCRUD's `PaginatedListResponse` and `paginated_response()` helper:
+The project uses FastCRUD's `PaginatedListResponse` and `paginated_response()` helper:
 
 ```python
 from fastcrud import PaginatedListResponse, compute_offset, paginated_response
@@ -198,7 +198,7 @@ Start with the basics:
 
 1. **[Endpoints](endpoints.md)** - Common patterns for new routes
 2. **[Pagination](pagination.md)** - List endpoints with paged responses
-3. **[Exception Handling](exceptions.md)** - The boilerplate's exception model
+3. **[Exception Handling](exceptions.md)** - The project's exception model
 4. **[API Versioning](versioning.md)** - Versioning strategy
 
 Then go deeper:

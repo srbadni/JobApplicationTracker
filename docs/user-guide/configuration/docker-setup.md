@@ -1,6 +1,6 @@
 # Docker Setup
 
-This page walks through running the boilerplate in containers. The Python project lives at `backend/`, so all Docker operations happen from there.
+This page walks through running the project in containers. The Python project lives at `backend/`, so all Docker operations happen from there.
 
 !!! info "docker-compose.yml status"
     The repository ships a `backend/Dockerfile` (multi-stage). A canonical `backend/docker-compose.yml` is on the way — until then, the **Recommended Compose File** below is what to drop in at `backend/docker-compose.yml` to get the `docker compose up` flow running.
@@ -29,9 +29,9 @@ docker compose up
 You select a stage with `--target` when building:
 
 ```bash
-docker build --target dev -t fastapi-boilerplate:dev backend
-docker build --target prod -t fastapi-boilerplate:prod backend
-docker build --target migrate -t fastapi-boilerplate:migrate backend
+docker build --target dev -t job-tracker:dev backend
+docker build --target prod -t job-tracker:prod backend
+docker build --target migrate -t job-tracker:migrate backend
 ```
 
 ## Recommended Compose File
@@ -107,7 +107,7 @@ Postgres 17 (alpine for size). Reads `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `
 
 ### `redis` — Redis 7
 
-Used for cache (`CACHE_REDIS_DB=0`), rate limiting (`RATE_LIMITER_REDIS_DB=1`), sessions, and the Taskiq broker (`TASKIQ_REDIS_DB=3`). The boilerplate uses different DB numbers so they don't interfere.
+Used for cache (`CACHE_REDIS_DB=0`), rate limiting (`RATE_LIMITER_REDIS_DB=1`), sessions, and the Taskiq broker (`TASKIQ_REDIS_DB=3`). The project uses different DB numbers so they don't interfere.
 
 ## Optional Services
 

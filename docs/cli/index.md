@@ -1,22 +1,22 @@
-# bp — the FastAPI-boilerplate CLI
+# job-tracker — the job-tracker CLI
 
-`bp` is the developer/operator tool that ships alongside the boilerplate. It generates deployment artifacts, helps prepare the runtime environment, and serves as the host for plugin commands and feature generators.
+`job-tracker` is the developer/operator tool that ships alongside the project. It generates deployment artifacts, helps prepare the runtime environment, and serves as the host for plugin commands and feature generators.
 
-It is **not** part of the deployable backend. The backend image stays lean — `bp` lives in its own workspace package (`cli/`) and is only present in development environments and on machines where you've installed it as a tool.
+It is **not** part of the deployable backend. The backend image stays lean — `job-tracker` lives in its own workspace package (`cli/`) and is only present in development environments and on machines where you've installed it as a tool.
 
 ## What's in this section
 
 - **[Commands](commands.md)** — complete reference for the in-tree `deploy` and `env` sub-apps
-- **[Plugins](plugins.md)** — extension points (`bp.commands` and `bp.features`) and authoring guide
+- **[Plugins](plugins.md)** — extension points (`job_tracker.commands` and `job_tracker.features`) and authoring guide
 
 ## Repository Layout
 
 ```text
-fastapi-boilerplate/
+job-tracker/
 ├── pyproject.toml          # workspace root (uv workspace metadata)
-├── backend/                # deployable application — never ships bp
+├── backend/                # deployable application — never ships job-tracker
 │   └── src/...
-├── cli/                    # the bp package
+├── cli/                    # the job-tracker package
 │   ├── pyproject.toml      # typer + jinja2 + workspace dep on backend
 │   └── src/cli/
 │       ├── app.py          # Typer root + plugin discovery
@@ -26,34 +26,34 @@ fastapi-boilerplate/
 └── docs/
 ```
 
-The two-package split is deliberate: `cli/` depends on `backend/` (for things like `bp env validate`), but `backend/` never depends on `cli/`. Production images ship `backend/` only.
+The two-package split is deliberate: `cli/` depends on `backend/` (for things like `job-tracker env validate`), but `backend/` never depends on `cli/`. Production images ship `backend/` only.
 
 ## Install
 
 ### In-repo (most common)
 
 ```bash
-git clone https://github.com/benavlabs/fastapi-boilerplate
-cd fastapi-boilerplate
+git clone https://github.com/job-tracker/job-tracker
+cd job-tracker
 uv sync                  # syncs the workspace; installs backend + cli into one venv
-uv run bp --help         # works from anywhere in the repo
+uv run job-tracker --help         # works from anywhere in the repo
 ```
 
-The workspace shares a single `.venv/` at the repo root. You can run `uv run bp` from any subdirectory — uv walks up to find the workspace root.
+The workspace shares a single `.venv/` at the repo root. You can run `uv run job-tracker` from any subdirectory — uv walks up to find the workspace root.
 
 ### Machine-wide (optional)
 
-If you want `bp` on `PATH` outside the repo:
+If you want `job-tracker` on `PATH` outside the repo:
 
 ```bash
 uv tool install --editable ./cli
-bp --help
+job-tracker --help
 ```
 
 `--editable` means edits to `cli/src/cli/` show up immediately without reinstall. Re-run `uv tool install --editable ./cli` only when `cli/pyproject.toml` changes (deps, entry points). To uninstall:
 
 ```bash
-uv tool uninstall fastapi-boilerplate-cli
+uv tool uninstall job-tracker-cli
 ```
 
 ## Quick Tour
@@ -61,9 +61,9 @@ uv tool uninstall fastapi-boilerplate-cli
 ### Generate a Compose File
 
 ```bash
-uv run bp deploy generate local                  # hot-reload dev stack
-uv run bp deploy generate prod --workers 8       # production stack
-uv run bp deploy generate nginx                  # production behind nginx
+uv run job-tracker deploy generate local                  # hot-reload dev stack
+uv run job-tracker deploy generate prod --workers 8       # production stack
+uv run job-tracker deploy generate nginx                  # production behind nginx
 ```
 
 Each command writes `docker-compose.yml` (and `nginx/default.conf` for the nginx mode) to the repo root by default. Use `--output-dir` to target somewhere else.
@@ -71,14 +71,14 @@ Each command writes `docker-compose.yml` (and `nginx/default.conf` for the nginx
 ### Generate a Secret
 
 ```bash
-uv run bp env gen-secret
+uv run job-tracker env gen-secret
 # → 64-char hex suitable for SECRET_KEY
 ```
 
 ### Audit Production Settings
 
 ```bash
-uv run bp env validate
+uv run job-tracker env validate
 # Forces the production security validator regardless of ENVIRONMENT.
 # Exits 1 if any critical issues are found.
 ```
@@ -86,7 +86,7 @@ uv run bp env validate
 ## Command Tree
 
 ```text
-bp
+job-tracker
 ├── deploy
 │   └── generate <mode> [options]    # mode ∈ {local, prod, nginx}
 └── env
@@ -98,7 +98,7 @@ Plugin sub-apps mount as siblings of `deploy` and `env`. See [Plugins](plugins.m
 
 ## Design Principles
 
-- **No surprises in production.** `bp` never runs against production at runtime — it's a developer/operator tool. Production images don't even include the `cli` package.
+- **No surprises in production.** `job-tracker` never runs against production at runtime — it's a developer/operator tool. Production images don't even include the `cli` package.
 - **Two extension points, kept separate.** Command plugins (Typer sub-apps) and feature plugins (code generators with manifests) have different lifecycles and shouldn't share machinery.
 - **Templates as data.** Built-in features render Jinja templates. Plugin features do the same. The installer is the only thing that needs to know how to execute the plan.
 - **Idempotent and dry-runnable.** Every operation that mutates the user's repo prompts before overwriting and supports `--dry-run`.

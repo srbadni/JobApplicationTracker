@@ -1,6 +1,6 @@
 # API Versioning
 
-The boilerplate ships a `v1` namespace under `/api/v1/`. This page documents the actual wiring and how to add `/api/v2/` when you need to make breaking changes.
+The project ships a `v1` namespace under `/api/v1/`. This page documents the actual wiring and how to add `/api/v2/` when you need to make breaking changes.
 
 ## How It's Wired Today
 
@@ -259,7 +259,7 @@ v2.include_router(v2_router)
 main.mount("/api/v2", v2)
 ```
 
-You'll get `/api/v1/docs` and `/api/v2/docs` independently. Note the boilerplate ships a single mounted app today — adopt this only when you genuinely need separate docs.
+You'll get `/api/v1/docs` and `/api/v2/docs` independently. Note the project ships a single mounted app today — adopt this only when you genuinely need separate docs.
 
 ## Testing Multiple Versions
 

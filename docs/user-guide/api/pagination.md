@@ -1,6 +1,6 @@
 # API Pagination
 
-The boilerplate uses FastCRUD's `PaginatedListResponse[T]` and `paginated_response()` helpers for paginated list endpoints. This page documents the pattern.
+The project uses FastCRUD's `PaginatedListResponse[T]` and `paginated_response()` helpers for paginated list endpoints. This page documents the pattern.
 
 ## Quick Start
 
@@ -48,7 +48,7 @@ async def get_users(
 }
 ```
 
-`has_more` is `True` when there are still rows past the current page (`page * items_per_page < total_count`). The boilerplate doesn't return `total_pages` — frontends can derive it as `ceil(total_count / items_per_page)` if they need it.
+`has_more` is `True` when there are still rows past the current page (`page * items_per_page < total_count`). The project doesn't return `total_pages` — frontends can derive it as `ceil(total_count / items_per_page)` if they need it.
 
 ## Where the Service Does the Work
 
@@ -190,7 +190,7 @@ async def list_users(
     ...
 ```
 
-The boilerplate uses `ge=1, le=100` for the user list endpoint and `ge=1, le=1000` for API-key usage history (`modules/api_keys/routes.py`). Pick a cap that matches the row size of the model you're paginating.
+The project uses `ge=1, le=100` for the user list endpoint and `ge=1, le=1000` for API-key usage history (`modules/api_keys/routes.py`). Pick a cap that matches the row size of the model you're paginating.
 
 ## Real Endpoint: List Users
 

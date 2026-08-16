@@ -1,8 +1,8 @@
 # Cache Strategies
 
-Caching is easy to add and easy to get wrong. This page collects the practical patterns the boilerplate supports — how to name keys, when to invalidate, how to layer TTLs against write patterns, and how to warm the cache without bolting on a separate scheduler.
+Caching is easy to add and easy to get wrong. This page collects the practical patterns the project supports — how to name keys, when to invalidate, how to layer TTLs against write patterns, and how to warm the cache without bolting on a separate scheduler.
 
-All examples use the boilerplate's real APIs: the [`@cache` decorator](redis-cache.md) for endpoint-level caching, and the provider exports (`get`, `set`, `delete`, `delete_pattern`, `exists`, `clear`) from `src.infrastructure.cache` for everything else.
+All examples use the project's real APIs: the [`@cache` decorator](redis-cache.md) for endpoint-level caching, and the provider exports (`get`, `set`, `delete`, `delete_pattern`, `exists`, `clear`) from `src.infrastructure.cache` for everything else.
 
 ## Picking a Key Naming Scheme
 
@@ -171,7 +171,7 @@ Conventions:
 
 ## Cache Stampede Mitigation
 
-When a hot cache key expires, every concurrent request can hit the database before any of them writes the new value back — a stampede. Mitigations the boilerplate's stack supports:
+When a hot cache key expires, every concurrent request can hit the database before any of them writes the new value back — a stampede. Mitigations the project's stack supports:
 
 ### Slightly Randomized TTLs
 
@@ -209,15 +209,15 @@ async def get_payload(user_id: int) -> dict:
 
 Past the soft TTL, the next request triggers a recompute even though the cache is still warm — the next concurrent request still gets the fresh value. This is enough to prevent stampedes for moderately hot keys.
 
-For genuinely hot keys (top trending list with 10k req/s), reach for a distributed lock (`SET key value NX EX 30`) inside the recompute path. The boilerplate doesn't ship one, but Redis primitives are sufficient.
+For genuinely hot keys (top trending list with 10k req/s), reach for a distributed lock (`SET key value NX EX 30`) inside the recompute path. The project doesn't ship one, but Redis primitives are sufficient.
 
 ## Cache Warming
 
-Cache warming proactively populates the cache so the first user request after a deploy isn't a cold miss. Two reasonable places to do it in the boilerplate:
+Cache warming proactively populates the cache so the first user request after a deploy isn't a cold miss. Two reasonable places to do it in the project:
 
 ### At Application Startup (in the lifespan)
 
-The boilerplate's `lifespan_factory` (in `infrastructure/app_factory.py`) is where the cache is initialized. Warming sits naturally just after that point — but only for genuinely **small** datasets (reference tables, tier definitions, top-N aggregates). Don't pull a million rows into Redis on every boot.
+The project's `lifespan_factory` (in `infrastructure/app_factory.py`) is where the cache is initialized. Warming sits naturally just after that point — but only for genuinely **small** datasets (reference tables, tier definitions, top-N aggregates). Don't pull a million rows into Redis on every boot.
 
 The pattern, in your own `interfaces/main.py` setup:
 
@@ -233,7 +233,7 @@ from src.infrastructure.config.settings import get_settings
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
-    # Run the boilerplate's default lifespan first
+    # Run the project's default lifespan first
     base_lifespan = lifespan_factory(settings)
     async with base_lifespan(app):
         await _warm_reference_data()

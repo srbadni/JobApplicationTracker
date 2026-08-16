@@ -1,21 +1,21 @@
 # Plugins
 
-`bp` has two extension points, kept deliberately separate. They have different lifecycles and shouldn't share machinery:
+`job-tracker` has two extension points, kept deliberately separate. They have different lifecycles and shouldn't share machinery:
 
-- **Command plugins** (`bp.commands`) — third-party Typer sub-apps mounted under the root, e.g. `bp aws deploy`. Pure CLI surface; the plugin doesn't touch the user's repo.
-- **Feature plugins** (`bp.features`) — code generators with a manifest that `bp feature` can list, install, and remove. Plugins of this kind mutate the user's repo (write files, edit settings, run hooks).
+- **Command plugins** (`job_tracker.commands`) — third-party Typer sub-apps mounted under the root, e.g. `job-tracker aws deploy`. Pure CLI surface; the plugin doesn't touch the user's repo.
+- **Feature plugins** (`job_tracker.features`) — code generators with a manifest that `job-tracker feature` can list, install, and remove. Plugins of this kind mutate the user's repo (write files, edit settings, run hooks).
 
 Both are discovered via [Python entry points](https://packaging.python.org/en/latest/specifications/entry-points/), so a plugin is just a normal Python package on the user's machine.
 
 ## How Discovery Works
 
-When `bp` starts, the root app:
+When `job-tracker` starts, the root app:
 
 1. Mounts in-tree command sub-apps (`deploy`, `env`)
-2. Calls `discover_command_plugins()` (from `cli.plugins`) which walks `entry_points(group="bp.commands")` and mounts each healthy result
-3. Builds the feature registry on demand: in-tree features merged with `discover_feature_plugins()` from `bp.features`
+2. Calls `discover_command_plugins()` (from `cli.plugins`) which walks `entry_points(group="job_tracker.commands")` and mounts each healthy result
+3. Builds the feature registry on demand: in-tree features merged with `discover_feature_plugins()` from `job_tracker.features`
 
-A broken plugin never breaks `bp`. Discovery wraps each load in `try/except`, surfaces a `RuntimeWarning`, and continues with the working subset.
+A broken plugin never breaks `job-tracker`. Discovery wraps each load in `try/except`, surfaces a `RuntimeWarning`, and continues with the working subset.
 
 ```python
 # cli/src/cli/plugins.py (abridged)
@@ -31,16 +31,16 @@ In-tree commands and features take precedence on name collisions — a plugin ca
 
 ## Command Plugins
 
-Use a command plugin when you want to add new top-level verbs to `bp` without modifying the boilerplate. Examples: `bp fly deploy`, `bp pulumi up`, `bp lint custom-rules`.
+Use a command plugin when you want to add new top-level verbs to `job-tracker` without modifying the project. Examples: `job-tracker fly deploy`, `job-tracker pulumi up`, `job-tracker lint custom-rules`.
 
 ### Authoring a Command Plugin
 
-Create a Python package with a `typer.Typer` instance and register it under the `bp.commands` group.
+Create a Python package with a `typer.Typer` instance and register it under the `job_tracker.commands` group.
 
 #### 1. Package layout
 
 ```text
-bp-deploy-fly/
+job-tracker-deploy-fly/
 ├── pyproject.toml
 └── src/
     └── bp_deploy_fly/
@@ -74,12 +74,12 @@ def deploy(
 
 ```toml
 [project]
-name = "bp-deploy-fly"
+name = "job-tracker-deploy-fly"
 version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = ["typer>=0.12"]
 
-[project.entry-points."bp.commands"]
+[project.entry-points."job_tracker.commands"]
 fly = "bp_deploy_fly.cli:app"
 
 [tool.setuptools.packages.find]
@@ -91,20 +91,20 @@ The entry-point key (`fly`) becomes the sub-command name. The value (`bp_deploy_
 #### 4. Install and use
 
 ```bash
-uv pip install bp-deploy-fly
-uv run bp --help
+uv pip install job-tracker-deploy-fly
+uv run job-tracker --help
 # ╭─ Commands ────────────────────────────────────────────────╮
 # │ deploy  Generate deployment artifacts ...                 │
 # │ env     Inspect and prepare the runtime environment.      │
 # │ fly     Deploy this app to Fly.io.            ← new       │
 # ╰───────────────────────────────────────────────────────────╯
 
-uv run bp fly deploy --region ord --yes
+uv run job-tracker fly deploy --region ord --yes
 ```
 
 ### Best Practices for Command Plugins
 
-- **Pick a unique name.** `bp` warns if you collide with a built-in (`deploy`, `env`, `feature`) and ignores you. Pick something specific (`fly`, `aws`, `pulumi`) rather than generic (`cloud`, `tools`).
+- **Pick a unique name.** `job-tracker` warns if you collide with a built-in (`deploy`, `env`, `feature`) and ignores you. Pick something specific (`fly`, `aws`, `pulumi`) rather than generic (`cloud`, `tools`).
 - **Keep your sub-app self-contained.** Don't import from the host CLI's internals — use only the public Typer interface. The `cli.app` module is not a public API.
 - **Honor the global UX patterns.** Support `--yes` for non-interactive runs and `--dry-run` where it makes sense. Match the style of the in-tree commands.
 - **Don't block on broken external dependencies.** If your plugin needs `flyctl` or `kubectl`, check for it gracefully and surface a useful error — not a stack trace from `subprocess`.
@@ -113,8 +113,8 @@ uv run bp fly deploy --region ord --yes
 
 Use a feature plugin when you want to **mutate the user's repo** — drop in a new module, add OAuth providers, wire up a payments integration, write migrations. Features have a manifest, plan, and installer lifecycle so they can apply, list, and (eventually) revert cleanly.
 
-!!! note "Feature plugins are designed for, but not yet wired to, `bp feature`"
-    The feature framework (`Feature`, `FeatureManifest`, `FeaturePlan`, `FeatureInstaller`) is fully implemented and the registry already discovers plugin features. The user-facing `bp feature` sub-app is not yet shipped — features are reachable today only via in-tree commands like `bp deploy generate`. The contract below is stable; once `bp feature {list,add,remove,info}` lands, your plugins will work without changes.
+!!! note "Feature plugins are designed for, but not yet wired to, `job-tracker feature`"
+    The feature framework (`Feature`, `FeatureManifest`, `FeaturePlan`, `FeatureInstaller`) is fully implemented and the registry already discovers plugin features. The user-facing `job-tracker feature` sub-app is not yet shipped — features are reachable today only via in-tree commands like `job-tracker deploy generate`. The contract below is stable; once `job-tracker feature {list,add,remove,info}` lands, your plugins will work without changes.
 
 ### The Feature Contract
 
@@ -130,7 +130,7 @@ class MyFeature(Feature):
         return FeatureManifest(
             name="my-feature",
             version="1.0",
-            summary="One-line description shown by `bp feature list`.",
+            summary="One-line description shown by `job-tracker feature list`.",
         )
 
     def plan(self, params: dict, project: ProjectContext) -> FeaturePlan:
@@ -193,7 +193,7 @@ The installer renders `template` with the plan's `template_context` and writes t
 #### 1. Package layout
 
 ```text
-bp-feature-audit-log/
+job-tracker-feature-audit-log/
 ├── pyproject.toml
 └── src/
     └── bp_feature_audit_log/
@@ -248,12 +248,12 @@ A feature plugin writes into a directory that still exists in the layout — tha
 
 ```toml
 [project]
-name = "bp-feature-audit-log"
+name = "job-tracker-feature-audit-log"
 version = "0.1.0"
 requires-python = ">=3.11"
-dependencies = ["fastapi-boilerplate-cli"]
+dependencies = ["job-tracker-cli"]
 
-[project.entry-points."bp.features"]
+[project.entry-points."job_tracker.features"]
 audit-log = "bp_feature_audit_log.feature:feature"
 
 [tool.setuptools]
@@ -271,9 +271,9 @@ Note `include-package-data = true` and the `package-data` glob — without these
 #### 4. Install
 
 ```bash
-uv pip install bp-feature-audit-log
-# Once `bp feature` ships:
-# uv run bp feature add audit-log --retention-days 90
+uv pip install job-tracker-feature-audit-log
+# Once `job-tracker feature` ships:
+# uv run job-tracker feature add audit-log --retention-days 90
 ```
 
 ### Best Practices for Feature Plugins
@@ -283,7 +283,7 @@ uv pip install bp-feature-audit-log
 - **Declare every file.** Don't write files outside the plan. The installer's behavior (dry-run, idempotency, overwrite prompts) only works for files declared in the plan.
 - **Put templates next to the feature.** `Path(__file__).parent / "templates"` is the canonical pattern. Keeps the plugin self-contained.
 - **Use Jinja's `StrictUndefined`.** The bundled `Renderer` does this for you — missing context variables fail loudly rather than rendering empty strings.
-- **Document required `params`.** Once `bp feature` lands, your manifest's `summary` is the first thing users see; document params clearly there.
+- **Document required `params`.** Once `job-tracker feature` lands, your manifest's `summary` is the first thing users see; document params clearly there.
 
 ## Discovery & Diagnosis
 
@@ -291,10 +291,10 @@ uv pip install bp-feature-audit-log
 
 ```bash
 # In-tree + plugin commands
-uv run bp --help
+uv run job-tracker --help
 
 # (Once shipped) — list features:
-# uv run bp feature list
+# uv run job-tracker feature list
 ```
 
 ### Inspecting Entry Points
@@ -302,24 +302,24 @@ uv run bp --help
 ```bash
 uv run python -c "
 from importlib.metadata import entry_points
-for ep in entry_points(group='bp.commands'):
+for ep in entry_points(group='job_tracker.commands'):
     print(f'command  {ep.name:>15s}  ->  {ep.value}')
-for ep in entry_points(group='bp.features'):
+for ep in entry_points(group='job_tracker.features'):
     print(f'feature  {ep.name:>15s}  ->  {ep.value}')
 "
 ```
 
 ### Troubleshooting
 
-#### My plugin doesn't appear in `bp --help`
+#### My plugin doesn't appear in `job-tracker --help`
 
-1. **Confirm it's installed in the right venv.** Run the entry-point inspection script above. If your plugin isn't listed, the package isn't installed where `bp` runs.
-2. **Check for load warnings.** `bp` prints `warning: Failed to load plugin ...` to stderr if your plugin's import fails. Run `bp --help 2>&1` to make sure stderr isn't being suppressed.
+1. **Confirm it's installed in the right venv.** Run the entry-point inspection script above. If your plugin isn't listed, the package isn't installed where `job-tracker` runs.
+2. **Check for load warnings.** `job-tracker` prints `warning: Failed to load plugin ...` to stderr if your plugin's import fails. Run `job-tracker --help 2>&1` to make sure stderr isn't being suppressed.
 3. **Confirm your entry-point shape.** For commands, the value must resolve to a `typer.Typer` instance. For features, a `Feature` instance or a callable returning one.
 
 #### My plugin shadows a built-in
 
-`bp` warns and ignores plugins that try to register a name already in use by a built-in (`deploy`, `env`, `feature`). Rename your plugin to a unique key.
+`job-tracker` warns and ignores plugins that try to register a name already in use by a built-in (`deploy`, `env`, `feature`). Rename your plugin to a unique key.
 
 #### My templates aren't shipping in the wheel
 
@@ -327,7 +327,7 @@ Set `include-package-data = true` in `pyproject.toml` and add a `package-data` g
 
 ## Roadmap
 
-- **`bp feature {list,add,remove,info}`** — user-facing surface for the feature framework. Currently the registry exists; the commands don't.
+- **`job-tracker feature {list,add,remove,info}`** — user-facing surface for the feature framework. Currently the registry exists; the commands don't.
 - **Codemod execution** — apply AST-aware edits declared in `FeaturePlan.codemods`. Useful for "drop a module + register its router in `interfaces/main.py`" kinds of features.
 - **Post-install hooks** — execute commands declared in `FeaturePlan.hooks`. Useful for "after writing the migration, run `alembic upgrade head`" kinds of features.
 

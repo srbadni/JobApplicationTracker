@@ -1,6 +1,6 @@
 # Database Layer
 
-Learn how to work with the database layer in the FastAPI Boilerplate. This section covers everything you need to store and retrieve data effectively.
+Learn how to work with the database layer in the job-tracker. This section covers everything you need to store and retrieve data effectively.
 
 ## What You'll Learn
 
@@ -12,7 +12,7 @@ Learn how to work with the database layer in the FastAPI Boilerplate. This secti
 
 ## Quick Overview
 
-The boilerplate splits the data layer across each feature module so a feature owns its full stack:
+The project splits the data layer across each feature module so a feature owns its full stack:
 
 ```python
 # modules/user/routes.py — request comes in, validated by UserCreate
@@ -47,7 +47,7 @@ SQLAlchemy Model     (modules/<feature>/models.py)
 PostgreSQL
 ```
 
-The service layer holds business rules (permission checks, multi-step orchestration). FastCRUD handles the boilerplate query plumbing. The model defines the table.
+The service layer holds business rules (permission checks, multi-step orchestration). FastCRUD handles the project query plumbing. The model defines the table.
 
 ## Key Components
 
@@ -157,7 +157,7 @@ uv run alembic downgrade -1
 
 ## Database Setup
 
-The boilerplate uses async PostgreSQL via `asyncpg`.
+The project uses async PostgreSQL via `asyncpg`.
 
 ### Environment Configuration
 
@@ -209,7 +209,7 @@ async def list_users(
 
 ## Included Models
 
-The boilerplate ships with these models (one per feature module):
+The project ships with these models (one per feature module):
 
 ### `User` — `modules/user/models.py`
 - Username, email, hashed password, full name, profile image

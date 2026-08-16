@@ -36,10 +36,10 @@ app = create_application(
     docs_production_dependency=None,
     enable_gzip=None,
     openapi_prefix=None,
-    title="FastAPI Boilerplate",
+    title="job-tracker",
     summary="A modular FastAPI starter with a plugin system",
     description="""
-    # FastAPI Boilerplate
+    # job-tracker
 
     A modern FastAPI starter with:
 
@@ -50,9 +50,7 @@ app = create_application(
     """,
     version="0.19.0",
     contact={
-        "name": "Benav Labs",
-        "url": "https://github.com/benavlabs/FastAPI-boilerplate",
-        "email": "contact@benav.io",
+        "name": "job-tracker team",
     },
     license_info={
         "name": "MIT",

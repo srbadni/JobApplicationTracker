@@ -1,6 +1,6 @@
 # Environment Variables Reference
 
-This page is the complete reference for every environment variable the boilerplate reads. The source of truth is `backend/.env.example` — this page mirrors it with descriptions.
+This page is the complete reference for every environment variable the project reads. The source of truth is `backend/.env.example` — this page mirrors it with descriptions.
 
 All variables are loaded from `backend/.env` at application startup via Pydantic `BaseSettings` classes in `src/infrastructure/config/settings.py`.
 
@@ -245,7 +245,7 @@ ADMIN_ENABLED=true              # enables /admin
 
 ```env
 DEBUG=false
-APP_NAME=FastAPI Boilerplate
+APP_NAME=job-tracker
 APP_DESCRIPTION=Modular FastAPI starter
 VERSION=0.19.0
 CONTACT_NAME=Support

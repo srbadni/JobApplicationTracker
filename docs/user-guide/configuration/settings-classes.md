@@ -52,7 +52,7 @@ print(settings.APP_NAME)
 
 ## Built-in Settings Groups
 
-The actual classes that ship with the boilerplate, all in `src/infrastructure/config/settings.py`:
+The actual classes that ship with the project, all in `src/infrastructure/config/settings.py`:
 
 | Class | Covers |
 |-------|--------|
@@ -217,7 +217,7 @@ class StorageSettings(BaseSettings):
     STORAGE_BACKEND: str = config("STORAGE_BACKEND", default=StorageBackend.LOCAL.value)
 ```
 
-The boilerplate already does this for `CacheBackend`, `LogFormat`, `LogLevel`, `SessionBackend`, `TaskiqBrokerType`, and `EnvironmentOption`.
+The project already does this for `CacheBackend`, `LogFormat`, `LogLevel`, `SessionBackend`, `TaskiqBrokerType`, and `EnvironmentOption`.
 
 ## Removing Built-in Groups
 
@@ -281,7 +281,7 @@ def test_storage_validation():
 
 ### Security
 
-- Validate `SECRET_KEY` length / strength when `ENVIRONMENT=production` (the boilerplate already does this via the production security validator)
+- Validate `SECRET_KEY` length / strength when `ENVIRONMENT=production` (the project already does this via the production security validator)
 - Never set a real default for credentials — leave them blank and let the validator complain
 - Use `@property` to derive connection strings rather than embedding them in env vars
 

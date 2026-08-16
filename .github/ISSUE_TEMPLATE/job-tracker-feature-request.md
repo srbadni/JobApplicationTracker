@@ -1,5 +1,5 @@
 ---
-name: FastAPI-boilerplate Feature request
+name: job-tracker Feature request
 about: Suggest an idea for this project
 title: ''
 labels: enhancement

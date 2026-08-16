@@ -1,8 +1,8 @@
-# Fastro - The Benav Labs FastAPI boilerplate Changelog
+# job-tracker - The job-tracker team job-tracker Changelog
 
 ## Introduction
 
-The Changelog documents all notable changes to the Fastro FastAPI boilerplate, organized by version. For releases before v0.18.0, see [GitHub releases](https://github.com/benavlabs/FastAPI-boilerplate/releases).
+The Changelog documents all notable changes to the job-tracker job-tracker, organized by version. For releases before v0.18.0, see [GitHub releases](https://github.com/job-tracker/job-tracker/releases).
 
 For the full narrative on each release — rationale, decisions, migration guide — see the corresponding GitHub release page.
 
@@ -10,11 +10,11 @@ ___
 
 ## 0.19.0 - June 23, 2026 - The crudauth Migration
 
-Three changes since v0.18.0: route dependency injection moved to centralized `Annotated[...]` type aliases ([#261](https://github.com/benavlabs/FastAPI-boilerplate/pull/261)), the app metadata (`APP_NAME` / `APP_DESCRIPTION` / `VERSION`) became environment-configurable, and — the headline — the vendored authentication stack was replaced with the [`crudauth`](https://pypi.org/project/crudauth/) library.
+Three changes since v0.18.0: route dependency injection moved to centralized `Annotated[...]` type aliases ([#261](https://github.com/job-tracker/job-tracker/pull/261)), the app metadata (`APP_NAME` / `APP_DESCRIPTION` / `VERSION`) became environment-configurable, and — the headline — the vendored authentication stack was replaced with the [`crudauth`](https://pypi.org/project/crudauth/) library.
 
-**The crudauth migration.** The vendored authentication stack — the in-tree `SessionManager`, its storage backends, the OAuth provider framework, and the token/password utilities — has been replaced with crudauth. The boilerplate now keeps only the wiring: a single `auth = CRUDAuth(...)` singleton in `infrastructure/auth/setup.py`, the FastAPI dependencies that wrap it, the OAuth building blocks, and the route handlers. Session validation, CSRF, login lockout, and session storage all live in the library.
+**The crudauth migration.** The vendored authentication stack — the in-tree `SessionManager`, its storage backends, the OAuth provider framework, and the token/password utilities — has been replaced with crudauth. The project now keeps only the wiring: a single `auth = CRUDAuth(...)` singleton in `infrastructure/auth/setup.py`, the FastAPI dependencies that wrap it, the OAuth building blocks, and the route handlers. Session validation, CSRF, login lockout, and session storage all live in the library.
 
-**Annotated type-alias DI** ([#261](https://github.com/benavlabs/FastAPI-boilerplate/pull/261), by [@emiliano-gandini-outeda](https://github.com/emiliano-gandini-outeda)). Route signatures moved from inline `Depends(...)` to centralized `Annotated[..., Depends(...)]` aliases in `infrastructure/dependencies.py`, with per-module `dependencies.py` files holding the service aliases for `user`, `tier`, `rate_limit`, and `api_keys`.
+**Annotated type-alias DI** ([#261](https://github.com/job-tracker/job-tracker/pull/261), by [@emiliano-gandini-outeda](https://github.com/emiliano-gandini-outeda)). Route signatures moved from inline `Depends(...)` to centralized `Annotated[..., Depends(...)]` aliases in `infrastructure/dependencies.py`, with per-module `dependencies.py` files holding the service aliases for `user`, `tier`, `rate_limit`, and `api_keys`.
 
 This is a **breaking** change for anyone importing from the old auth modules or relying on the removed settings. See Breaking Changes below for the migration.
 
@@ -27,7 +27,7 @@ This is a **breaking** change for anyone importing from the old auth modules or 
   - New `Principal`-based dependencies `get_current_principal` / `get_optional_principal` alongside the dict-returning `get_current_user` / `get_optional_user` / `get_current_superuser`
 - **`TRUSTED_PROXY_HOPS` setting** (default `0`) — number of trusted reverse proxies in front of the app, used by crudauth to resolve the real client IP for login lockout. Set `1` behind a single nginx/Caddy.
 - **`User.is_active` property** — derived from `not is_deleted`; crudauth reads it during login so soft-deleted users can't authenticate.
-- **Annotated type-alias dependency injection** ([#261](https://github.com/benavlabs/FastAPI-boilerplate/pull/261)) by [@emiliano-gandini-outeda](https://github.com/emiliano-gandini-outeda) — centralized `Annotated[..., Depends(...)]` aliases in `infrastructure/dependencies.py` and per-module `dependencies.py` (`user`, `tier`, `rate_limit`, `api_keys`) with service aliases; route signatures migrated to use them.
+- **Annotated type-alias dependency injection** ([#261](https://github.com/job-tracker/job-tracker/pull/261)) by [@emiliano-gandini-outeda](https://github.com/emiliano-gandini-outeda) — centralized `Annotated[..., Depends(...)]` aliases in `infrastructure/dependencies.py` and per-module `dependencies.py` (`user`, `tier`, `rate_limit`, `api_keys`) with service aliases; route signatures migrated to use them.
 
 #### Changed
 
@@ -36,7 +36,7 @@ This is a **breaking** change for anyone importing from the old auth modules or 
 - Login lockout now returns **`429 Too Many Requests` with a `Retry-After` header** (was a generic `401`). It is throttled internally by crudauth (escalating per-IP / per-identifier), not via env vars.
 - OAuth providers are now registered via crudauth's `OAuthProviderFactory` in `infrastructure/auth/oauth.py` rather than as separate `oauth/providers/<name>.py` files. Google remains wired.
 - `APP_NAME`, `APP_DESCRIPTION`, and `VERSION` are now environment-configurable (read via `config(...)`; previously hardcoded).
-- `/check-auth` now answers anonymous callers with `{"authenticated": false}` instead of raising `401` ([#261](https://github.com/benavlabs/FastAPI-boilerplate/pull/261)).
+- `/check-auth` now answers anonymous callers with `{"authenticated": false}` instead of raising `401` ([#261](https://github.com/job-tracker/job-tracker/pull/261)).
 
 #### Removed
 
@@ -55,8 +55,8 @@ This is a **breaking** change for anyone importing from the old auth modules or 
 - **`SESSION_BACKEND=memcached` is no longer valid** — switch to `redis` or `memory`.
 - **`SessionManager` and friends are gone.** Code that called the session manager directly (e.g. listing a user's sessions) must move to crudauth's session APIs.
 
-**Full release notes**: https://github.com/benavlabs/FastAPI-boilerplate/releases/tag/v0.19.0
-**Full changelog**: https://github.com/benavlabs/FastAPI-boilerplate/compare/v0.18.0...v0.19.0
+**Full release notes**: https://github.com/job-tracker/job-tracker/releases/tag/v0.19.0
+**Full changelog**: https://github.com/job-tracker/job-tracker/compare/v0.18.0...v0.19.0
 
 ___
 
@@ -68,13 +68,13 @@ A heads-up before we go further: **the diff is enormous**; v0.17.0 → v0.18.0 i
 
 ### Why this release is so different
 
-We didn't iterate on the v0.17.0 codebase to get here. We **rebased the project on the [fastroai-template](https://fastro.ai) structure**.
+We didn't iterate on the v0.17.0 codebase to get here. We **rebased the project on the [job-tracker](https://job-tracker.ai) structure**.
 
-fastroai-template is the production-tested template we use internally (and sell) for AI SaaS products. It's been running real apps for months and the structural choices (three-layer architecture, vertical-slice modules, server-side sessions, SQLAdmin, Taskiq, swappable infrastructure) have proven themselves under load. Reinventing all of that for FastAPI-boilerplate would have meant another six months of polish; rebasing meant we could ship the good parts on day one.
+job-tracker is the production-tested template we use internally (and sell) for AI SaaS products. It's been running real apps for months and the structural choices (three-layer architecture, vertical-slice modules, server-side sessions, SQLAdmin, Taskiq, swappable infrastructure) have proven themselves under load. Reinventing all of that for job-tracker would have meant another six months of polish; rebasing meant we could ship the good parts on day one.
 
-The trade-off is that fastroai-template carries a lot of stuff this boilerplate's audience doesn't necessarily need: a Stripe integration, subscription/credits/entitlements modeling, AI agent orchestration, usage tracking with cost calculation, OAuth-specific provisioning for SaaS, an Astro frontend. Excellent for an AI SaaS starter, wrong for a general FastAPI boilerplate.
+The trade-off is that job-tracker carries a lot of stuff this project's audience doesn't necessarily need: a Stripe integration, subscription/credits/entitlements modeling, AI agent orchestration, usage tracking with cost calculation, OAuth-specific provisioning for SaaS, an Astro frontend. Excellent for an AI SaaS starter, wrong for a general job-tracker.
 
-**So this release is fastroai-template minus the SaaS/AI parts, plus a plugin system that fastroai-template doesn't have.** What's left is the structural skeleton; the parts that any FastAPI app needs and that we've watched hold up in real use:
+**So this release is job-tracker minus the SaaS/AI parts, plus a plugin system that job-tracker doesn't have.** What's left is the structural skeleton; the parts that any FastAPI app needs and that we've watched hold up in real use:
 
 - The three-layer split (`interfaces/`, `infrastructure/`, `modules/`)
 - Vertical-slice modules (`user/`, `tier/`, `api_keys/`, `rate_limit/`)
@@ -82,13 +82,13 @@ The trade-off is that fastroai-template carries a lot of stuff this boilerplate'
 - SQLAdmin, Taskiq, swappable cache/session/rate-limit backends
 - The production security validator that refuses to boot with insecure defaults
 
-The new part, the one fastroai-template doesn't have, is **`bp` — a plugin-aware CLI**. fastroai-template ships everything in-tree because that's appropriate for an AI SaaS starter. FastAPI-boilerplate's whole pitch is "use what you need, drop what you don't", and that pitch only works if dropping things and adding things are first-class operations. The `bp.commands` and `bp.features` entry points are how external Python packages contribute new commands and feature generators without touching the core. Build a Stripe plugin, a Prometheus plugin, a CRUD-generator plugin, they all ship as separate packages.
+The new part, the one job-tracker doesn't have, is **`job-tracker` — a plugin-aware CLI**. job-tracker ships everything in-tree because that's appropriate for an AI SaaS starter. job-tracker's whole pitch is "use what you need, drop what you don't", and that pitch only works if dropping things and adding things are first-class operations. The `job_tracker.commands` and `job_tracker.features` entry points are how external Python packages contribute new commands and feature generators without touching the core. Build a Stripe plugin, a Prometheus plugin, a CRUD-generator plugin, they all ship as separate packages.
 
 ### If you can stay on v0.17.0, consider it
 
 For brand-new projects, v0.18.0 is the better starting point. For existing apps with significant custom code on v0.17.0, the honest answer is: **the migration path is "copy your business logic into the new structure"**, not a sed-style find-and-replace. If your fork has diverged from v0.17.0 in non-trivial ways, pinning to v0.17.0 may be the right call. We'll keep v0.17.0 around as a tag forever.
 
-For the full migration guide and per-section detail, see the [full release notes on GitHub](https://github.com/benavlabs/FastAPI-boilerplate/releases/tag/v0.18.0).
+For the full migration guide and per-section detail, see the [full release notes on GitHub](https://github.com/job-tracker/job-tracker/releases/tag/v0.18.0).
 
 ---
 
@@ -104,10 +104,10 @@ For the full migration guide and per-section detail, see the [full release notes
   - Single shared `.venv`; prod Dockerfile only copies `backend/src/`
   - Install with `uv sync --all-packages --all-extras` from the repo root
 
-- **`bp` CLI with plugin extension points** by [@igorbenav](https://github.com/igorbenav)
-  - `bp.commands` — external Typer sub-apps mount under the root
-  - `bp.features` — external feature generators with manifest + plan + rollback
-  - In-tree commands: `bp deploy generate {local,prod,nginx}`, `bp env gen-secret`, `bp env validate`
+- **`job-tracker` CLI with plugin extension points** by [@igorbenav](https://github.com/igorbenav)
+  - `job_tracker.commands` — external Typer sub-apps mount under the root
+  - `job_tracker.features` — external feature generators with manifest + plan + rollback
+  - In-tree commands: `job-tracker deploy generate {local,prod,nginx}`, `job-tracker env gen-secret`, `job-tracker env validate`
   - Built-in `deploy` feature with Jinja templates for compose + nginx
 
 - **OAuth provider framework** by [@igorbenav](https://github.com/igorbenav), [@LucasQR](https://github.com/LucasQR)
@@ -124,7 +124,7 @@ For the full migration guide and per-section detail, see the [full release notes
 - **Production security validator** by [@igorbenav](https://github.com/igorbenav)
   - Startup gate that refuses to boot prod with insecure defaults
   - Checks `SECRET_KEY`, DB credentials, CORS policy, session flags, debug mode, `CREATE_TABLES_ON_STARTUP`
-  - `bp env validate` runs the same checks against any config
+  - `job-tracker env validate` runs the same checks against any config
 
 - **Server-side sessions** by [@igorbenav](https://github.com/igorbenav)
   - Opaque session IDs in `HttpOnly` cookies
@@ -219,7 +219,7 @@ For the full migration guide and per-section detail, see the [full release notes
 - **JWT auth + `token_blacklist` table** — replaced by server-side sessions
 - **CRUDAdmin views** — replaced by SQLAdmin
 - **ARQ workers** — replaced by Taskiq
-- **Deployment scripts** (`setup.py`, `scripts/{local_with_uvicorn,gunicorn_managing_uvicorn_workers,production_with_nginx}/`) — replaced by `bp deploy generate`
+- **Deployment scripts** (`setup.py`, `scripts/{local_with_uvicorn,gunicorn_managing_uvicorn_workers,production_with_nginx}/`) — replaced by `job-tracker deploy generate`
 - **`mkdocs.yml`** — replaced by `zensical.toml`
 - **Demo `posts` module** — pure demo code, not needed
 - **`backend/uv.lock`** — stale duplicate of workspace `uv.lock`
@@ -237,13 +237,13 @@ For the full migration guide and per-section detail, see the [full release notes
 | API key hash format | Existing keys won't validate | Users must regenerate |
 | Settings composition | Env var names mostly stable; a few moved | Diff `.env.example` |
 | Sync command | `cd backend && uv sync --extra dev` produces broken venv | Use `uv sync --all-packages --all-extras` from repo root |
-| Deployment scaffolder | `./setup.py local` removed | `uv run bp deploy generate {local,prod,nginx}` |
+| Deployment scaffolder | `./setup.py local` removed | `uv run job-tracker deploy generate {local,prod,nginx}` |
 
 For brand-new projects, v0.18.0 is the better starting point. For existing apps with significant custom code on v0.17.0, **pinning to v0.17.0 may be the right call** — that tag stays supported.
 
 #### New Co-Maintainers
 
-- [@carlosplanchon](https://github.com/carlosplanchon) and [@emiliano-gandini-outeda](https://github.com/emiliano-gandini-outeda) are now officially helping maintain and improve the boilerplate.
+- [@carlosplanchon](https://github.com/carlosplanchon) and [@emiliano-gandini-outeda](https://github.com/emiliano-gandini-outeda) are now officially helping maintain and improve the project.
 
-**Full release notes**: https://github.com/benavlabs/FastAPI-boilerplate/releases/tag/v0.18.0
-**Full changelog**: https://github.com/benavlabs/FastAPI-boilerplate/compare/v0.17.0...v0.18.0
+**Full release notes**: https://github.com/job-tracker/job-tracker/releases/tag/v0.18.0
+**Full changelog**: https://github.com/job-tracker/job-tracker/compare/v0.17.0...v0.18.0

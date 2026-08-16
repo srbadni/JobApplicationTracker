@@ -1,10 +1,10 @@
 # Database Migrations
 
-Schema changes are managed with [Alembic](https://alembic.sqlalchemy.org/). This guide covers the day-to-day workflow plus the production safety net the boilerplate adds on top.
+Schema changes are managed with [Alembic](https://alembic.sqlalchemy.org/). This guide covers the day-to-day workflow plus the production safety net the project adds on top.
 
 ## Two Modes: Auto-Create vs Migrations
 
-The boilerplate supports both. They are **alternatives**, not complements:
+The project supports both. They are **alternatives**, not complements:
 
 ### `CREATE_TABLES_ON_STARTUP=true` — auto-create
 
@@ -34,7 +34,7 @@ The shipped config sets:
 
 ### `backend/migrations/env.py`
 
-The boilerplate's `env.py` does three things you'll want to know about:
+The project's `env.py` does three things you'll want to know about:
 
 ```python
 from src.infrastructure.config.settings import settings
@@ -256,7 +256,7 @@ def downgrade() -> None:
 
 ## Production Migration Strategy
 
-The boilerplate adds a hard guard against accidental production migrations: with `ENVIRONMENT=production`, Alembic refuses to run unless `CONFIRM_PRODUCTION_MIGRATION=yes` is set.
+The project adds a hard guard against accidental production migrations: with `ENVIRONMENT=production`, Alembic refuses to run unless `CONFIRM_PRODUCTION_MIGRATION=yes` is set.
 
 ```bash
 # Production migration — explicit confirmation required

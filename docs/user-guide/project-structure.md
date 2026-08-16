@@ -5,7 +5,7 @@ The codebase follows a three-layer architecture (**interfaces / infrastructure /
 ## Repository Root
 
 ```text
-fastapi-boilerplate/
+job-tracker/
 ├── backend/                  # Python project root (see below)
 ├── docs/                     # zensical documentation
 ├── .github/                  # CI workflows

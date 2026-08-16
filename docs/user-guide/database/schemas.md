@@ -205,7 +205,7 @@ Set on `UserCreate`, `UserUpdate`, etc. — anything the client sends beyond the
 
 ### `from_attributes`
 
-Use `ConfigDict(from_attributes=True)` when you need to build a Pydantic schema from a SQLAlchemy model instance directly. The boilerplate's services mostly work with dicts (FastCRUD's default return shape), so this is rarely needed — but it's the right setting if you do `UserRead.model_validate(orm_user)`.
+Use `ConfigDict(from_attributes=True)` when you need to build a Pydantic schema from a SQLAlchemy model instance directly. The project's services mostly work with dicts (FastCRUD's default return shape), so this is rarely needed — but it's the right setting if you do `UserRead.model_validate(orm_user)`.
 
 ## Schema Patterns
 
@@ -277,7 +277,7 @@ class UserReadWithStats(UserRead):
 
 ## Multi-Record Responses
 
-The boilerplate uses **FastCRUD's `PaginatedListResponse`** for paginated list endpoints:
+The project uses **FastCRUD's `PaginatedListResponse`** for paginated list endpoints:
 
 ```python
 from fastcrud import PaginatedListResponse, compute_offset, paginated_response
@@ -387,7 +387,7 @@ def email_must_be_unique(cls, v):
 # GOOD — let the DB unique constraint and service-layer logic handle it
 ```
 
-The boilerplate's `UserService.create` already checks for duplicates before insert. The DB unique constraint is the final guardrail.
+The project's `UserService.create` already checks for duplicates before insert. The DB unique constraint is the final guardrail.
 
 ### Don't reuse the same schema for create and update
 

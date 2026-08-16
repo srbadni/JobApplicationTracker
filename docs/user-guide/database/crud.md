@@ -1,10 +1,10 @@
 # CRUD Operations
 
-This guide covers the CRUD (Create, Read, Update, Delete) operations available in the boilerplate via [FastCRUD](https://benavlabs.github.io/fastcrud/).
+This guide covers the CRUD (Create, Read, Update, Delete) operations available in the project via [FastCRUD](https://job-tracker.github.io/fastcrud/).
 
 ## Overview
 
-The boilerplate uses **FastCRUD** for all database access. It gives you:
+The project uses **FastCRUD** for all database access. It gives you:
 
 - A consistent async API across every model
 - Automatic pagination helpers
@@ -114,7 +114,7 @@ await crud_users.get_multi(db=db, created_at__gt=cutoff_datetime)
 await crud_users.get_multi(db=db, tier_id__in=[1, 2, 3])
 ```
 
-Available operators include `__contains`, `__icontains`, `__startswith`, `__endswith`, `__gt`, `__ge`, `__lt`, `__le`, `__in`, `__not_in`, and others. See the [FastCRUD docs](https://benavlabs.github.io/fastcrud/) for the full list.
+Available operators include `__contains`, `__icontains`, `__startswith`, `__endswith`, `__gt`, `__ge`, `__lt`, `__le`, `__in`, `__not_in`, and others. See the [FastCRUD docs](https://job-tracker.github.io/fastcrud/) for the full list.
 
 ### Check Existence
 
@@ -261,11 +261,11 @@ posts_with_authors = await crud_posts.get_multi_joined(
 # Each row: {..., "author_username": ..., "author_email": ...}
 ```
 
-The boilerplate also uses **`JoinConfig`** for more complex multi-join queries (see `UserService.get_rate_limits` for a real example with two joins).
+The project also uses **`JoinConfig`** for more complex multi-join queries (see `UserService.get_rate_limits` for a real example with two joins).
 
 ## Pagination
 
-The boilerplate uses FastCRUD's `paginated_response()` helper to turn a `get_multi` result into a public-shaped paginated response:
+The project uses FastCRUD's `paginated_response()` helper to turn a `get_multi` result into a public-shaped paginated response:
 
 ```python
 from fastcrud import PaginatedListResponse, compute_offset, paginated_response

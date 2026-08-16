@@ -1,12 +1,12 @@
-"""Plugin discovery for the bp CLI.
+"""Plugin discovery for the job-tracker CLI.
 
 Two extension points, kept deliberately separate:
 
-- ``bp.commands`` — a Typer sub-app mounted under the root, e.g.
-  ``bp aws deploy``. Plugin packages declare entry points whose values
+- ``job_tracker.commands`` — a Typer sub-app mounted under the root, e.g.
+  ``job-tracker aws deploy``. Plugin packages declare entry points whose values
   resolve to a ``typer.Typer`` instance.
 
-- ``bp.features`` — a ``Feature`` instance that ``bp feature`` can list
+- ``job_tracker.features`` — a ``Feature`` instance that ``job-tracker feature`` can list
   and apply. Plugin packages declare entry points whose values resolve
   to ``Feature`` instances (or callables that return one).
 
@@ -25,8 +25,8 @@ import typer
 
 from .features.base import Feature
 
-COMMANDS_GROUP = "bp.commands"
-FEATURES_GROUP = "bp.features"
+COMMANDS_GROUP = "job_tracker.commands"
+FEATURES_GROUP = "job_tracker.features"
 
 
 def _safe_load(ep: EntryPoint) -> object | None:
@@ -43,7 +43,7 @@ def _safe_load(ep: EntryPoint) -> object | None:
 
 
 def discover_command_plugins() -> dict[str, typer.Typer]:
-    """Return ``{name: typer_app}`` for every healthy ``bp.commands`` entry point."""
+    """Return ``{name: typer_app}`` for every healthy ``job_tracker.commands`` entry point."""
     found: dict[str, typer.Typer] = {}
     for ep in entry_points(group=COMMANDS_GROUP):
         loaded = _safe_load(ep)
@@ -61,7 +61,7 @@ def discover_command_plugins() -> dict[str, typer.Typer]:
 
 
 def discover_feature_plugins() -> dict[str, Feature]:
-    """Return ``{name: feature}`` for every healthy ``bp.features`` entry point.
+    """Return ``{name: feature}`` for every healthy ``job_tracker.features`` entry point.
 
     Entry-point values may be either a ``Feature`` instance or a callable
     that returns one (helpful when constructing features needs the project
