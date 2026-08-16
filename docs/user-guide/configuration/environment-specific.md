@@ -1,6 +1,6 @@
 # Environment-Specific Configuration
 
-The boilerplate adapts its behavior based on the `ENVIRONMENT` variable. This page covers the recommended settings for each environment and the behaviors the codebase already changes for you.
+The project adapts its behavior based on the `ENVIRONMENT` variable. This page covers the recommended settings for each environment and the behaviors the codebase already changes for you.
 
 ## Supported Environments
 
@@ -18,7 +18,7 @@ ENVIRONMENT=development
 
 ## What the Codebase Does for You
 
-The boilerplate already changes its own behavior based on `ENVIRONMENT`. You don't need to write conditional code for these:
+The project already changes its own behavior based on `ENVIRONMENT`. You don't need to write conditional code for these:
 
 | Behavior | development / local | staging | production |
 |----------|---------------------|---------|------------|

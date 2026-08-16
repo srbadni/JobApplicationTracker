@@ -259,7 +259,7 @@ Default is 1 hour (`3600`). Override per route based on staleness tolerance.
 
 ## Real Examples
 
-The boilerplate doesn't currently use `@cache` on its built-in routes (the existing endpoints are admin/list operations where the data churns enough that caching isn't a clear win). Add `@cache` to your own modules where it pays off — typically: read-heavy GETs on rarely-changing data.
+The project doesn't currently use `@cache` on its built-in routes (the existing endpoints are admin/list operations where the data churns enough that caching isn't a clear win). Add `@cache` to your own modules where it pays off — typically: read-heavy GETs on rarely-changing data.
 
 ## Performance Tips
 

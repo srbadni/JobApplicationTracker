@@ -56,7 +56,7 @@ class TestSettings:
         settings = Settings()
         # Should construct URL from components
         assert "postgresql+asyncpg://" in settings.DATABASE_URL
-        assert "postgres:postgres@localhost:5432" in settings.DATABASE_URL
+        assert "postgres:postgres@localhost:5432/job-tracker" in settings.DATABASE_URL
 
     @patch.dict(os.environ, {"DEBUG": "true"})
     def test_debug_mode_setting(self):

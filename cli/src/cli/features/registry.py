@@ -2,7 +2,7 @@
 
 In-tree features are imported lazily so that adding new ones doesn't
 slow down every CLI invocation. Plugin features come from the
-``bp.features`` entry-point group.
+``job_tracker.features`` entry-point group.
 """
 
 from __future__ import annotations

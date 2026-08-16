@@ -97,7 +97,7 @@ This creates:
 
 ### Authentication Flow (Sessions)
 
-This boilerplate uses **server-side sessions** with HTTP-only cookies — no JWT.
+This project uses **server-side sessions** with HTTP-only cookies — no JWT.
 
 #### 1. Log In
 
@@ -268,7 +268,7 @@ You've verified your install and tested the main features. Now:
 
 ### Development Workflow
 
-1. **[Development Guide](../user-guide/development.md)** - Extend the boilerplate
+1. **[Development Guide](../user-guide/development.md)** - Extend the project
 2. **[Testing](../user-guide/testing.md)** - Test your features
 3. **[Production](../user-guide/production.md)** - Deploy
 
@@ -276,5 +276,5 @@ You've verified your install and tested the main features. Now:
 
 - **Check the logs** for error messages
 - **Verify your `backend/.env`** has the right values
-- **Search [GitHub Issues](https://github.com/benavlabs/fastapi-boilerplate/issues)** for similar problems
-- **Open a [new issue](https://github.com/benavlabs/fastapi-boilerplate/issues/new)** with details
+- **Search [GitHub Issues](https://github.com/job-tracker/job-tracker/issues)** for similar problems
+- **Open a [new issue](https://github.com/job-tracker/job-tracker/issues/new)** with details

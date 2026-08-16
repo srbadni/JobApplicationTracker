@@ -1,6 +1,6 @@
 # User Management
 
-User management covers the full lifecycle: registration, authentication, profile updates, and deletion. This page documents the endpoints and patterns the boilerplate ships with.
+User management covers the full lifecycle: registration, authentication, profile updates, and deletion. This page documents the endpoints and patterns the project ships with.
 
 ## Endpoints at a Glance
 
@@ -84,7 +84,7 @@ class UserCreate(UserBase):
 
 ## Authentication
 
-Authentication happens via `POST /api/v1/auth/login`. See [Sessions](sessions.md) for the full flow. The credential check itself now lives inside the `crudauth` library — the login route delegates to the `auth` singleton (`infrastructure/auth/setup.py`), which looks the user up, verifies the password, and creates the session. The boilerplate no longer ships an `authenticate_user` helper.
+Authentication happens via `POST /api/v1/auth/login`. See [Sessions](sessions.md) for the full flow. The credential check itself now lives inside the `crudauth` library — the login route delegates to the `auth` singleton (`infrastructure/auth/setup.py`), which looks the user up, verifies the password, and creates the session. The project no longer ships an `authenticate_user` helper.
 
 Two things to note about the login behavior:
 
@@ -177,7 +177,7 @@ class UserUpdate(BaseModel):
 
 ## Deletion
 
-The boilerplate distinguishes three deletion modes — pick based on what the request actually wants.
+The project distinguishes three deletion modes — pick based on what the request actually wants.
 
 ### Soft Delete
 

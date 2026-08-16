@@ -22,7 +22,7 @@ class FeatureManifest:
     """Static metadata about a feature.
 
     The manifest is the part that's safe to read without executing
-    anything — used by ``bp feature list`` / ``bp feature info`` to
+    anything — used by ``job-tracker feature list`` / ``job-tracker feature info`` to
     describe what's available.
     """
 

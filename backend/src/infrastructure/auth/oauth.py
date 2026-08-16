@@ -1,4 +1,4 @@
-"""crudauth OAuth building blocks for the boilerplate's own OAuth routes.
+"""crudauth OAuth building blocks for the project's own OAuth routes.
 
 Runs the existing ``/oauth/google`` routes on crudauth's hardened OAuth
 (PKCE + signed state + verified-email account linking) without mounting crudauth's

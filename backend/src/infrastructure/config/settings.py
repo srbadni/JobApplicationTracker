@@ -47,7 +47,7 @@ class DatabaseSettings(BaseSettings):
     POSTGRES_PASSWORD: str = config("POSTGRES_PASSWORD", default="postgres")
     POSTGRES_SERVER: str = config("POSTGRES_SERVER", default="localhost")
     POSTGRES_PORT: int = config("POSTGRES_PORT", default=5432)
-    POSTGRES_DB: str = config("POSTGRES_DB", default="postgres")
+    POSTGRES_DB: str = config("POSTGRES_DB", default="job-tracker")
     POSTGRES_SYNC_PREFIX: str = config("POSTGRES_SYNC_PREFIX", default="postgresql://")
     POSTGRES_ASYNC_PREFIX: str = config("POSTGRES_ASYNC_PREFIX", default="postgresql+asyncpg://")
     CREATE_TABLES_ON_STARTUP: bool = config("CREATE_TABLES_ON_STARTUP", default=True, cast=bool)
@@ -266,7 +266,7 @@ class AppSettings(BaseSettings):
     """Application-related settings."""
 
     # Note: For API documentation, prefer using API_* fields in APIDocSettings
-    APP_NAME: str = config("APP_NAME", default="FastAPI Boilerplate")
+    APP_NAME: str = config("APP_NAME", default="job-tracker")
     APP_DESCRIPTION: str = config("APP_DESCRIPTION", default="Modular FastAPI starter")
     DEBUG: bool = config("DEBUG", default=False, cast=bool)
     VERSION: str = config("VERSION", default="0.1.0")

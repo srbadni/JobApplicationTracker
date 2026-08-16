@@ -1,8 +1,8 @@
 # Authentication & Security
 
-The boilerplate uses **server-side sessions with HTTP-only cookies** — not JWT. Auth is provided by the [`crudauth`](https://pypi.org/project/crudauth/) library: sessions are stored in Redis (or memory, configurable), CSRF-protected, and lockout-throttled at the login endpoint. The composition root is the `auth = CRUDAuth(...)` singleton in `infrastructure/auth/setup.py` (see [Sessions → Auth Architecture](sessions.md#auth-architecture)).
+The project uses **server-side sessions with HTTP-only cookies** — not JWT. Auth is provided by the [`crudauth`](https://pypi.org/project/crudauth/) library: sessions are stored in Redis (or memory, configurable), CSRF-protected, and lockout-throttled at the login endpoint. The composition root is the `auth = CRUDAuth(...)` singleton in `infrastructure/auth/setup.py` (see [Sessions → Auth Architecture](sessions.md#auth-architecture)).
 
-For machine-to-machine clients, the boilerplate ships **API keys** with per-key permissions and usage tracking.
+For machine-to-machine clients, the project ships **API keys** with per-key permissions and usage tracking.
 
 ## What You'll Learn
 
@@ -12,7 +12,7 @@ For machine-to-machine clients, the boilerplate ships **API keys** with per-key 
 
 ## Why Sessions, Not JWT
 
-The original boilerplate used JWT with refresh tokens and a token blacklist. We replaced that with sessions because:
+The original project used JWT with refresh tokens and a token blacklist. We replaced that with sessions because:
 
 - **Logout is trivial.** Delete the session row, done. No blacklist to maintain.
 - **Rotating credentials is trivial.** Update the session record. No need to wait for tokens to expire.
@@ -24,7 +24,7 @@ If you specifically need stateless tokens (e.g. for inter-service auth where you
 
 ### Need JWT for mobile or native apps?
 
-Cookies and CSRF are awkward for mobile apps, native clients, and CLIs. crudauth handles this with a **bearer (JWT) transport** that runs *alongside* sessions — the boilerplate just doesn't enable it by default. Both transports resolve to the same `Principal`, so your route protection (`CurrentUserDep`, `get_current_user`, etc.) doesn't change; only how the client authenticates does.
+Cookies and CSRF are awkward for mobile apps, native clients, and CLIs. crudauth handles this with a **bearer (JWT) transport** that runs *alongside* sessions — the project just doesn't enable it by default. Both transports resolve to the same `Principal`, so your route protection (`CurrentUserDep`, `get_current_user`, etc.) doesn't change; only how the client authenticates does.
 
 To turn it on, add a `BearerTransport` to the `transports` list in `infrastructure/auth/setup.py` and mount crudauth's bearer router (which adds `POST /token` to log in and `POST /refresh` to mint a new access token):
 
@@ -52,11 +52,11 @@ app.include_router(auth.bearer_router, prefix="/api/v1/auth")
 
 Mobile clients typically want `refresh="body"` so the refresh token comes back in the JSON response (to store themselves) rather than as a cookie. Clients then send the access token as `Authorization: Bearer <token>`. When both a session cookie and a bearer token are present, the **first transport in the list wins**.
 
-For the full walkthrough — token lifecycle, refresh strategies, scopes, and running session + bearer together — see crudauth's [Bearer tokens](https://benavlabs.github.io/crudauth/guides/auth/bearer/) and [Multiple transports](https://benavlabs.github.io/crudauth/guides/auth/multiple-transports/) guides.
+For the full walkthrough — token lifecycle, refresh strategies, scopes, and running session + bearer together — see crudauth's [Bearer tokens](https://job-tracker.github.io/crudauth/guides/auth/bearer/) and [Multiple transports](https://job-tracker.github.io/crudauth/guides/auth/multiple-transports/) guides.
 
 ## Authentication Mechanisms
 
-The boilerplate supports three auth pathways. They coexist; you pick the right one per endpoint.
+The project supports three auth pathways. They coexist; you pick the right one per endpoint.
 
 ### 1. Sessions (Browser Clients)
 

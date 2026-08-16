@@ -1,26 +1,26 @@
-# Contributing to FastAPI-boilerplate
+# Contributing to job-tracker
 
-Thank you for your interest in contributing to FastAPI-boilerplate! This guide is meant to make it easy for you to get started.
+Thank you for your interest in contributing to job-tracker! This guide is meant to make it easy for you to get started.
 Contributions are appreciated, even if just reporting bugs, documenting stuff or answering questions. To contribute with a feature:
 
 ## Setting Up Your Development Environment
 
 ### Cloning the Repository
 
-Start by forking and cloning the FastAPI-boilerplate repository:
+Start by forking and cloning the job-tracker repository:
 
-1. **Fork the Repository**: Begin by forking the project repository. You can do this by visiting https://github.com/igormagalhaesr/FastAPI-boilerplate and clicking the "Fork" button.
+1. **Fork the Repository**: Begin by forking the project repository. You can do this by visiting https://github.com/igormagalhaesr/job-tracker and clicking the "Fork" button.
 1. **Create a Feature Branch**: Once you've forked the repo, create a branch for your feature by running `git checkout -b feature/fooBar`.
 1. **Testing Changes**: Ensure that your changes do not break existing functionality by running tests. In the root folder, execute `uv run pytest` to run the tests.
 
 ### Using uv for Dependency Management
 
-FastAPI-boilerplate uses uv for managing dependencies. If you don't have uv installed, follow the instructions on the [official uv website](https://docs.astral.sh/uv/).
+job-tracker uses uv for managing dependencies. If you don't have uv installed, follow the instructions on the [official uv website](https://docs.astral.sh/uv/).
 
 Once uv is installed, navigate to the cloned repository and install the dependencies:
 
 ```sh
-cd FastAPI-boilerplate
+cd job-tracker
 uv sync
 ```
 
@@ -47,7 +47,7 @@ uv run python your_script.py
 
 ### Testing with Pytest
 
-FastAPI-boilerplate uses pytest for testing. Run tests using:
+job-tracker uses pytest for testing. Run tests using:
 
 ```sh
 uv run pytest
@@ -108,4 +108,4 @@ After making your changes:
 
 Please adhere to our [Code of Conduct](CODE_OF_CONDUCT.md) to maintain a welcoming and inclusive environment.
 
-Thank you for contributing to FastAPI-boilerplate🚀
+Thank you for contributing to job-tracker🚀

@@ -1,6 +1,6 @@
 # Client Cache
 
-Client-side caching uses HTTP `Cache-Control` headers to tell browsers (and intermediate CDNs / proxies) when they're allowed to reuse a response without coming back to the server. The boilerplate ships a small middleware that sets sensible defaults — an explicit "don't cache" for the API, and a configurable `max-age` for everything else.
+Client-side caching uses HTTP `Cache-Control` headers to tell browsers (and intermediate CDNs / proxies) when they're allowed to reuse a response without coming back to the server. The project ships a small middleware that sets sensible defaults — an explicit "don't cache" for the API, and a configurable `max-age` for everything else.
 
 ## What's Built In
 
@@ -145,7 +145,7 @@ If you need different behavior at the edge (longer CDN TTL but short browser TTL
 CLIENT_CACHE_ENABLED=false
 ```
 
-After restart, no `Cache-Control` header is set by the boilerplate. Your routes and proxy take full control. This is the right move when:
+After restart, no `Cache-Control` header is set by the project. Your routes and proxy take full control. This is the right move when:
 
 - You have a reverse proxy / CDN already managing cache headers
 - You're doing per-route caching strategies that would be undone by the middleware

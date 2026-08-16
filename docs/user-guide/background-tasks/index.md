@@ -1,9 +1,9 @@
 # Background Tasks
 
-The boilerplate runs background work with [Taskiq](https://taskiq-python.github.io/) — an async-native task queue with a Celery-like API and pluggable brokers. By default it runs against Redis, with RabbitMQ available as an alternative.
+The project runs background work with [Taskiq](https://taskiq-python.github.io/) — an async-native task queue with a Celery-like API and pluggable brokers. By default it runs against Redis, with RabbitMQ available as an alternative.
 
 !!! tip "Building a full SaaS?"
-    Background tasks are part of the free foundation. **[FastroAI](https://fastro.ai)** bundles them with Stripe payments, entitlements, transactional email, a frontend, and AI agents - all wired together and production-ready. [Ship your SaaS faster →](https://fastro.ai)
+    Background tasks are part of the free foundation. **[job-tracker](https://job-tracker.ai)** bundles them with Stripe payments, entitlements, transactional email, a frontend, and AI agents - all wired together and production-ready. [Ship your SaaS faster →](https://job-tracker.ai)
 
 This page covers the actual setup that ships in `backend/src/infrastructure/taskiq/`, how to write and enqueue tasks, and how to run a worker.
 
@@ -30,7 +30,7 @@ backend/src/infrastructure/taskiq/
 └── worker.py          Worker entry point: `default_broker`
 ```
 
-Importantly: **no example task ships in the boilerplate.** The infrastructure is wired up; the modules are yours to add. `register_task` and `task_registry` are available for your own bookkeeping but are optional.
+Importantly: **no example task ships in the project.** The infrastructure is wired up; the modules are yours to add. `register_task` and `task_registry` are available for your own bookkeeping but are optional.
 
 ## Configuration
 
@@ -67,7 +67,7 @@ If you pick `TASKIQ_BROKER_TYPE=rabbitmq`, install the optional broker:
 uv add taskiq-aio-pika
 ```
 
-The boilerplate already ships it as a dependency, but the `aio_pika` import is gated to keep Redis-only deployments lean.
+The project already ships it as a dependency, but the `aio_pika` import is gated to keep Redis-only deployments lean.
 
 ## Writing a Task
 
@@ -97,7 +97,7 @@ async def rebuild_widget_index(
 A few things worth knowing:
 
 - **`task_name`** is optional but recommended. If you don't pass one, Taskiq uses `module.function_name` — fine for hobbyist setups, but a refactor that moves the function will silently break consumers. Pin a stable name.
-- **`DBSession`** is the boilerplate's `Annotated[AsyncSession, TaskiqDepends(get_db_session)]`. Each task gets its own session backed by a `NullPool` engine — connections aren't shared with the API process and are closed at the end of the task.
+- **`DBSession`** is the project's `Annotated[AsyncSession, TaskiqDepends(get_db_session)]`. Each task gets its own session backed by a `NullPool` engine — connections aren't shared with the API process and are closed at the end of the task.
 - **Return values** can be retrieved via the result backend (Redis, by default). If you don't need the result, don't await it.
 - **Logging** flows through your standard logger — there's no separate Taskiq logger to configure.
 
@@ -149,7 +149,7 @@ This holds the API request open until the worker finishes. **Don't do this for s
 
 ### Scheduled & Delayed Tasks
 
-Taskiq supports labels and a separate scheduler library (`taskiq-redis`'s scheduler source, `taskiq.scheduler.TaskiqScheduler`). The boilerplate doesn't ship a scheduler wired up — if you need cron-like scheduling, add `taskiq[scheduler]` to your worker setup. For one-off delays:
+Taskiq supports labels and a separate scheduler library (`taskiq-redis`'s scheduler source, `taskiq.scheduler.TaskiqScheduler`). The project doesn't ship a scheduler wired up — if you need cron-like scheduling, add `taskiq[scheduler]` to your worker setup. For one-off delays:
 
 ```python
 await rebuild_widget_index.kicker().with_labels(delay=60).kiq(owner_id=owner_id)
@@ -186,7 +186,7 @@ Helpful in development. Don't run with `--reload` in production.
 
 ## Worker Lifecycle Hooks
 
-The boilerplate already wires Taskiq's `WORKER_STARTUP` and `WORKER_SHUTDOWN` events for logging in `infrastructure/taskiq/app.py`:
+The project already wires Taskiq's `WORKER_STARTUP` and `WORKER_SHUTDOWN` events for logging in `infrastructure/taskiq/app.py`:
 
 ```python
 broker.add_event_handler(TaskiqEvents.WORKER_STARTUP, startup_taskiq_worker)
@@ -302,7 +302,7 @@ The user is created synchronously; the email goes out from a worker. If the emai
 
 ### "Worker can't import my task module"
 
-The worker imports the broker by module path. With the boilerplate's install layout (`[tool.setuptools.packages.find] where = ["src"]`), `infrastructure`, `modules`, etc. are top-level packages once you've run `uv sync` — so `infrastructure.taskiq.worker:default_broker` resolves cleanly. If you skipped install and are running from source, ensure `backend/src` is on `PYTHONPATH`.
+The worker imports the broker by module path. With the project's install layout (`[tool.setuptools.packages.find] where = ["src"]`), `infrastructure`, `modules`, etc. are top-level packages once you've run `uv sync` — so `infrastructure.taskiq.worker:default_broker` resolves cleanly. If you skipped install and are running from source, ensure `backend/src` is on `PYTHONPATH`.
 
 ### "Database connection errors in tasks"
 

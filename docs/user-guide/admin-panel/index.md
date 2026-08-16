@@ -1,9 +1,9 @@
 # Admin Panel
 
-The boilerplate ships a built-in admin panel powered by [SQLAdmin](https://github.com/smithyhq/sqladmin). It gives you a web interface for browsing and editing the database without writing custom CRUD endpoints.
+The project ships a built-in admin panel powered by [SQLAdmin](https://github.com/smithyhq/sqladmin). It gives you a web interface for browsing and editing the database without writing custom CRUD endpoints.
 
 !!! tip "Building a full SaaS?"
-    The admin panel is part of the free foundation. **[FastroAI](https://fastro.ai)** bundles it with Stripe payments, entitlements, transactional email, a frontend, and AI agents - all wired together and production-ready. [Ship your SaaS faster →](https://fastro.ai)
+    The admin panel is part of the free foundation. **[job-tracker](https://job-tracker.ai)** bundles it with Stripe payments, entitlements, transactional email, a frontend, and AI agents - all wired together and production-ready. [Ship your SaaS faster →](https://job-tracker.ai)
 
 ## Accessing the Admin Panel
 
@@ -31,7 +31,7 @@ Visit <http://localhost:8000/admin>, enter those credentials, and you're in.
 
 ## What's Included
 
-The boilerplate registers two model views out of the box (in `src/interfaces/admin/views/`):
+The project registers two model views out of the box (in `src/interfaces/admin/views/`):
 
 | View | Source | Notes |
 |------|--------|-------|
