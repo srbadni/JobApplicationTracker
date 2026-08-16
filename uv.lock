@@ -10,9 +10,9 @@ resolution-markers = [
 
 [manifest]
 members = [
-    "fastapi-boilerplate",
-    "fastapi-boilerplate-cli",
-    "fastapi-boilerplate-workspace",
+    "job-tracker",
+    "job-tracker-cli",
+    "job-tracker-workspace",
 ]
 
 [[package]]
@@ -645,7 +645,7 @@ standard = [
 ]
 
 [[package]]
-name = "fastapi-boilerplate"
+name = "job-tracker"
 version = "0.19.0"
 source = { editable = "backend" }
 dependencies = [
@@ -717,24 +717,24 @@ requires-dist = [
 provides-extras = ["dev"]
 
 [[package]]
-name = "fastapi-boilerplate-cli"
+name = "job-tracker-cli"
 version = "0.1.0"
 source = { editable = "cli" }
 dependencies = [
-    { name = "fastapi-boilerplate" },
+    { name = "job-tracker" },
     { name = "jinja2" },
     { name = "typer" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "fastapi-boilerplate", editable = "backend" },
+    { name = "job-tracker", editable = "backend" },
     { name = "jinja2", specifier = ">=3.1" },
     { name = "typer", specifier = ">=0.12" },
 ]
 
 [[package]]
-name = "fastapi-boilerplate-workspace"
+name = "job-tracker-workspace"
 version = "0"
 source = { virtual = "." }
 

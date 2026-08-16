@@ -1,11 +1,11 @@
-"""``bp env`` — inspect and prepare the runtime environment.
+"""``job-tracker env`` — inspect and prepare the runtime environment.
 
 Two commands today:
 
-- ``bp env gen-secret`` prints a 64-char hex string suitable for
+- ``job-tracker env gen-secret`` prints a 64-char hex string suitable for
   ``SECRET_KEY``. No filesystem I/O — pipe it into your secrets manager.
 
-- ``bp env validate`` runs the production security validator against
+- ``job-tracker env validate`` runs the production security validator against
   the current settings, regardless of the configured environment, and
   prints critical errors and warnings.
 """

@@ -1,7 +1,7 @@
-"""``bp deploy`` — generate deployment artifacts.
+"""``job-tracker deploy`` — generate deployment artifacts.
 
 Today this is just a wrapper around the in-tree ``deploy`` feature.
-Other deploy-adjacent commands (``bp deploy nginx-tls``, ``bp deploy
+Other deploy-adjacent commands (``job-tracker deploy nginx-tls``, ``job-tracker deploy
 github-actions``) can mount here as siblings.
 """
 

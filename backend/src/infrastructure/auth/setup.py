@@ -8,7 +8,7 @@ connections via ``auth.initialize()`` / ``auth.shutdown()`` (see ``app_factory``
 Wires a single session transport (sessions + CSRF + escalating login lockout)
 over the configured session backend, plus a shared Redis rate limiter for the
 lockout counters. Email recovery and sudo are intentionally not configured -
-the boilerplate has no email pipeline, and no route gates on sudo.
+the project has no email pipeline, and no route gates on sudo.
 """
 
 from crudauth import CookieConfig, CRUDAuth, SessionTransport

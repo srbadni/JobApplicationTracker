@@ -1,6 +1,6 @@
 """Locate the user's project on disk and read context from it.
 
-The CLI is shipped inside ``backend/src/cli`` of the boilerplate, but
+The CLI is shipped inside ``backend/src/cli`` of the project, but
 when invoked it operates on whichever directory the user is in. These
 helpers resolve the repo root, the backend directory, and read values
 from the project's ``.env`` files without importing the application.

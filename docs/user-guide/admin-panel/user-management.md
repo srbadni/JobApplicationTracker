@@ -1,6 +1,6 @@
 # Admin User Management
 
-Admin authentication in this boilerplate is intentionally simple: a single admin user defined by environment variables, gated by `SECRET_KEY`-encrypted Starlette sessions. There's no admin user table, no multi-operator flow out of the box.
+Admin authentication in this project is intentionally simple: a single admin user defined by environment variables, gated by `SECRET_KEY`-encrypted Starlette sessions. There's no admin user table, no multi-operator flow out of the box.
 
 This page covers the trade-offs, hardening options, and what to do if you need something more sophisticated.
 
@@ -42,7 +42,7 @@ The same `ADMIN_*` env vars are also read by `scripts/setup_initial_data.py` to 
 
 ## Two Separate User Systems
 
-The boilerplate maintains two completely separate concepts of "user". Don't confuse them.
+The project maintains two completely separate concepts of "user". Don't confuse them.
 
 | | Admin login | Application users |
 |---|---|---|
@@ -139,13 +139,13 @@ Build a small model (`AdminUser` with `username`, `hashed_password`, `is_active`
 
 For larger orgs, mount the admin behind an SSO proxy (Authelia, Pomerium, AWS ALB with Cognito). The admin app trusts the proxy's authentication header and grants access on its presence.
 
-None of these are wired up in the boilerplate — pick the one that fits your environment and implement it. The SQLAdmin docs cover [Authentication](https://github.com/smithyhq/sqladmin) extensions in detail.
+None of these are wired up in the project — pick the one that fits your environment and implement it. The SQLAdmin docs cover [Authentication](https://github.com/smithyhq/sqladmin) extensions in detail.
 
 ## Auditing Admin Activity
 
 The admin panel doesn't log every action by default. If you need an audit trail:
 
-- The boilerplate's logging infrastructure (`infrastructure/logging/`) gives you correlation IDs out of the box. SQLAdmin requests pass through it like any other.
+- The project's logging infrastructure (`infrastructure/logging/`) gives you correlation IDs out of the box. SQLAdmin requests pass through it like any other.
 - Override `on_model_change` / `after_model_change` / `delete_model` in your views to log explicitly:
 
 ```python

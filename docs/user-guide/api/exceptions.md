@@ -1,6 +1,6 @@
 # API Exception Handling
 
-The boilerplate has a deliberate two-layer exception model:
+The project has a deliberate two-layer exception model:
 
 1. **Domain exceptions** raised by services (`modules/common/exceptions.py`)
 2. **HTTP exceptions** raised by routes (`infrastructure/auth/http_exceptions.py`)

@@ -1,11 +1,11 @@
 [project]
-site_name = "Fastro · FastAPI Boilerplate"
+site_name = "job-tracker · job-tracker"
 site_description = "Production-ready FastAPI starter with sessions, OAuth, SQLAdmin, Taskiq, Redis caching, and a plugin-aware CLI."
-site_url = "https://benavlabs.github.io/FastAPI-boilerplate"
+site_url = "https://job-tracker.github.io/job-tracker"
 docs_dir = "docs"
 site_dir = "site"
 
-copyright = "&copy; 2026 Benav Labs"
+copyright = "&copy; 2026 job-tracker team"
 
 extra_css = ["stylesheets/extra.css"]
 
@@ -16,8 +16,8 @@ extra_css = ["stylesheets/extra.css"]
 [project.theme]
 variant = "modern"
 
-logo = "assets/FastAPI-boilerplate.png"
-favicon = "assets/FastAPI-boilerplate.png"
+logo = "assets/job-tracker.png"
+favicon = "assets/job-tracker.png"
 
 font.text = "Ubuntu"
 font.code = "JetBrains Mono"
@@ -57,8 +57,8 @@ toggle.name = "Switch to light mode"
 
 [[project.extra.social]]
 icon = "fontawesome/brands/github"
-link = "https://github.com/benavlabs/fastapi-boilerplate"
-name = "FastAPI boilerplate on GitHub"
+link = "https://github.com/job-tracker/job-tracker"
+name = "job-tracker on GitHub"
 
 [[project.extra.social]]
 icon = "fontawesome/brands/python"
@@ -71,9 +71,6 @@ name = "FastAPI on PyPI"
 
 [[project.nav]]
 "Home" = "index.md"
-
-[[project.nav]]
-"Fastro vs FastroAI" = "fastro-vs-fastroai.md"
 
 [[project.nav]]
 "Getting Started" = [

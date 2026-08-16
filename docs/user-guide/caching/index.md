@@ -1,9 +1,9 @@
 # Caching
 
-The boilerplate ships a flexible caching system supporting **Redis or Memcached** server-side, plus configurable client-side cache headers. Same decorator and provider API regardless of the backend.
+The project ships a flexible caching system supporting **Redis or Memcached** server-side, plus configurable client-side cache headers. Same decorator and provider API regardless of the backend.
 
 !!! tip "Building a full SaaS?"
-    Caching is part of the free foundation. **[FastroAI](https://fastro.ai)** bundles it with Stripe payments, entitlements, transactional email, a frontend, and AI agents - all wired together and production-ready. [Ship your SaaS faster →](https://fastro.ai)
+    Caching is part of the free foundation. **[job-tracker](https://job-tracker.ai)** bundles it with Stripe payments, entitlements, transactional email, a frontend, and AI agents - all wired together and production-ready. [Ship your SaaS faster →](https://job-tracker.ai)
 
 ## Overview
 
@@ -110,7 +110,7 @@ Both backends work with the decorator and provider. They have different strength
 
 **Pick Memcached** if you have an existing Memcached deployment or you specifically want simpler key/value semantics.
 
-The boilerplate's defaults run Redis everywhere because it doubles as the session and rate-limit backend.
+The project's defaults run Redis everywhere because it doubles as the session and rate-limit backend.
 
 ## Graceful Degradation
 

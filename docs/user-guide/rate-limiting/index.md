@@ -1,9 +1,9 @@
 # Rate Limiting
 
-The boilerplate ships a flexible rate limiter that supports per-tier, per-path limits with Redis or Memcached backends. This page covers how the pieces fit together, how to enable enforcement on your routes, and the gotchas to know upfront.
+The project ships a flexible rate limiter that supports per-tier, per-path limits with Redis or Memcached backends. This page covers how the pieces fit together, how to enable enforcement on your routes, and the gotchas to know upfront.
 
 !!! tip "Building a full SaaS?"
-    Rate limiting is part of the free foundation. **[FastroAI](https://fastro.ai)** bundles it with Stripe payments, entitlements, transactional email, a frontend, and AI agents - all wired together and production-ready. [Ship your SaaS faster →](https://fastro.ai)
+    Rate limiting is part of the free foundation. **[job-tracker](https://job-tracker.ai)** bundles it with Stripe payments, entitlements, transactional email, a frontend, and AI agents - all wired together and production-ready. [Ship your SaaS faster →](https://job-tracker.ai)
 
 ## What's Built In
 
@@ -64,7 +64,7 @@ router = APIRouter(dependencies=[Depends(check_rate_limit)])
 That's all that's required — provided the rate limiter is enabled (`RATE_LIMITER_ENABLED=true`), every request to that route is checked.
 
 !!! warning "Currently no built-in route uses `check_rate_limit`"
-    The boilerplate's shipped routes (`/api/v1/users`, `/api/v1/auth`, `/api/v1/tiers`, `/api/v1/rate-limits`, `/api/v1/api-keys`) do **not** apply `check_rate_limit` by default. You add the dependency where you want enforcement. The middleware will still attach `X-RateLimit-*` headers, but only when something has populated `request.state.rate_limit_headers` — which only happens after `check_rate_limit` has run.
+    The project's shipped routes (`/api/v1/users`, `/api/v1/auth`, `/api/v1/tiers`, `/api/v1/rate-limits`, `/api/v1/api-keys`) do **not** apply `check_rate_limit` by default. You add the dependency where you want enforcement. The middleware will still attach `X-RateLimit-*` headers, but only when something has populated `request.state.rate_limit_headers` — which only happens after `check_rate_limit` has run.
 
 ## Configuration
 

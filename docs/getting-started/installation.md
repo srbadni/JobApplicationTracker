@@ -1,6 +1,6 @@
 # Installation Guide
 
-This guide covers different ways to install the FastAPI Boilerplate depending on your needs.
+This guide covers different ways to install the job-tracker depending on your needs.
 
 ## System Requirements
 
@@ -23,8 +23,8 @@ Docker Compose handles every service for you (Postgres + Redis + the app).
 1. **Clone the repository**:
 
     ```bash
-    git clone https://github.com/benavlabs/fastapi-boilerplate
-    cd fastapi-boilerplate/backend
+    git clone https://github.com/job-tracker/job-tracker
+    cd job-tracker/backend
     ```
 
 2. **Set up the environment file**:
@@ -105,11 +105,11 @@ For development on your host machine. You provide PostgreSQL and Redis yourself.
 1. **Clone the repository**:
 
     ```bash
-    git clone https://github.com/benavlabs/fastapi-boilerplate
-    cd fastapi-boilerplate
+    git clone https://github.com/job-tracker/job-tracker
+    cd job-tracker
     ```
 
-    The repo is a [uv workspace](https://docs.astral.sh/uv/concepts/projects/workspaces/) — the deployable application lives in `backend/` and the developer CLI (`bp`) lives in `cli/`. Both share a single virtual environment at the repo root.
+    The repo is a [uv workspace](https://docs.astral.sh/uv/concepts/projects/workspaces/) — the deployable application lives in `backend/` and the developer CLI (`job-tracker`) lives in `cli/`. Both share a single virtual environment at the repo root.
 
 2. **Install Python dependencies**:
 
@@ -124,14 +124,14 @@ For development on your host machine. You provide PostgreSQL and Redis yourself.
     ```bash
     cp backend/.env.example backend/.env
     # Edit backend/.env: point POSTGRES_SERVER and CACHE_REDIS_HOST at localhost,
-    # set a strong SECRET_KEY (or run `uv run bp env gen-secret`), etc.
+    # set a strong SECRET_KEY (or run `uv run job-tracker env gen-secret`), etc.
     ```
 
     The CLI ships a few helpers for this step — see [CLI → Commands](../cli/commands.md):
 
     ```bash
-    uv run bp env gen-secret      # print a fresh SECRET_KEY
-    uv run bp env validate        # audit the .env against the production validator
+    uv run job-tracker env gen-secret      # print a fresh SECRET_KEY
+    uv run job-tracker env validate        # audit the .env against the production validator
     ```
 
 4. **Set up PostgreSQL** (if not already configured):
@@ -171,7 +171,7 @@ For development on your host machine. You provide PostgreSQL and Redis yourself.
 
 ## Method 3: Development Setup
 
-For contributors and anyone modifying the boilerplate itself.
+For contributors and anyone modifying the project itself.
 
 ### Steps
 
@@ -179,8 +179,8 @@ For contributors and anyone modifying the boilerplate itself.
 
     ```bash
     # Fork on GitHub first
-    git clone https://github.com/yourusername/fastapi-boilerplate
-    cd fastapi-boilerplate
+    git clone https://github.com/yourusername/job-tracker
+    cd job-tracker
     ```
 
 2. **Install dev dependencies**:
@@ -307,5 +307,5 @@ docker compose up
 
 ## Need Help?
 
-- Check the [GitHub Issues](https://github.com/benavlabs/fastapi-boilerplate/issues) for known problems
-- Open a [new issue](https://github.com/benavlabs/fastapi-boilerplate/issues/new) with details
+- Check the [GitHub Issues](https://github.com/job-tracker/job-tracker/issues) for known problems
+- Open a [new issue](https://github.com/job-tracker/job-tracker/issues/new) with details

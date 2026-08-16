@@ -1,6 +1,6 @@
 # Adding Models to the Admin
 
-Adding your own models to the admin is straightforward, but there's one quirk to know upfront: the boilerplate's models use SQLAlchemy's `MappedAsDataclass`, which requires a special mixin to play nicely with SQLAdmin.
+Adding your own models to the admin is straightforward, but there's one quirk to know upfront: the project's models use SQLAlchemy's `MappedAsDataclass`, which requires a special mixin to play nicely with SQLAdmin.
 
 For the full range of options, see the [SQLAdmin documentation](https://github.com/smithyhq/sqladmin).
 
@@ -8,7 +8,7 @@ For the full range of options, see the [SQLAdmin documentation](https://github.c
 
 SQLAdmin's default insert flow creates an empty model instance, then sets attributes one by one. That breaks dataclass models with required fields that have no defaults.
 
-The boilerplate solves this with `DataclassModelMixin` (`backend/src/interfaces/admin/mixins.py`) — it constructs the model with all the form data at once.
+The project solves this with `DataclassModelMixin` (`backend/src/interfaces/admin/mixins.py`) — it constructs the model with all the form data at once.
 
 ```python
 from ..mixins import DataclassModelMixin
@@ -96,7 +96,7 @@ column_labels = {
 }
 ```
 
-The boilerplate's `UserAdmin` uses `column_labels` to render `hashed_password` as just "Password" — the actual hashing happens in `on_model_change`.
+The project's `UserAdmin` uses `column_labels` to render `hashed_password` as just "Password" — the actual hashing happens in `on_model_change`.
 
 ### Search and Sort
 
@@ -119,7 +119,7 @@ You can also write the list explicitly if you want a different order or to inclu
 
 ## Foreign Keys and Relationships
 
-The boilerplate's models use a **dual pattern**: foreign-key columns for database operations and relationships for SQLAdmin display.
+The project's models use a **dual pattern**: foreign-key columns for database operations and relationships for SQLAdmin display.
 
 ### The Model Pattern
 
@@ -168,7 +168,7 @@ class WidgetAdmin(DataclassModelMixin, ModelView, model=Widget):
     column_list = [Widget.id, Widget.name, Widget.owner, Widget.created_at]
 ```
 
-The boilerplate's `UserAdmin` does this for tier:
+The project's `UserAdmin` does this for tier:
 
 ```python
 column_list = [User.id, User.name, User.username, User.email, User.is_superuser, User.tier]
@@ -186,7 +186,7 @@ form_create_rules = [*WidgetCreate.model_fields.keys(), "owner_id"]
 
 ### `lazy="selectin"` Is Required
 
-SQLAdmin runs in async context, so relationships must use `lazy="selectin"` to avoid lazy-loading errors. Symptom of forgetting: `MissingGreenlet` or `greenlet_spawn has not been called`. Both User and Tier models in the boilerplate already use this pattern.
+SQLAdmin runs in async context, so relationships must use `lazy="selectin"` to avoid lazy-loading errors. Symptom of forgetting: `MissingGreenlet` or `greenlet_spawn has not been called`. Both User and Tier models in the project already use this pattern.
 
 ### Don't Set `default=None` on Relationships
 
@@ -249,7 +249,7 @@ async def after_model_change(
 
 ### `delete_model` — Custom Delete Behavior
 
-Override when delete needs to do more than `DELETE FROM`. The boilerplate's `TierAdmin` uses this to call the tier service's `permanent_delete`, which validates that no users or rate limits still reference the tier:
+Override when delete needs to do more than `DELETE FROM`. The project's `TierAdmin` uses this to call the tier service's `permanent_delete`, which validates that no users or rate limits still reference the tier:
 
 ```python
 async def delete_model(self, request: Request, pk: str) -> None:
@@ -302,7 +302,7 @@ class WidgetAdmin(DataclassModelMixin, ModelView, model=Widget):
 Notes:
 
 - Selected IDs come from `request.query_params["pks"]` as a comma-separated string
-- `local_session()` is the boilerplate's session-maker — import it from `infrastructure/database/session.py`
+- `local_session()` is the project's session-maker — import it from `infrastructure/database/session.py`
 - Always commit before redirecting, otherwise the change reverts when the request ends
 
 ## Icons
@@ -326,7 +326,7 @@ class WidgetAdmin(...):
     category = "Inventory"
 ```
 
-Views with the same category appear under the same sidebar header. The boilerplate's existing views use `"Users & Access"`.
+Views with the same category appear under the same sidebar header. The project's existing views use `"Users & Access"`.
 
 ## Soft Delete vs Hard Delete
 
@@ -343,7 +343,7 @@ Most of the time you actually want a hard delete here (the admin is editing the 
 
 ## Real Examples in the Codebase
 
-The boilerplate ships two admin views — read them as reference implementations:
+The project ships two admin views — read them as reference implementations:
 
 | File | What it shows |
 |------|---------------|

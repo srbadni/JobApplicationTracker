@@ -1,6 +1,6 @@
 # Production Deployment
 
-This page is the production hardening checklist for a FastAPI-boilerplate deployment. It covers the boilerplate's built-in production validators, env-var hygiene, the multi-stage Dockerfile that ships, and the operational decisions you'll make once.
+This page is the production hardening checklist for a job-tracker deployment. It covers the project's built-in production validators, env-var hygiene, the multi-stage Dockerfile that ships, and the operational decisions you'll make once.
 
 ## The Production Validator
 
@@ -126,7 +126,7 @@ Never reuse the dev key. Never commit prod keys. Pull from a secrets manager (AW
 
 ## The Production Dockerfile
 
-The boilerplate ships a multi-stage `backend/Dockerfile`:
+The project ships a multi-stage `backend/Dockerfile`:
 
 | Stage              | Purpose                                          |
 |--------------------|--------------------------------------------------|
@@ -221,7 +221,7 @@ For zero-downtime deploys, do schema changes in two phases — see [Database →
 
 ## TLS, Reverse Proxy, and CORS
 
-The boilerplate doesn't terminate TLS — that's your reverse proxy's job (Nginx, Caddy, ALB, Cloud Run's built-in TLS, etc.). Common deployment shapes:
+The project doesn't terminate TLS — that's your reverse proxy's job (Nginx, Caddy, ALB, Cloud Run's built-in TLS, etc.). Common deployment shapes:
 
 ```text
 [Client] → HTTPS → [Reverse Proxy] → HTTP → [API container]
@@ -248,18 +248,18 @@ LOG_LEVEL=INFO
 LOG_FORMAT=json
 ```
 
-The boilerplate's logger (`infrastructure/logging/`) attaches a correlation ID per request — it appears in every log line for that request, including downstream Taskiq tasks if you propagate it. Useful for tying together "user X reported error Y" with the actual server-side trace.
+The project's logger (`infrastructure/logging/`) attaches a correlation ID per request — it appears in every log line for that request, including downstream Taskiq tasks if you propagate it. Useful for tying together "user X reported error Y" with the actual server-side trace.
 
 For lower-noise production logs:
 
 - `LOG_LEVEL=INFO` is the right default. `WARNING` skips request logs, which makes incident debugging harder.
 - Sample low-information lines (health-check polls, etc.) at the proxy or aggregator, not in the app.
 
-For OpenTelemetry / APM integration, hook into the FastAPI app at startup — there's no built-in hook in the boilerplate.
+For OpenTelemetry / APM integration, hook into the FastAPI app at startup — there's no built-in hook in the project.
 
 ## Health and Readiness
 
-The boilerplate ships a `GET /api/v1/health` endpoint. Use it as your liveness probe:
+The project ships a `GET /api/v1/health` endpoint. Use it as your liveness probe:
 
 ```yaml
 # Kubernetes / Docker probe
@@ -315,7 +315,7 @@ If you're stuck on `SESSION_BACKEND=memory`, you can't horizontally scale safely
 
 Watch `database_pool_size × api_workers + worker_concurrency × taskiq_workers` against your Postgres `max_connections`. Common pitfall: 4 API workers × 10 pool size = 40 connections per API replica, easy to blow past 100 connection cap with two replicas + Taskiq.
 
-Use a connection pooler (PgBouncer, RDS Proxy) at scale. The boilerplate's `DATABASE_URL` accepts a pooler endpoint identically.
+Use a connection pooler (PgBouncer, RDS Proxy) at scale. The project's `DATABASE_URL` accepts a pooler endpoint identically.
 
 Managed Postgres works the same way — point `DATABASE_URL` at the provider and leave the rest of the config alone. [Neon](database/neon.md) (serverless, scale-to-zero, database branching for preview environments) is the setup we document end to end, including the TLS parameter, pooled vs. direct endpoints, and pool tuning for a compute that suspends when idle.
 
@@ -368,4 +368,4 @@ The worker process isn't running, isn't pointed at the same Redis, or hasn't imp
 - **[Configuration → Environment-Specific](configuration/environment-specific.md)** — per-environment env-var matrix
 - **[Database → Migrations](database/migrations.md)** — zero-downtime schema-change patterns
 - **[Authentication → Sessions](authentication/sessions.md)** — production session configuration
-- **[Testing](testing.md)** — the test setup that ships with the boilerplate
+- **[Testing](testing.md)** — the test setup that ships with the project

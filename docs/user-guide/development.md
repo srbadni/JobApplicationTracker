@@ -1,6 +1,6 @@
 # Development Guide
 
-This page covers the day-to-day development loop: running the app, the tools that ship with it, how to add a new module, and what to know about debugging the boilerplate's moving parts.
+This page covers the day-to-day development loop: running the app, the tools that ship with it, how to add a new module, and what to know about debugging the project's moving parts.
 
 For end-to-end "how do I add an entity," see:
 
@@ -88,7 +88,7 @@ pre-commit run --all-files
 
 ## Adding a New Module
 
-The boilerplate organizes domain code under `backend/src/modules/<name>/` with a vertical-slice layout. To add a `widgets` module:
+The project organizes domain code under `backend/src/modules/<name>/` with a vertical-slice layout. To add a `widgets` module:
 
 ```text
 backend/src/modules/widgets/
@@ -155,7 +155,7 @@ Register in `infrastructure/app_factory.py` (or your overridden `create_applicat
 application.add_middleware(TimingMiddleware)
 ```
 
-Order matters — middleware added later runs **earlier** in the request path. The boilerplate's own middlewares (`SecurityHeadersMiddleware`, `ClientCacheMiddleware`, `RateLimiterMiddleware`, `SessionMiddleware`, etc.) are added in a deliberate order; see `app_factory.py:create_application`.
+Order matters — middleware added later runs **earlier** in the request path. The project's own middlewares (`SecurityHeadersMiddleware`, `ClientCacheMiddleware`, `RateLimiterMiddleware`, `SessionMiddleware`, etc.) are added in a deliberate order; see `app_factory.py:create_application`.
 
 ## Adding a Custom Dependency
 
@@ -235,7 +235,7 @@ Each subsystem uses a different Redis DB number; see `.env.example` for the conv
 
 ### Watch sessions live
 
-Session storage is managed by the `crudauth` library, so there's no boilerplate `SessionManager` to call. If a user reports being logged out unexpectedly, inspect the session store directly in Redis:
+Session storage is managed by the `crudauth` library, so there's no project `SessionManager` to call. If a user reports being logged out unexpectedly, inspect the session store directly in Redis:
 
 ```bash
 redis-cli
@@ -366,11 +366,11 @@ Removing a subsystem entirely (deleting the code) is rare and usually wrong — 
 
 ### "Auto-import" gotchas
 
-The boilerplate uses `import_models("src.modules")` in Alembic to discover models. **The discovery walks `modules/<name>/models.py` only.** If you put models in `modules/<name>/sub/inner.py`, autogenerate won't find them. Either keep models in `models.py` or hand-import the file.
+The project uses `import_models("src.modules")` in Alembic to discover models. **The discovery walks `modules/<name>/models.py` only.** If you put models in `modules/<name>/sub/inner.py`, autogenerate won't find them. Either keep models in `models.py` or hand-import the file.
 
 ### Forgetting `lazy="selectin"` on a relationship
 
-SQLAdmin runs in async context. A relationship without `lazy="selectin"` raises `MissingGreenlet` when the admin tries to render it. Both `User.tier` and other relationships in the boilerplate already use this pattern — copy from those.
+SQLAdmin runs in async context. A relationship without `lazy="selectin"` raises `MissingGreenlet` when the admin tries to render it. Both `User.tier` and other relationships in the project already use this pattern — copy from those.
 
 ### Dataclass models without `init=False` on relationships
 

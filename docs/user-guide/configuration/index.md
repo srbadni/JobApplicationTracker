@@ -1,6 +1,6 @@
 # Configuration
 
-Learn how to configure your FastAPI Boilerplate application for different environments. Configuration is driven by environment variables and validated by Python settings classes.
+Learn how to configure your job-tracker application for different environments. Configuration is driven by environment variables and validated by Python settings classes.
 
 ## What You'll Learn
 
@@ -223,7 +223,7 @@ To run a Taskiq worker, add a worker service to your Compose file with the comma
 
 ### Feature Toggles
 
-The boilerplate already exposes toggles like `CACHE_ENABLED`, `RATE_LIMITER_ENABLED`, `TASKIQ_ENABLED`, `ADMIN_ENABLED`, and `CSRF_ENABLED`. You can add your own in a settings class:
+The project already exposes toggles like `CACHE_ENABLED`, `RATE_LIMITER_ENABLED`, `TASKIQ_ENABLED`, `ADMIN_ENABLED`, and `CSRF_ENABLED`. You can add your own in a settings class:
 
 ```python
 class FeatureSettings(BaseSettings):
@@ -280,4 +280,4 @@ python -c "import secrets; print(secrets.token_urlsafe(64))"
 3. **[Docker Setup](docker-setup.md)** - Compose files and overrides
 4. **[Environment-Specific](environment-specific.md)** - Per-environment best practices
 
-The boilerplate ships with sensible defaults — only override what you need.
+The project ships with sensible defaults — only override what you need.

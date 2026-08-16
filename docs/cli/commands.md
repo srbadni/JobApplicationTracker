@@ -1,17 +1,17 @@
 # Commands
 
-Complete reference for the in-tree `bp` commands. Plugin commands have their own help text — see [Plugins](plugins.md).
+Complete reference for the in-tree `job-tracker` commands. Plugin commands have their own help text — see [Plugins](plugins.md).
 
-## `bp deploy`
+## `job-tracker deploy`
 
 Generate deployment artifacts. Today's only sub-command is `generate`.
 
-### `bp deploy generate <mode>`
+### `job-tracker deploy generate <mode>`
 
 Render `docker-compose.yml` (and `nginx/default.conf` for `nginx` mode) for the chosen deployment shape.
 
 ```text
-Usage: bp deploy generate [OPTIONS] MODE
+Usage: job-tracker deploy generate [OPTIONS] MODE
 
 Arguments:
   MODE                          {local|prod|nginx}  [required]
@@ -39,16 +39,16 @@ All modes target the same multi-stage `backend/Dockerfile` — no per-mode Docke
 
 ```bash
 # Generate the dev stack at the repo root
-uv run bp deploy generate local
+uv run job-tracker deploy generate local
 
 # Override workers and port
-uv run bp deploy generate prod --workers 8 --api-port 9000
+uv run job-tracker deploy generate prod --workers 8 --api-port 9000
 
 # Dry run — print what would be written, don't touch disk
-uv run bp deploy generate nginx --output-dir /tmp/scratch --dry-run
+uv run job-tracker deploy generate nginx --output-dir /tmp/scratch --dry-run
 
 # Generate into a separate directory (for staging configs in CI, etc.)
-uv run bp deploy generate prod --output-dir ./deploy/prod --yes
+uv run job-tracker deploy generate prod --output-dir ./deploy/prod --yes
 ```
 
 #### What it writes
@@ -74,45 +74,45 @@ All three modes use the same service names and networking:
 
 The compose file references `./backend/.env` for env vars. Make sure that file exists (`cp backend/.env.example backend/.env`) before `docker compose up`.
 
-## `bp env`
+## `job-tracker env`
 
 Inspect and prepare the runtime environment. Two sub-commands today.
 
-### `bp env gen-secret`
+### `job-tracker env gen-secret`
 
 Generate a high-entropy hex secret suitable for `SECRET_KEY`.
 
 ```text
-Usage: bp env gen-secret [OPTIONS]
+Usage: job-tracker env gen-secret [OPTIONS]
 
 Options:
   --bytes INTEGER RANGE [16 ≤ x ≤ 128]   Number of random bytes (hex output is 2x). [default: 32]
 ```
 
 ```bash
-$ uv run bp env gen-secret
+$ uv run job-tracker env gen-secret
 af97045f600bf988041ec4b6fd891763d8f79f01f0a0a4a7ed2022e57f771a9e
 
-$ uv run bp env gen-secret --bytes 16
+$ uv run job-tracker env gen-secret --bytes 16
 c042a8aa0d678a9c73dc371e3e0d6a5e
 ```
 
-The default produces 64 hex characters (256 bits of entropy) — enough for any of the boilerplate's secret slots (`SECRET_KEY`, signed-cookie secrets, etc.). Pipe directly into your secrets manager:
+The default produces 64 hex characters (256 bits of entropy) — enough for any of the project's secret slots (`SECRET_KEY`, signed-cookie secrets, etc.). Pipe directly into your secrets manager:
 
 ```bash
-uv run bp env gen-secret | gh secret set SECRET_KEY --repo my-org/my-app
+uv run job-tracker env gen-secret | gh secret set SECRET_KEY --repo my-org/my-app
 ```
 
-### `bp env validate`
+### `job-tracker env validate`
 
 Run the production security validator against your current settings, regardless of `ENVIRONMENT`.
 
 ```text
-Usage: bp env validate
+Usage: job-tracker env validate
 ```
 
 ```bash
-$ uv run bp env validate
+$ uv run job-tracker env validate
 Critical (2):
   • SECRET_KEY is using default or insecure value. ...
   • Database is using default credentials (POSTGRES_PASSWORD='postgres'). ...
@@ -135,7 +135,7 @@ Useful in CI to gate deployments:
 
 ```yaml
 # .github/workflows/deploy.yml (excerpt)
-- run: uv run bp env validate
+- run: uv run job-tracker env validate
   env:
     SECRET_KEY: ${{ secrets.SECRET_KEY }}
     POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
@@ -167,11 +167,11 @@ Typer-provided options work on any sub-command:
 Every command has `--help`:
 
 ```bash
-uv run bp --help
-uv run bp deploy --help
-uv run bp deploy generate --help
-uv run bp env --help
-uv run bp env validate --help
+uv run job-tracker --help
+uv run job-tracker deploy --help
+uv run job-tracker deploy generate --help
+uv run job-tracker env --help
+uv run job-tracker env validate --help
 ```
 
-The root `bp --help` lists every mounted command group, including those contributed by plugins. If a plugin you installed isn't showing up, see [Plugins → Troubleshooting](plugins.md#troubleshooting).
+The root `job-tracker --help` lists every mounted command group, including those contributed by plugins. If a plugin you installed isn't showing up, see [Plugins → Troubleshooting](plugins.md#troubleshooting).

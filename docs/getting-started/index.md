@@ -1,6 +1,6 @@
 # Getting Started
 
-Welcome to the FastAPI Boilerplate! This guide will have you up and running in just a few minutes.
+Welcome to the job-tracker! This guide will have you up and running in just a few minutes.
 
 ## Quick Start (5 minutes)
 
@@ -15,7 +15,7 @@ Pick whichever workflow fits you:
 
     ### 1. Get the Template
 
-    1. Click **"Use this template"** on the [GitHub repository](https://github.com/benavlabs/fastapi-boilerplate)
+    1. Click **"Use this template"** on the [GitHub repository](https://github.com/job-tracker/job-tracker)
     2. Create a new repository with your project name
     3. Clone your new repository and `cd` into the backend:
 
@@ -165,7 +165,7 @@ curl http://localhost:8000/api/v1/users/me -b cookies.txt
 ## Need Help?
 
 - Join our **[Discord Community](../community.md)** - Get help from other developers
-- Report issues on **[GitHub](https://github.com/benavlabs/fastapi-boilerplate/issues)**
+- Report issues on **[GitHub](https://github.com/job-tracker/job-tracker/issues)**
 
 ---
 

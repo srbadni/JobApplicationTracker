@@ -1,10 +1,10 @@
 # Permissions and Authorization
 
-Authentication answers "who are you?". Authorization answers "what can you do?". This page covers the boilerplate's authorization patterns: superuser flags, resource ownership, tier-based limits, and API key permissions.
+Authentication answers "who are you?". Authorization answers "what can you do?". This page covers the project's authorization patterns: superuser flags, resource ownership, tier-based limits, and API key permissions.
 
 ## Authorization Patterns
 
-The boilerplate ships four overlapping mechanisms. Pick the one(s) that fit your use case.
+The project ships four overlapping mechanisms. Pick the one(s) that fit your use case.
 
 | Pattern | Where it lives | When to use |
 |---------|----------------|-------------|
@@ -137,7 +137,7 @@ Three rules to follow:
 
 ## Tier-Based Authorization
 
-Every user has a `tier_id` foreign key to the `Tier` model. The boilerplate ships **bare tiers** — just `name` and `description`, no built-in feature mapping or pricing logic. You decide what tiers mean.
+Every user has a `tier_id` foreign key to the `Tier` model. The project ships **bare tiers** — just `name` and `description`, no built-in feature mapping or pricing logic. You decide what tiers mean.
 
 ### Reading the User's Tier
 
@@ -164,7 +164,7 @@ async def export_data(self, current_user: dict[str, Any], db: AsyncSession) -> b
     # ...generate export...
 ```
 
-This works for "binary" features. For more complex models (per-feature quotas, multiple add-ons), consider building an entitlements system on top — that's outside the scope of the boilerplate.
+This works for "binary" features. For more complex models (per-feature quotas, multiple add-ons), consider building an entitlements system on top — that's outside the scope of the project.
 
 ### Tier-Based Rate Limits
 
@@ -259,7 +259,7 @@ The service translates the dict into `KeyPermission` rows.
 
 ### Checking Permissions in a Route
 
-When a request comes in via API key, you can guard endpoints by required `(resource, action)`. The boilerplate doesn't ship a built-in `require_permission(...)` decorator — the API key flow is left flexible so you can wire it however suits your app:
+When a request comes in via API key, you can guard endpoints by required `(resource, action)`. The project doesn't ship a built-in `require_permission(...)` decorator — the API key flow is left flexible so you can wire it however suits your app:
 
 ```python
 async def require_key_permission(
@@ -376,7 +376,7 @@ The built-in tier rate-limiter middleware is enforced before your route runs. Do
 
 ### Audit superuser actions
 
-Superuser endpoints touch sensitive data. Log the actor + action server-side — the boilerplate's logging infrastructure (with `correlation_id` + `support_id`) makes this straightforward. See [Logging](../../user-guide/configuration/index.md) for the setup.
+Superuser endpoints touch sensitive data. Log the actor + action server-side — the project's logging infrastructure (with `correlation_id` + `support_id`) makes this straightforward. See [Logging](../../user-guide/configuration/index.md) for the setup.
 
 ## Next Steps
 

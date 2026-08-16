@@ -1,10 +1,10 @@
 # API Endpoints
 
-This guide shows the patterns the boilerplate uses for endpoints, so adding new ones stays consistent with the existing modules.
+This guide shows the patterns the project uses for endpoints, so adding new ones stays consistent with the existing modules.
 
 ## Dependency Injection
 
-This boilerplate supports two equivalent ways to inject FastAPI dependencies — you'll see both in the codebase, and either is correct.
+This project supports two equivalent ways to inject FastAPI dependencies — you'll see both in the codebase, and either is correct.
 
 ### Traditional style (explicit `Depends()`)
 
@@ -35,7 +35,7 @@ async def list_items(
     ...
 ```
 
-The boilerplate pre-defines aliases for every shared dependency in `infrastructure/dependencies.py`:
+The project pre-defines aliases for every shared dependency in `infrastructure/dependencies.py`:
 
 | Alias | Resolves to |
 |---|---|
@@ -283,7 +283,7 @@ async def hard_delete_widget(
     return {"message": "Widget permanently deleted"}
 ```
 
-The leading underscore on the dependency-only parameter is the convention used across the boilerplate.
+The leading underscore on the dependency-only parameter is the convention used across the project.
 
 ### API Key Authentication
 
@@ -332,7 +332,7 @@ async def list_widgets(
 
 ## Error Handling
 
-The boilerplate uses two layers of exceptions:
+The project uses two layers of exceptions:
 
 ### Domain exceptions (services)
 
@@ -418,7 +418,7 @@ async def upload_avatar(
     return {"message": "Avatar uploaded successfully"}
 ```
 
-The boilerplate doesn't ship a default storage backend; pick one (local disk, S3, GCS) and add it as a settings group when you need it.
+The project doesn't ship a default storage backend; pick one (local disk, S3, GCS) and add it as a settings group when you need it.
 
 ## Adding a New Endpoint Module
 

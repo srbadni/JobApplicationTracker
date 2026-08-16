@@ -3,10 +3,10 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fastapi-boilerplate"
+name = "job-tracker"
 version = "0.19.0"
 description = "Modular FastAPI starter — vertical slices, swappable infrastructure, plugin-ready."
-authors = [{ name = "Benav Labs", email = "contact@benav.io" }]
+authors = [{ name = "job-tracker team" }]
 license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.11"
