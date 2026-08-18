@@ -1,18 +1,27 @@
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from ..common.schemas import PersistentDeletion, TimestampSchema
 
 
 class UserBase(BaseModel):
     name: Annotated[str, Field(min_length=2, max_length=30, examples=["User Userson"])]
-    username: Annotated[
-        str,
-        Field(min_length=2, max_length=20, pattern=r"^[a-z0-9]+$", examples=["userson"]),
-    ]
     email: Annotated[EmailStr, Field(examples=["user.userson@example.com"])]
+    phone_number: Annotated[str, Field(pattern=r"^09\d{9}$", examples=["09123456789"])]
+
+    @field_validator("phone_number", mode="before")
+    @classmethod
+    def normalize_iranian_phone_number(cls, value: object) -> object:
+        """Accept common Iranian mobile formats and persist the local 09 form."""
+        if isinstance(value, str):
+            value = value.strip().replace(" ", "").replace("-", "")
+            if value.startswith("+98"):
+                value = "0" + value[3:]
+            elif value.startswith("0098"):
+                value = "0" + value[4:]
+        return value
 
 
 class User(TimestampSchema, UserBase, PersistentDeletion):
@@ -42,11 +51,9 @@ class UserRead(BaseModel):
 
     id: int
     name: Annotated[str, Field(min_length=2, max_length=30, examples=["User Userson"])]
-    username: Annotated[
-        str,
-        Field(min_length=2, max_length=20, pattern=r"^[a-z0-9]+$", examples=["userson"]),
-    ]
     email: Annotated[EmailStr, Field(examples=["user.userson@example.com"])]
+    phone_number: str | None
+    user_type: str
     profile_image_url: str
     is_deleted: bool = False
     tier_id: int | None
@@ -84,6 +91,7 @@ class UserCreateInternal(UserBase):
     """Internal schema for user creation with hashed password."""
 
     hashed_password: str
+    user_type: Literal["applicant", "employer"] = "applicant"
     google_id: str | None = None
     github_id: str | None = None
     oauth_provider: str | None = None
@@ -101,17 +109,8 @@ class UserUpdate(BaseModel):
         str | None,
         Field(min_length=2, max_length=30, examples=["User Userberg"], default=None),
     ]
-    username: Annotated[
-        str | None,
-        Field(
-            min_length=2,
-            max_length=20,
-            pattern=r"^[a-z0-9]+$",
-            examples=["userberg"],
-            default=None,
-        ),
-    ]
     email: Annotated[EmailStr | None, Field(examples=["user.userberg@example.com"], default=None)]
+    phone_number: Annotated[str | None, Field(pattern=r"^09\d{9}$", default=None)]
     profile_image_url: Annotated[
         str | None,
         Field(
@@ -158,7 +157,7 @@ class UserAnonymize(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str
-    username: str
+    phone_number: str
     hashed_password: str | None = None
     profile_image_url: str | None = None
     tier_id: int | None = None

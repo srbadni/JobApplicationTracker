@@ -59,7 +59,7 @@ async def login(
     session_id, csrf_token = await crud_auth.sessions.create_session(
         request,
         user_id=crud_auth.repo.user_id(user),
-        metadata={"login_type": "password", "username": crud_auth.repo.get(user, "username")},
+        metadata={"login_type": "password", "email": crud_auth.repo.get(user, "email")},
     )
     crud_auth.sessions.set_session_cookies(response, session_id, csrf_token)
 
@@ -248,7 +248,7 @@ async def oauth_google_callback(
 
         user, is_new_user = await oauth_account_service.get_or_create_user(user_info, db)
         user_id = crud_auth.repo.user_id(user)
-        username = crud_auth.repo.get(user, "username")
+        email = crud_auth.repo.get(user, "email")
 
         session_id, csrf_token = await crud_auth.sessions.create_session(
             request,
@@ -256,7 +256,7 @@ async def oauth_google_callback(
             metadata={
                 "login_type": "oauth",
                 "oauth_provider": OAuthProvider.GOOGLE.value,
-                "username": username,
+                "email": email,
                 "is_new_user": is_new_user,
             },
         )
@@ -269,8 +269,7 @@ async def oauth_google_callback(
                 "success": True,
                 "user": {
                     "id": user_id,
-                    "username": username,
-                    "email": crud_auth.repo.get(user, "email"),
+                    "email": email,
                     "is_new_user": is_new_user,
                 },
                 "csrf_token": csrf_token,
@@ -324,7 +323,6 @@ async def check_auth(
             "authenticated": True,
             "user": {
                 "id": user["id"],
-                "username": user["username"],
                 "email": user["email"],
                 "oauth_provider": user.get("oauth_provider"),
             },

@@ -1,4 +1,3 @@
-from datetime import UTC, datetime
 from typing import Any, cast
 
 from crudauth import get_password_hash
@@ -43,28 +42,28 @@ class UserService:
     async def create(self, user: UserCreate, db: AsyncSession) -> dict[str, Any]:
         """Create a new user account.
 
-        Creates a new user with unique email and username validation. Automatically
+        Creates a new user with unique email and phone-number validation. Automatically
         hashes the password and stores user credentials securely.
 
         Args:
-            user: User creation data including email, username, and password.
+            user: User creation data including email, phone number, and password.
             db: Database session for the operation.
 
         Returns:
             The created user data dictionary.
 
         Raises:
-            UserExistsError: If email or username already exists.
+            UserExistsError: If the email or phone number already exists.
 
         Note:
             Passwords are automatically hashed using secure password hashing.
-            Both email and username must be unique across the system.
+            Both email and phone number must be unique across the system.
 
         Example:
             ```python
             user_data = UserCreate(
                 email="user@example.com",
-                username="johndoe",
+                phone_number="09123456789",
                 password="securepassword123"
             )
             created_user = await service.create(user_data, db)
@@ -74,11 +73,12 @@ class UserService:
         if email_exists:
             raise UserExistsError("Email already registered")
 
-        username_exists = await crud_users.exists(db=db, username=user.username)
-        if username_exists:
-            raise UserExistsError("Username already taken")
+        phone_exists = await crud_users.exists(db=db, phone_number=user.phone_number)
+        if phone_exists:
+            raise UserExistsError("Phone number already registered")
 
         user_internal_dict = user.model_dump()
+        user_internal_dict["user_type"] = "applicant"
         user_internal_dict["hashed_password"] = get_password_hash(password=user_internal_dict["password"])
         del user_internal_dict["password"]
 
@@ -113,7 +113,7 @@ class UserService:
             ```python
             users = await service.get_paginated(skip=0, limit=20, db=db)
             for user in users["data"]:
-                print(f"User: {user['username']} - {user['email']}")
+                print(f"User: {user['name']} - {user['email']}")
             ```
         """
         if db is None:
@@ -127,75 +127,13 @@ class UserService:
             is_deleted=False,
         )
 
-    async def get_by_username(self, username: str, db: AsyncSession) -> dict[str, Any]:
-        """Retrieve a user by username.
-
-        Finds a user by their unique username, excluding soft-deleted accounts.
-
-        Args:
-            username: Username to search for.
-            db: Database session for the operation.
-
-        Returns:
-            User data dictionary if found.
-
-        Raises:
-            UserNotFoundError: If no user exists with the given username.
-
-        Note:
-            Only returns non-deleted users. Usernames are unique identifiers
-            commonly used for authentication and user references.
-
-        Example:
-            ```python
-            user = await service.get_by_username("johndoe", db)
-            print(f"User email: {user['email']}")
-            ```
-        """
-        user = await crud_users.get(
-            db=db,
-            schema_to_select=UserRead,
-            username=username,
-            is_deleted=False,
-        )
-        if not user:
-            raise UserNotFoundError(f"User with username '{username}' not found")
-        return user
-
-    async def get_active_and_inactive_by_username(self, username: str, db: AsyncSession) -> dict[str, Any]:
-        """Retrieve a user by username.
-
-        Finds a user by their username, including soft-deleted accounts.
-
-        Args:
-            username: Username to search for.
-            db: Database session for the operation.
-
-        Returns:
-            User data dictionary if found.
-
-        Note:
-            Usernames are unique identifiers commonly used for authentication and user references.
-
-        Example:
-            ```python
-            user = await service.get_active_and_inactive_by_username("johndoe", db)
-            print(f"User email: {user['email']}")
-            ```
-        """
-        user = await crud_users.get(db=db, schema_to_select=UserRead, username=username)
-        if not user:
-            raise UserNotFoundError(f"User with username '{username}' not found")
-        return user
-
     async def get_by_email(self, email: str, db: AsyncSession) -> dict[str, Any]:
-        """Retrieve a user by email address.
+        """Retrieve a user by email.
 
-        Finds a user by their unique email address, excluding soft-deleted accounts.
-        Returns the user model instance for authentication purposes.
+        Finds a user by their unique email, excluding soft-deleted accounts.
 
         Args:
-            email: Email address to search for.
+            email: Email to search for.
             db: Database session for the operation.
 
         Returns:
@@ -205,13 +143,13 @@ class UserService:
             UserNotFoundError: If no user exists with the given email.
 
         Note:
-            Only returns non-deleted users. Email addresses are unique identifiers
-            primarily used for authentication and account recovery.
+            Only returns non-deleted users. Emails are unique identifiers
+            commonly used for authentication and user references.
 
         Example:
             ```python
-            user = await service.get_by_email("user@example.com", db)
-            print(f"User ID: {user['id']}")
+            user = await service.get_by_email("john@example.com", db)
+            print(f"User email: {user['email']}")
             ```
         """
         user = await crud_users.get(
@@ -224,11 +162,37 @@ class UserService:
             raise UserNotFoundError(f"User with email '{email}' not found")
         return user
 
+    async def get_active_and_inactive_by_email(self, email: str, db: AsyncSession) -> dict[str, Any]:
+        """Retrieve a user by email.
+
+        Finds a user by their email, including soft-deleted accounts.
+
+        Args:
+            email: Email to search for.
+            db: Database session for the operation.
+
+        Returns:
+            User data dictionary if found.
+
+        Note:
+            Emails are unique identifiers commonly used for authentication and user references.
+
+        Example:
+            ```python
+            user = await service.get_active_and_inactive_by_email("johndoe", db)
+            print(f"User email: {user['email']}")
+            ```
+        """
+        user = await crud_users.get(db=db, schema_to_select=UserRead, email=email)
+        if not user:
+            raise UserNotFoundError(f"User with email '{email}' not found")
+        return user
+
     async def update(self, user_id: int, user_update: UserUpdate, db: AsyncSession) -> dict[str, Any]:
         """Update user information.
 
         Updates user fields with validation for unique constraints on email
-        and username. Only provided fields are updated.
+        and email. Only provided fields are updated.
 
         Args:
             user_id: ID of the user to update.
@@ -240,10 +204,10 @@ class UserService:
 
         Raises:
             UserNotFoundError: If the user doesn't exist.
-            UserExistsError: If email or username conflicts with existing users.
+            UserExistsError: If email or email conflicts with existing users.
 
         Note:
-            Validates uniqueness when updating email or username.
+            Validates uniqueness when updating email or email.
             Only non-deleted users can be updated.
 
         Example:
@@ -266,10 +230,10 @@ class UserService:
             if email_exists:
                 raise UserExistsError("Email already registered")
 
-        if "username" in update_data and update_data["username"] != existing_user["username"]:
-            username_exists = await crud_users.exists(db=db, username=update_data["username"])
-            if username_exists:
-                raise UserExistsError("Username already taken")
+        if "phone_number" in update_data and update_data["phone_number"] != existing_user["phone_number"]:
+            phone_exists = await crud_users.exists(db=db, phone_number=update_data["phone_number"])
+            if phone_exists:
+                raise UserExistsError("Phone number already registered")
 
         updated_user = await crud_users.update(
             db=db, object=user_update, id=user_id, return_columns=list(UserSchema.model_fields.keys())
@@ -278,7 +242,7 @@ class UserService:
             raise UserNotFoundError(f"User with ID {user_id} not found")
         return updated_user
 
-    async def check_update_permission(self, requester_user: dict[str, Any], target_username: str) -> bool:
+    async def check_update_permission(self, requester_user: dict[str, Any], target_email: str) -> bool:
         """Check if user has permission to update another user.
 
         Determines if the requesting user has permission to update the target user.
@@ -286,7 +250,7 @@ class UserService:
 
         Args:
             requester_user: User data of the user making the request.
-            target_username: Username of the user to be updated.
+            target_email: Email of the user to be updated.
 
         Returns:
             True if the user has permission, False otherwise.
@@ -299,10 +263,10 @@ class UserService:
         if requester_user.get("is_superuser", False):
             return True
 
-        return requester_user.get("username") == target_username
+        return requester_user.get("email") == target_email
 
     async def verify_user_permission(
-        self, requester_user: dict[str, Any], target_username: str, action_description: str = "perform this action"
+        self, requester_user: dict[str, Any], target_email: str, action_description: str = "perform this action"
     ) -> None:
         """Verify user has permission to perform an action on another user.
 
@@ -311,7 +275,7 @@ class UserService:
 
         Args:
             requester_user: User data of the user making the request.
-            target_username: Username of the user to perform action on.
+            target_email: Email of the user to perform action on.
             action_description: Description of the action for error messages.
 
         Raises:
@@ -328,7 +292,7 @@ class UserService:
             )
             ```
         """
-        has_permission = await self.check_update_permission(requester_user, target_username)
+        has_permission = await self.check_update_permission(requester_user, target_email)
         if not has_permission:
             raise PermissionDeniedError(f"You don't have permission to {action_description} on this user")
 
@@ -421,8 +385,6 @@ class UserService:
             if not existing_user:
                 raise UserNotFoundError(f"User with ID {user_id} not found")
 
-            timestamp = int(datetime.now(UTC).timestamp())
-
             logger.info(
                 "User anonymization requested",
                 extra={
@@ -434,7 +396,7 @@ class UserService:
 
             anonymize_data = UserAnonymize(
                 name="[DELETED]",
-                username=f"del_{user_id}_{timestamp % 10000}",
+                phone_number=f"09{user_id:09d}"[-11:],
                 hashed_password="DELETED_INVALID_HASH",
                 profile_image_url="https://deleted.com/deleted.jpg",
                 tier_id=None,

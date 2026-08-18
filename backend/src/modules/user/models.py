@@ -30,12 +30,6 @@ class User(Base, TimestampMixin, SoftDeleteMixin):
         String(30),
     )
 
-    username: Mapped[str] = mapped_column(
-        String(20),
-        unique=True,
-        index=True,
-    )
-
     email: Mapped[str] = mapped_column(
         String(50),
         unique=True,
@@ -44,6 +38,14 @@ class User(Base, TimestampMixin, SoftDeleteMixin):
 
     hashed_password: Mapped[str] = mapped_column(
         String(100),
+    )
+
+    phone_number: Mapped[str | None] = mapped_column(
+        String(11),
+        unique=True,
+        index=True,
+        nullable=True,
+        default=None,
     )
 
     profile_image_url: Mapped[str] = mapped_column(

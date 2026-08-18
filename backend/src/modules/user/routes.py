@@ -31,7 +31,7 @@ router = APIRouter(tags=["Users"])
 
            This endpoint allows registration of new users with their basic information:
            - Full name
-           - Username (must be lowercase alphanumeric)
+           - Email (must be lowercase alphanumeric)
            - Email address
            - Password (with security requirements)
 
@@ -40,7 +40,7 @@ router = APIRouter(tags=["Users"])
     responses={
         201: {"description": "User account created successfully"},
         400: {"description": "Invalid user data"},
-        409: {"description": "Username or email already exists"},
+        409: {"description": "Email or email already exists"},
     },
     response_description="The created user profile with assigned ID",
 )
@@ -97,7 +97,7 @@ async def get_users(
             Retrieves the profile information of the currently authenticated user.
 
             This endpoint provides users with their own profile data including:
-            - Basic profile information (name, username, email)
+            - Basic profile information (name, email, email)
             - Profile image URL
             - Subscription tier information
             - Authentication details (superuser status, email verification)
@@ -116,31 +116,31 @@ async def get_current_user_profile(
 
 
 @router.get(
-    "/{username}",
+    "/{email}",
     response_model=UserRead,
-    summary="Get User Profile by Username",
+    summary="Get User Profile by Email",
     description="""
-            Retrieves a user's profile information by their unique username.
+            Retrieves a user's profile information by their unique email.
 
             This endpoint can be used to look up any active user in the system by their
-            username. It returns the same profile data structure as other user
+            email. It returns the same profile data structure as other user
             endpoints but does not include sensitive information.
 
-            Note that usernames are case-sensitive in lookup operations.
+            Note that emails are case-sensitive in lookup operations.
             """,
     responses={404: {"description": "User not found"}},
     response_description="The requested user's profile data",
 )
-async def get_user_by_username(
-    username: str,
+async def get_user_by_email(
+    email: str,
     db: AsyncSessionDep,
     user_service: UserServiceDep,
 ) -> dict[str, Any]:
-    """Get user profile by username."""
+    """Get user profile by email."""
     try:
-        user = await user_service.get_by_username(username, db)
+        user = await user_service.get_by_email(email, db)
         if user is None:
-            raise HTTPException(status_code=404, detail=f"User with username {username} not found")
+            raise HTTPException(status_code=404, detail=f"User with email {email} not found")
         return user
     except Exception as e:
         http_exception = handle_exception(e)
@@ -150,17 +150,17 @@ async def get_user_by_username(
 
 
 @router.get(
-    "/active-and-inactive/{username}",
+    "/active-and-inactive/{email}",
     response_model=UserRead,
-    summary="Get Active and Inactive User Profile by Username(Admin)",
+    summary="Get Active and Inactive User Profile by Email(Admin)",
     description="""
-            Retrieve a user's profile information by their unique username.
+            Retrieve a user's profile information by their unique email.
 
             This endpoint can be used to look up any user in the system by their
-            username. It returns the same profile data structure as other user
+            email. It returns the same profile data structure as other user
             endpoints but does not include sensitive information.
 
-            Note that usernames are case-sensitive in lookup operations.
+            Note that emails are case-sensitive in lookup operations.
             """,
     responses={
         401: {"description": "Not authenticated"},
@@ -169,17 +169,17 @@ async def get_user_by_username(
     },
     response_description="the requested user's profile data",
 )
-async def get_active_and_inactive_user_by_username(
-    username: str,
+async def get_active_and_inactive_user_by_email(
+    email: str,
     db: AsyncSessionDep,
     _: CurrentSuperUserDep,
     user_service: UserServiceDep,
 ) -> dict[str, Any]:
-    """Get active and inactive profile by username."""
+    """Get active and inactive profile by email."""
     try:
-        user = await user_service.get_active_and_inactive_by_username(username, db)
+        user = await user_service.get_active_and_inactive_by_email(email, db)
         if user is None:
-            raise HTTPException(status_code=404, detail=f"User with username {username} not found")
+            raise HTTPException(status_code=404, detail=f"User with email {email} not found")
         return user
     except Exception as e:
         http_exception = handle_exception(e)
@@ -189,7 +189,7 @@ async def get_active_and_inactive_user_by_username(
 
 
 @router.patch(
-    "/{username}",
+    "/{email}",
     summary="Update User Profile",
     description="""
             Updates a user's profile information.
@@ -201,21 +201,21 @@ async def get_active_and_inactive_user_by_username(
             Permission rules:
             - Regular users can only update their own profiles
             - Administrators can update any user's profile
-            - Note: Tier updates are handled by a separate endpoint (/users/{username}/tier)
+            - Note: Tier updates are handled by a separate endpoint (/users/{email}/tier)
 
-            Username and email changes are validated to ensure uniqueness.
+            Email and email changes are validated to ensure uniqueness.
             """,
     responses={
         200: {"description": "Profile updated successfully"},
         400: {"description": "Invalid profile data"},
         403: {"description": "Not authorized to update this profile"},
         404: {"description": "User not found"},
-        409: {"description": "Username or email already exists"},
+        409: {"description": "Email or email already exists"},
     },
     response_description="Success confirmation message",
 )
 async def update_user_profile(
-    username: str,
+    email: str,
     values: UserUpdate,
     current_user: CurrentUserDep,
     db: AsyncSessionDep,
@@ -223,10 +223,10 @@ async def update_user_profile(
 ) -> dict[str, str]:
     """Update user profile information."""
     try:
-        await user_service.verify_user_permission(current_user, username, "update profile")
-        user = await user_service.get_by_username(username, db)
+        await user_service.verify_user_permission(current_user, email, "update profile")
+        user = await user_service.get_by_email(email, db)
         if user is None:
-            raise HTTPException(status_code=404, detail=f"User with username {username} not found")
+            raise HTTPException(status_code=404, detail=f"User with email {email} not found")
 
         await user_service.update(user["id"], values, db)
         return {"message": "User updated successfully"}
@@ -238,7 +238,7 @@ async def update_user_profile(
 
 
 @router.delete(
-    "/{username}",
+    "/{email}",
     summary="Deactivate User Account",
     description="""
             Soft-deletes (deactivates) a user account.
@@ -262,18 +262,18 @@ async def update_user_profile(
     response_description="Success confirmation message",
 )
 async def delete_user_account(
-    username: str,
+    email: str,
     current_user: CurrentUserDep,
     db: AsyncSessionDep,
     user_service: UserServiceDep,
 ) -> dict[str, str]:
     """Soft delete a user account."""
     try:
-        user = await user_service.get_by_username(username, db)
+        user = await user_service.get_by_email(email, db)
         if user is None:
-            raise HTTPException(status_code=404, detail=f"User with username {username} not found")
+            raise HTTPException(status_code=404, detail=f"User with email {email} not found")
 
-        await user_service.verify_user_permission(current_user, username, "delete this account")
+        await user_service.verify_user_permission(current_user, email, "delete this account")
         await user_service.delete(user["id"], db)
         return {"message": "User account deactivated"}
     except Exception as e:
@@ -284,7 +284,7 @@ async def delete_user_account(
 
 
 @router.delete(
-    "/db/{username}",
+    "/db/{email}",
     summary="GDPR Delete User (Admin)",
     description="""
             GDPR/LGPD compliant user deletion with data anonymization.
@@ -319,16 +319,16 @@ async def delete_user_account(
     response_description="Success confirmation message",
 )
 async def gdpr_delete_user(
-    username: str,
+    email: str,
     db: AsyncSessionDep,
     user_service: UserServiceDep,
     _: CurrentSuperUserDep,
 ) -> dict[str, str]:
     """GDPR compliant user anonymization (admin only)."""
     try:
-        user = await user_service.get_active_and_inactive_by_username(username, db)
+        user = await user_service.get_active_and_inactive_by_email(email, db)
         if user is None:
-            raise HTTPException(status_code=404, detail=f"User with username {username} not found")
+            raise HTTPException(status_code=404, detail=f"User with email {email} not found")
         await user_service.anonymize_user(user["id"], db)
         return {"message": "User data anonymized in compliance with GDPR"}
     except Exception as e:
@@ -339,7 +339,7 @@ async def gdpr_delete_user(
 
 
 @router.get(
-    "/{username}/rate-limits",
+    "/{email}/rate-limits",
     summary="Get User Rate Limits",
     description="""
             Retrieves the rate limit configuration for a specific user.
@@ -363,17 +363,17 @@ async def gdpr_delete_user(
     response_description="Detailed rate limit configuration for the user",
 )
 async def get_user_rate_limits(
-    username: str,
+    email: str,
     db: AsyncSessionDep,
     current_user: CurrentUserDep,
     user_service: UserServiceDep,
 ) -> dict[str, Any]:
     """Get rate limits for a user."""
     try:
-        await user_service.verify_user_permission(current_user, username, "view rate limits")
-        user = await user_service.get_by_username(username, db)
+        await user_service.verify_user_permission(current_user, email, "view rate limits")
+        user = await user_service.get_by_email(email, db)
         if user is None:
-            raise HTTPException(status_code=404, detail=f"User with username {username} not found")
+            raise HTTPException(status_code=404, detail=f"User with email {email} not found")
         return await user_service.get_rate_limits(user["id"], db)
     except Exception as e:
         http_exception = handle_exception(e)
@@ -383,7 +383,7 @@ async def get_user_rate_limits(
 
 
 @router.get(
-    "/{username}/tier",
+    "/{email}/tier",
     summary="Get User Subscription Tier",
     description="""
             Retrieves detailed information about a user's subscription tier.
@@ -407,18 +407,18 @@ async def get_user_rate_limits(
     response_description="User profile with detailed tier information",
 )
 async def get_user_tier(
-    username: str,
+    email: str,
     db: AsyncSessionDep,
     current_user: CurrentUserDep,
     user_service: UserServiceDep,
 ) -> dict[str, Any]:
     """Get detailed tier information for a user."""
     try:
-        await user_service.verify_user_permission(current_user, username, "view tier information")
+        await user_service.verify_user_permission(current_user, email, "view tier information")
 
-        user = await user_service.get_by_username(username, db)
+        user = await user_service.get_by_email(email, db)
         if user is None:
-            raise HTTPException(status_code=404, detail=f"User with username {username} not found")
+            raise HTTPException(status_code=404, detail=f"User with email {email} not found")
         return await user_service.get_user_with_tier(user["id"], db)
     except Exception as e:
         http_exception = handle_exception(e)
@@ -428,7 +428,7 @@ async def get_user_tier(
 
 
 @router.patch(
-    "/{username}/tier",
+    "/{email}/tier",
     summary="Update User Subscription Tier (Admin)",
     description="""
             Changes a user's subscription tier.
@@ -451,7 +451,7 @@ async def get_user_tier(
     response_description="Success confirmation message",
 )
 async def update_user_tier(
-    username: str,
+    email: str,
     values: UserTierUpdate,
     db: AsyncSessionDep,
     user_service: UserServiceDep,
@@ -459,9 +459,9 @@ async def update_user_tier(
 ) -> dict[str, str]:
     """Update a user's subscription tier (admin only)."""
     try:
-        user = await user_service.get_by_username(username, db)
+        user = await user_service.get_by_email(email, db)
         if user is None:
-            raise HTTPException(status_code=404, detail=f"User with username {username} not found")
+            raise HTTPException(status_code=404, detail=f"User with email {email} not found")
         await user_service.update_tier(user["id"], values, db)
         return {"message": "User tier updated successfully"}
     except Exception as e:

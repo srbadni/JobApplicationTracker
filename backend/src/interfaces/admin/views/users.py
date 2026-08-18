@@ -25,10 +25,10 @@ class UserAdmin(DataclassModelMixin, ModelView, model=User):
     icon = "fa-solid fa-user"
     category = "Users & Access"
 
-    column_list = [User.id, User.name, User.username, User.email, User.is_superuser, User.tier]
+    column_list = [User.id, User.name, User.email, User.phone_number, User.is_superuser, User.tier]
     column_details_list = "__all__"
-    column_searchable_list = [User.name, User.username, User.email]
-    column_sortable_list = [User.id, User.name, User.username, User.email]
+    column_searchable_list = [User.name, User.email, User.phone_number]
+    column_sortable_list = [User.id, User.name, User.email]
     column_default_sort = [(User.id, True)]
 
     can_create = True
@@ -39,7 +39,7 @@ class UserAdmin(DataclassModelMixin, ModelView, model=User):
 
     column_labels = {"hashed_password": "Password"}
 
-    form_create_rules = ["name", "username", "email", "hashed_password", "tier_id", "is_superuser"]
+    form_create_rules = ["name", "email", "phone_number", "hashed_password", "tier_id", "is_superuser"]
     form_edit_rules = [*UserUpdate.model_fields.keys(), "tier_id", "is_superuser"]
 
     form_overrides = {"oauth_provider": SelectField}
@@ -56,7 +56,7 @@ class UserAdmin(DataclassModelMixin, ModelView, model=User):
         """Override delete to anonymize user instead of removing.
 
         GDPR/LGPD compliant deletion that:
-        - Anonymizes all PII (name, username, password, OAuth data)
+        - Anonymizes all PII (name, phone number, password, OAuth data)
         - Retains email and timestamps for legal compliance
         - Soft deletes the user (is_deleted = True)
         - Maintains foreign key relationships
