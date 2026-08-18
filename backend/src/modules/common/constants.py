@@ -38,7 +38,7 @@ EXCEPTION_MAPPING: dict[type[DomainError], Callable[[str], HTTPException]] = {
     PermissionDeniedError: lambda message: ForbiddenException(detail="You don't have permission for this action."),
     UserNotFoundError: lambda message: NotFoundException(detail="User not found."),
     UserExistsError: lambda message: DuplicateValueException(
-        detail=message or "A user with this email or username already exists."
+        detail=message or "A user with this email already exists."
     ),
     TierNotFoundError: lambda message: NotFoundException(detail="The requested tier was not found."),
     RateLimitNotFoundError: lambda message: NotFoundException(detail="Rate limit configuration not found."),

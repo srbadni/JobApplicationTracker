@@ -12,6 +12,7 @@ the project has no email pipeline, and no route gates on sudo.
 """
 
 from crudauth import CookieConfig, CRUDAuth, SessionTransport
+from crudauth.identity import IdentityConfig
 from crudauth.ratelimit import redis_rate_limiter
 
 from ...modules.user.models import User
@@ -28,6 +29,7 @@ auth = CRUDAuth(
     session=async_session,
     user_model=User,
     SECRET_KEY=settings.SECRET_KEY,
+    identity=IdentityConfig(login=["email"], recovery="email"),
     cookies=CookieConfig(secure=settings.SESSION_SECURE_COOKIES),
     transports=[
         SessionTransport(
