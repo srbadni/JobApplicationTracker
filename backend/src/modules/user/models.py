@@ -30,10 +30,8 @@ class User(Base, TimestampMixin, SoftDeleteMixin):
         String(30),
     )
 
-    username: Mapped[str] = mapped_column(
-        String(20),
-        unique=True,
-        index=True,
+    phone_number: Mapped[str] = mapped_column(
+        String(11),
     )
 
     email: Mapped[str] = mapped_column(

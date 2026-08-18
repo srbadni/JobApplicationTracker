@@ -8,9 +8,13 @@ from ..common.schemas import PersistentDeletion, TimestampSchema
 
 class UserBase(BaseModel):
     name: Annotated[str, Field(min_length=2, max_length=30, examples=["User Userson"])]
-    username: Annotated[
+    phone_number: Annotated[
         str,
-        Field(min_length=2, max_length=20, pattern=r"^[a-z0-9]+$", examples=["userson"]),
+        Field(
+            pattern=r"^09\d{9}$",
+            examples=["09123456789"],
+            description="Iranian mobile number in 09XXXXXXXXX format",
+        ),
     ]
     email: Annotated[EmailStr, Field(examples=["user.userson@example.com"])]
 
@@ -42,9 +46,13 @@ class UserRead(BaseModel):
 
     id: int
     name: Annotated[str, Field(min_length=2, max_length=30, examples=["User Userson"])]
-    username: Annotated[
+    phone_number: Annotated[
         str,
-        Field(min_length=2, max_length=20, pattern=r"^[a-z0-9]+$", examples=["userson"]),
+        Field(
+            pattern=r"^09\d{9}$",
+            examples=["09123456789"],
+            description="Iranian mobile number in 09XXXXXXXXX format",
+        ),
     ]
     email: Annotated[EmailStr, Field(examples=["user.userson@example.com"])]
     profile_image_url: str
@@ -101,15 +109,9 @@ class UserUpdate(BaseModel):
         str | None,
         Field(min_length=2, max_length=30, examples=["User Userberg"], default=None),
     ]
-    username: Annotated[
+    phone_number: Annotated[
         str | None,
-        Field(
-            min_length=2,
-            max_length=20,
-            pattern=r"^[a-z0-9]+$",
-            examples=["userberg"],
-            default=None,
-        ),
+        Field(pattern=r"^09\d{9}$", examples=["09123456789"], default=None),
     ]
     email: Annotated[EmailStr | None, Field(examples=["user.userberg@example.com"], default=None)]
     profile_image_url: Annotated[
@@ -158,7 +160,7 @@ class UserAnonymize(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str
-    username: str
+    phone_number: str
     hashed_password: str | None = None
     profile_image_url: str | None = None
     tier_id: int | None = None

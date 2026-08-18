@@ -38,7 +38,7 @@ class UserNotFoundError(ResourceNotFoundError):
 
 
 class UserExistsError(ResourceExistsError):
-    """Raised when attempting to create a user with an existing email or username."""
+    """Raised when attempting to create a user with an existing email."""
 
     pass
 
