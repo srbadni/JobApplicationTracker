@@ -8,11 +8,15 @@ from ..common.schemas import PersistentDeletion, TimestampSchema
 
 class UserBase(BaseModel):
     name: Annotated[str, Field(min_length=2, max_length=30, examples=["User Userson"])]
-    username: Annotated[
-        str,
-        Field(min_length=2, max_length=20, pattern=r"^[a-z0-9]+$", examples=["userson"]),
-    ]
     email: Annotated[EmailStr, Field(examples=["user.userson@example.com"])]
+    phone_number: Annotated[
+        str,
+        Field(
+            pattern=r"^(?:\+98|0098|98|0)9\d{9}$",
+            examples=["09123456789"],
+            description="Iranian mobile number (for example 09123456789 or +989123456789)",
+        ),
+    ]
 
 
 class User(TimestampSchema, UserBase, PersistentDeletion):
@@ -42,11 +46,8 @@ class UserRead(BaseModel):
 
     id: int
     name: Annotated[str, Field(min_length=2, max_length=30, examples=["User Userson"])]
-    username: Annotated[
-        str,
-        Field(min_length=2, max_length=20, pattern=r"^[a-z0-9]+$", examples=["userson"]),
-    ]
     email: Annotated[EmailStr, Field(examples=["user.userson@example.com"])]
+    phone_number: str
     profile_image_url: str
     is_deleted: bool = False
     tier_id: int | None
@@ -101,17 +102,11 @@ class UserUpdate(BaseModel):
         str | None,
         Field(min_length=2, max_length=30, examples=["User Userberg"], default=None),
     ]
-    username: Annotated[
-        str | None,
-        Field(
-            min_length=2,
-            max_length=20,
-            pattern=r"^[a-z0-9]+$",
-            examples=["userberg"],
-            default=None,
-        ),
-    ]
     email: Annotated[EmailStr | None, Field(examples=["user.userberg@example.com"], default=None)]
+    phone_number: Annotated[
+        str | None,
+        Field(pattern=r"^(?:\+98|0098|98|0)9\d{9}$", examples=["09123456789"], default=None),
+    ]
     profile_image_url: Annotated[
         str | None,
         Field(
@@ -158,7 +153,7 @@ class UserAnonymize(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str
-    username: str
+    phone_number: str
     hashed_password: str | None = None
     profile_image_url: str | None = None
     tier_id: int | None = None

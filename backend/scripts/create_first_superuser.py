@@ -25,21 +25,21 @@ async def create_first_superuser() -> None:
     This script uses environment variables for configuration:
     - ADMIN_NAME: The admin's full name
     - ADMIN_EMAIL: The admin's email address
-    - ADMIN_USERNAME: The admin's username
+    - ADMIN_PHONE_NUMBER: The admin's Iranian mobile number
     - ADMIN_PASSWORD: The admin's password
     """
     try:
         name = settings.ADMIN_NAME
         email = settings.ADMIN_EMAIL
-        username = settings.ADMIN_USERNAME
+        phone_number = settings.ADMIN_PHONE_NUMBER
         password = settings.ADMIN_PASSWORD
 
-        if not all([name, email, username, password]):
+        if not all([name, email, phone_number, password]):
             logger.error("Admin configuration is incomplete. Please check environment variables.")
             logger.info("Using default admin credentials for testing")
             name = "Admin User"
             email = "admin@example.com"
-            username = "admin"
+            phone_number = "09120000000"
             password = "adminpassword"
 
         async with local_session() as session:
@@ -53,12 +53,12 @@ async def create_first_superuser() -> None:
                     if not user_model["is_superuser"]:
                         user_model["is_superuser"] = True
                         await session.commit()
-                        logger.info(f"Updated user {username} to be a superuser")
+                        logger.info(f"Updated user {email} to be a superuser")
                     return
             except UserNotFoundError:
                 logger.info(f"No user found with email {email}, creating a new superuser")
 
-            user_data = UserCreate(name=name, email=email, username=username, password=password)
+            user_data = UserCreate(name=name, email=email, phone_number=phone_number, password=password)
 
             user = await user_service.create(user_data, session)
 
@@ -71,7 +71,7 @@ async def create_first_superuser() -> None:
             await session.execute(stmt)
             await session.commit()
 
-            logger.info(f"Superuser {username} created successfully with ID {user_id}")
+            logger.info(f"Superuser {email} created successfully with ID {user_id}")
 
     except Exception as e:
         logger.error(f"Error creating superuser: {e}")

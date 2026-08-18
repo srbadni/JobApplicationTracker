@@ -7,6 +7,8 @@ per-request state store, and the account-linking service here and drive them fro
 the route handlers in ``routes.py``.
 """
 
+import hashlib
+
 from crudauth.oauth import OAuthAccountService, OAuthProviderFactory
 from crudauth.storage import get_session_storage
 
@@ -41,5 +43,11 @@ oauth_state_storage = get_session_storage(
 
 oauth_account_service = OAuthAccountService(
     repo=auth.repo,
-    new_user_fields=lambda ctx: {"name": ctx.suggested_name},
+    # OAuth providers do not supply phone numbers. Give new OAuth accounts a
+    # deterministic valid placeholder; the profile flow must collect the real
+    # required number before phone-dependent features are used.
+    new_user_fields=lambda ctx: {
+        "name": ctx.suggested_name,
+        "phone_number": f"0900{int(hashlib.sha256(ctx.email.encode()).hexdigest()[:8], 16) % 10_000_000:07d}",
+    },
 )

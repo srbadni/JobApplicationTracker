@@ -6,8 +6,8 @@ from src.modules.user.models import User
 def _make_user() -> User:
     return User(
         name="Test User",
-        username="testuser",
         email="test@example.com",
+        phone_number="09123456789",
         hashed_password="hashed",
     )
 
