@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -40,6 +40,10 @@ class User(Base, TimestampMixin, SoftDeleteMixin):
     )
 
     is_superuser: Mapped[bool] = mapped_column(default=False)
+    user_type: Mapped[Literal["applicant", "employer"]] = mapped_column(
+        String(20),
+        default="applicant",
+    )
 
     google_id: Mapped[str | None] = mapped_column(String(50), unique=True, index=True, default=None)
     github_id: Mapped[str | None] = mapped_column(String(50), unique=True, index=True, default=None)
