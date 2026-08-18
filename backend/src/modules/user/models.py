@@ -1,11 +1,12 @@
 from datetime import datetime
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ...infrastructure.database.models import SoftDeleteMixin, TimestampMixin
 from ...infrastructure.database.session import Base
+from .enums import UserType
 
 if TYPE_CHECKING:
     from ..company_membership.model import CompanyMembership
@@ -16,6 +17,9 @@ class User(Base, TimestampMixin, SoftDeleteMixin):
     """User model representing application users."""
 
     __tablename__ = "user"
+    __table_args__ = (
+        CheckConstraint("user_type IN ('applicant', 'employer')", name="ck_user_user_type"),
+    )
 
     id: Mapped[int] = mapped_column(
         "id",
@@ -60,9 +64,10 @@ class User(Base, TimestampMixin, SoftDeleteMixin):
         default=False,
     )
 
-    user_type: Mapped[Literal["applicant", "employer"]] = mapped_column(
+    user_type: Mapped[str] = mapped_column(
         String(20),
-        default="applicant",
+        default=UserType.APPLICANT.value,
+        nullable=False,
     )
 
     google_id: Mapped[str | None] = mapped_column(
@@ -109,6 +114,7 @@ class User(Base, TimestampMixin, SoftDeleteMixin):
         "CompanyMembership",
         back_populates="user",
         init=False,
+        uselist=False,
     )
 
     @property
