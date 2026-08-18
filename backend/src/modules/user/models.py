@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, Literal
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ...infrastructure.database.models import SoftDeleteMixin, TimestampMixin
@@ -16,6 +16,7 @@ class User(Base, TimestampMixin, SoftDeleteMixin):
     """User model representing application users."""
 
     __tablename__ = "user"
+    __table_args__ = (CheckConstraint("user_type IN ('applicant', 'employer')", name="ck_user_user_type"),)
 
     id: Mapped[int] = mapped_column(
         "id",

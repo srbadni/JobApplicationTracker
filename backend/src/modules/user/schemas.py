@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
@@ -61,6 +61,7 @@ class UserRead(BaseModel):
     is_superuser: bool = False
     email_verified: bool = False
     oauth_provider: str | None = None
+    user_type: Literal["applicant", "employer"]
 
 
 class UserCreate(UserBase):
@@ -92,6 +93,7 @@ class UserCreateInternal(UserBase):
     """Internal schema for user creation with hashed password."""
 
     hashed_password: str
+    user_type: Literal["applicant", "employer"] = "applicant"
     google_id: str | None = None
     github_id: str | None = None
     oauth_provider: str | None = None

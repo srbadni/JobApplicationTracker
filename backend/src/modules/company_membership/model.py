@@ -24,14 +24,15 @@ class CompanyMembership(Base):
 
     user_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("user.id"),
+        ForeignKey("user.id", ondelete="CASCADE"),
         unique=True,
         nullable=False,
     )
 
     company_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("companies.id"),
+        ForeignKey("companies.id", ondelete="CASCADE"),
+        index=True,
         nullable=False,
     )
 
