@@ -8,6 +8,7 @@ from ...infrastructure.database.session import Base
 
 if TYPE_CHECKING:
     from ..company_membership.model import CompanyMembership
+    from ..job_posting.models import JobPosting
 
 
 class Company(Base, TimestampMixin):
@@ -41,4 +42,10 @@ class Company(Base, TimestampMixin):
         "CompanyMembership",
         back_populates="company",
         init=False,
+    )
+
+    job_postings: Mapped[list["JobPosting"]] = relationship(
+        "JobPosting",
+        back_populates="company",
+        init=False
     )
