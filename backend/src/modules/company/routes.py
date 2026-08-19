@@ -10,23 +10,6 @@ from .schemas import CompanyCreate, CompanyRead
 
 router = APIRouter(tags=["Companies"])
 
-
-@router.post("", response_model=CompanyRead, status_code=status.HTTP_201_CREATED)
-async def create_company(
-    payload: CompanyCreate,
-    db: AsyncSessionDep,
-    company_service: CompanyServiceDep,
-) -> dict[str, Any]:
-    """Create and persist a company profile."""
-    try:
-        return await company_service.create(payload, db)
-    except Exception as error:
-        http_exception = handle_exception(error)
-        if http_exception:
-            raise http_exception
-        raise HTTPException(status_code=500, detail="An unexpected error occurred")
-
-
 @router.get("/{company_id}", response_model=CompanyRead)
 async def get_company(
     company_id: int,
