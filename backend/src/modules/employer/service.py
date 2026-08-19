@@ -4,15 +4,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..common.exceptions import UserExistsError
 from ..company.models import Company
+from ..company_membership.model import CompanyMembership
 from ..user.crud import crud_users
 from ..user.enums import UserType
 from ..user.models import User
-from .model import CompanyMembership
 from .schemas import EmployerRegistration, EmployerRegistrationRead
 
 
 class EmployerRegistrationService:
-    """Create an employer, their company, and the owning membership as one unit."""
+    """Create an employer, their company, and membership in one transaction."""
 
     async def create(self, payload: EmployerRegistration, db: AsyncSession) -> EmployerRegistrationRead:
         if await crud_users.exists(db=db, email=payload.user.email):
@@ -38,10 +38,8 @@ class EmployerRegistrationService:
             db.add(membership)
             await db.flush()
 
-            result = EmployerRegistrationRead(
-                user=user,
-                company=company,
-                membership=membership,
+            result = EmployerRegistrationRead.model_validate(
+                {"user": user, "company": company, "membership": membership}
             )
             await db.commit()
             return result

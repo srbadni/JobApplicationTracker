@@ -1,0 +1,1 @@
+"""Employer registration use case."""
