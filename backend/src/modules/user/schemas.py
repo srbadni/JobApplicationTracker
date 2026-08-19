@@ -4,13 +4,18 @@ from typing import Annotated
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from ..common.schemas import PersistentDeletion, TimestampSchema
+from .enums import UserType
 
 
 class UserBase(BaseModel):
     name: Annotated[str, Field(min_length=2, max_length=30, examples=["User Userson"])]
-    username: Annotated[
+    phone_number: Annotated[
         str,
-        Field(min_length=2, max_length=20, pattern=r"^[a-z0-9]+$", examples=["userson"]),
+        Field(
+            pattern=r"^09\d{9}$",
+            examples=["09123456789"],
+            description="Iranian mobile number in 09XXXXXXXXX format",
+        ),
     ]
     email: Annotated[EmailStr, Field(examples=["user.userson@example.com"])]
 
@@ -20,6 +25,7 @@ class User(TimestampSchema, UserBase, PersistentDeletion):
 
     hashed_password: str
     is_superuser: bool = False
+    user_type: UserType = UserType.APPLICANT
     profile_image_url: Annotated[
         str,
         Field(
@@ -40,17 +46,24 @@ class User(TimestampSchema, UserBase, PersistentDeletion):
 class UserRead(BaseModel):
     """Schema for reading user data, excludes sensitive information."""
 
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     name: Annotated[str, Field(min_length=2, max_length=30, examples=["User Userson"])]
-    username: Annotated[
+    phone_number: Annotated[
         str,
-        Field(min_length=2, max_length=20, pattern=r"^[a-z0-9]+$", examples=["userson"]),
+        Field(
+            pattern=r"^09\d{9}$",
+            examples=["09123456789"],
+            description="Iranian mobile number in 09XXXXXXXXX format",
+        ),
     ]
     email: Annotated[EmailStr, Field(examples=["user.userson@example.com"])]
     profile_image_url: str
     is_deleted: bool = False
     tier_id: int | None
     is_superuser: bool = False
+    user_type: UserType
     email_verified: bool = False
     oauth_provider: str | None = None
 
@@ -84,6 +97,7 @@ class UserCreateInternal(UserBase):
     """Internal schema for user creation with hashed password."""
 
     hashed_password: str
+    user_type: UserType = UserType.APPLICANT
     google_id: str | None = None
     github_id: str | None = None
     oauth_provider: str | None = None
@@ -101,15 +115,9 @@ class UserUpdate(BaseModel):
         str | None,
         Field(min_length=2, max_length=30, examples=["User Userberg"], default=None),
     ]
-    username: Annotated[
+    phone_number: Annotated[
         str | None,
-        Field(
-            min_length=2,
-            max_length=20,
-            pattern=r"^[a-z0-9]+$",
-            examples=["userberg"],
-            default=None,
-        ),
+        Field(pattern=r"^09\d{9}$", examples=["09123456789"], default=None),
     ]
     email: Annotated[EmailStr | None, Field(examples=["user.userberg@example.com"], default=None)]
     profile_image_url: Annotated[
@@ -158,7 +166,7 @@ class UserAnonymize(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str
-    username: str
+    phone_number: str
     hashed_password: str | None = None
     profile_image_url: str | None = None
     tier_id: int | None = None
