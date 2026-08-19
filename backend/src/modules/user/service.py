@@ -14,6 +14,7 @@ from ..tier.crud import crud_tiers
 from ..tier.models import Tier
 from ..tier.schemas import TierRead
 from .crud import crud_users
+from .enums import UserType
 from .models import User
 from .schemas import (
     User as UserSchema,
@@ -74,6 +75,7 @@ class UserService:
             raise UserExistsError("Email already registered")
 
         user_internal_dict = user.model_dump()
+        user_internal_dict["user_type"] = UserType.APPLICANT.value
         user_internal_dict["hashed_password"] = get_password_hash(password=user_internal_dict["password"])
         del user_internal_dict["password"]
 
