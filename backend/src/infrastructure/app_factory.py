@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
+from fastapi.responses import HTMLResponse
 
 from ..modules.common.utils.error_handler import register_exception_handlers
 from .auth.dependencies import get_current_superuser
@@ -32,6 +33,35 @@ from .rate_limit.initialize import close_rate_limiter, initialize_rate_limiter
 from .rate_limit.middleware import RateLimiterMiddleware
 
 logger = logging.getLogger(__name__)
+
+
+def get_csrf_aware_swagger_ui_html(openapi_url: str, title: str) -> HTMLResponse:
+    """Build Swagger UI that mirrors the CSRF cookie into the required header.
+
+    Browsers send the session cookie automatically, but Swagger UI does not infer
+    a double-submit CSRF header from the separate, readable CSRF cookie.  Adding a
+    request interceptor keeps unsafe "Try it out" requests consistent with the
+    way a browser frontend is expected to call the API.
+    """
+    response = get_swagger_ui_html(openapi_url=openapi_url, title=title)
+    html = response.body.decode("utf-8")
+    request_interceptor = """
+requestInterceptor: (request) => {
+    const unsafeMethods = ["POST", "PUT", "PATCH", "DELETE"];
+    if (unsafeMethods.includes(request.method.toUpperCase())) {
+        const csrfCookie = document.cookie
+            .split("; ")
+            .find((cookie) => cookie.startsWith("csrf_token="));
+        if (csrfCookie) {
+            request.headers["X-CSRF-Token"] = decodeURIComponent(csrfCookie.split("=").slice(1).join("="));
+        }
+    }
+    request.credentials = "same-origin";
+    return request;
+},
+"""
+    html = html.replace('"dom_id": "#swagger-ui",', f'"dom_id": "#swagger-ui",\n{request_interceptor}', 1)
+    return HTMLResponse(content=html, headers=dict(response.headers), status_code=response.status_code)
 
 
 async def set_threadpool_tokens(number_of_tokens: int = 100) -> None:
@@ -240,15 +270,23 @@ def create_application(
     metadata["redoc_url"] = _redoc_url
     metadata["openapi_url"] = _openapi_url
 
-    kwargs.update(metadata)
-
     hide_docs = (
         isinstance(settings, EnvironmentSettings)
         and settings.ENVIRONMENT == EnvironmentOption.PRODUCTION
         and not _enable_docs_in_production
     )
     if hide_docs:
-        kwargs.update({"docs_url": None, "redoc_url": None, "openapi_url": None})
+        metadata.update({"docs_url": None, "redoc_url": None, "openapi_url": None})
+
+    show_docs = isinstance(settings, EnvironmentSettings) and (
+        settings.ENVIRONMENT != EnvironmentOption.PRODUCTION or _enable_docs_in_production
+    )
+    # The routes below provide access control and a CSRF-aware Swagger UI. Disable
+    # FastAPI's built-in routes so they cannot shadow these routes at the same URLs.
+    if show_docs:
+        metadata.update({"docs_url": None, "redoc_url": None, "openapi_url": None})
+
+    kwargs.update(metadata)
 
     if lifespan is None:
         lifespan = lifespan_factory(settings, create_tables_on_startup=_create_tables_on_startup)
@@ -293,10 +331,6 @@ def create_application(
         _environment = settings.ENVIRONMENT.value if hasattr(settings, "ENVIRONMENT") else EnvironmentOption.DEVELOPMENT.value
         application.add_middleware(SecurityHeadersMiddleware, environment=_environment)
 
-    show_docs = isinstance(settings, EnvironmentSettings) and (
-        settings.ENVIRONMENT != EnvironmentOption.PRODUCTION or _enable_docs_in_production
-    )
-
     if show_docs:
         docs_router = APIRouter()
 
@@ -318,15 +352,15 @@ def create_application(
         if apply_dependency and dependency_to_apply is not None:
             docs_router = APIRouter(dependencies=[Depends(dependency_to_apply)])
 
-        @docs_router.get("/docs", include_in_schema=False)
+        @docs_router.get(_docs_url, include_in_schema=False)
         async def get_swagger_documentation() -> fastapi.responses.HTMLResponse:
-            return get_swagger_ui_html(openapi_url="/openapi.json", title="docs")
+            return get_csrf_aware_swagger_ui_html(openapi_url=_openapi_url, title="docs")
 
-        @docs_router.get("/redoc", include_in_schema=False)
+        @docs_router.get(_redoc_url, include_in_schema=False)
         async def get_redoc_documentation() -> fastapi.responses.HTMLResponse:
-            return get_redoc_html(openapi_url="/openapi.json", title="redoc")
+            return get_redoc_html(openapi_url=_openapi_url, title="redoc")
 
-        @docs_router.get("/openapi.json", include_in_schema=False)
+        @docs_router.get(_openapi_url, include_in_schema=False)
         async def openapi() -> dict[str, Any]:
             return get_openapi(
                 title=metadata.get("title", "API"),
