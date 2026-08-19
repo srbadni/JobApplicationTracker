@@ -13,3 +13,10 @@ class OAuthProvider(StrEnum):
 
     GOOGLE = "google"
     GITHUB = "github"
+
+
+class UserType(StrEnum):
+    """Supported account roles."""
+
+    APPLICANT = "applicant"
+    EMPLOYER = "employer"

@@ -4,6 +4,7 @@ from typing import Annotated
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from ..common.schemas import PersistentDeletion, TimestampSchema
+from .enums import UserType
 
 
 class UserBase(BaseModel):
@@ -24,6 +25,7 @@ class User(TimestampSchema, UserBase, PersistentDeletion):
 
     hashed_password: str
     is_superuser: bool = False
+    user_type: UserType = UserType.APPLICANT
     profile_image_url: Annotated[
         str,
         Field(
@@ -44,6 +46,8 @@ class User(TimestampSchema, UserBase, PersistentDeletion):
 class UserRead(BaseModel):
     """Schema for reading user data, excludes sensitive information."""
 
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     name: Annotated[str, Field(min_length=2, max_length=30, examples=["User Userson"])]
     phone_number: Annotated[
@@ -59,6 +63,7 @@ class UserRead(BaseModel):
     is_deleted: bool = False
     tier_id: int | None
     is_superuser: bool = False
+    user_type: UserType
     email_verified: bool = False
     oauth_provider: str | None = None
 
@@ -92,6 +97,7 @@ class UserCreateInternal(UserBase):
     """Internal schema for user creation with hashed password."""
 
     hashed_password: str
+    user_type: UserType = UserType.APPLICANT
     google_id: str | None = None
     github_id: str | None = None
     oauth_provider: str | None = None
