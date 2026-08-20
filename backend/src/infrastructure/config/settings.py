@@ -281,6 +281,10 @@ class AdminSettings(BaseSettings):
     ADMIN_NAME: str = config("ADMIN_NAME", default="")
     ADMIN_EMAIL: str = config("ADMIN_EMAIL", default="")
     ADMIN_PHONE_NUMBER: str = config("ADMIN_PHONE_NUMBER", default="")
+    # SQLAdmin has its own credential form and still calls this value a
+    # username. It is separate from the application's User model, which no
+    # longer has a username column.
+    ADMIN_USERNAME: str = config("ADMIN_USERNAME", default="")
     ADMIN_PASSWORD: str = config("ADMIN_PASSWORD", default="")
     DEFAULT_TIER_NAME: str = config("DEFAULT_TIER_NAME", default="free")
 

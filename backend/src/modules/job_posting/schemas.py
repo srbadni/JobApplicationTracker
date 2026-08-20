@@ -1,12 +1,12 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from .enums import (
     EmploymentType,
-    WorkMode,
-    RelevantWorkExperience,
-    MinimumEducationLevel,
     Gender,
     MilitaryServiceStatus,
+    MinimumEducationLevel,
+    RelevantWorkExperience,
+    WorkMode,
 )
 
 

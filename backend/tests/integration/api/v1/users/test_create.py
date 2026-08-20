@@ -18,9 +18,10 @@ pytestmark = pytest.mark.asyncio
 def generate_unique_user_data(prefix="user"):
     """Generate unique user data for testing."""
     unique_id = uuid.uuid4().hex[:6]
+    phone_suffix = uuid.uuid4().int % 1_000_000_000
     return {
         "name": f"Test {prefix.capitalize()} {unique_id}",
-        "username": f"{prefix}{unique_id}",
+        "phone_number": f"09{phone_suffix:09d}",
         "email": f"{prefix}.user.{unique_id}@example.com",
         "password": "Password123!",
     }
@@ -30,12 +31,12 @@ async def test_create_user_success(client: AsyncClient, db_session: AsyncSession
     """Test successful user creation."""
     user_data = generate_unique_user_data()
 
-    logger.info(f"Testing user creation with username: {user_data['username']}")
+    logger.info(f"Testing user creation with email: {user_data['email']}")
     response = await client.post("/api/v1/users/", json=user_data)
 
     assert response.status_code == 201
     data = response.json()
-    assert data["username"] == user_data["username"]
+    assert data["phone_number"] == user_data["phone_number"]
     assert data["email"] == user_data["email"]
     assert "id" in data
     assert "password" not in data
@@ -55,12 +56,14 @@ async def test_create_user_invalid_email(client: AsyncClient, db_session: AsyncS
     assert "detail" in data
 
 
-async def test_create_user_duplicate_username(client: AsyncClient, db_session: AsyncSession, test_user: dict):
-    """Test user creation with duplicate username."""
+async def test_create_user_rejects_client_selected_user_type(
+    client: AsyncClient,
+    db_session: AsyncSession,
+) -> None:
+    """Applicant registration cannot be used to create an employer account."""
     user_data = generate_unique_user_data()
-    user_data["username"] = test_user["username"]
+    user_data["user_type"] = "employer"
 
-    logger.info(f"Testing user creation with duplicate username: {user_data['username']}")
     response = await client.post("/api/v1/users/", json=user_data)
 
     assert response.status_code == 422
@@ -85,7 +88,7 @@ async def test_create_superuser(superuser_auth_client: AsyncClient, db_session: 
     """Test superuser creating another superuser via API and database."""
     user_data = generate_unique_user_data("admin")
 
-    logger.info(f"Testing user creation with username: {user_data['username']}")
+    logger.info(f"Testing user creation with email: {user_data['email']}")
     response = await superuser_auth_client.post("/api/v1/users/", json=user_data)
 
     assert response.status_code == 201

@@ -40,6 +40,7 @@ from src.infrastructure.config.settings import Settings, get_settings  # noqa: E
 from src.infrastructure.database.session import Base, async_session  # noqa: E402
 from src.interfaces.main import app  # noqa: E402
 from src.modules.tier.models import Tier  # noqa: E402
+from src.modules.user.enums import UserType  # noqa: E402
 from src.modules.user.models import User  # noqa: E402
 
 TEST_DATABASE_URL = get_settings().DATABASE_URL
@@ -156,7 +157,7 @@ async def test_user(db_session: AsyncSession, test_tier: dict):
     fake = Faker()
     user = User(
         name=fake.name(),
-        username=f"u{fake.random_int(10000, 99999)}",
+        phone_number=f"09{fake.random_int(100_000_000, 999_999_999)}",
         email=fake.email(),
         hashed_password=get_password_hash("Password123!"),
         is_superuser=False,
@@ -168,9 +169,13 @@ async def test_user(db_session: AsyncSession, test_tier: dict):
     return {
         "id": user.id,
         "name": user.name,
-        "username": user.username,
+        "phone_number": user.phone_number,
         "email": user.email,
         "is_superuser": user.is_superuser,
+        "is_deleted": user.is_deleted,
+        "user_type": UserType(user.user_type),
+        "email_verified": user.email_verified,
+        "oauth_provider": user.oauth_provider,
         "tier_id": user.tier_id,
         "password": "Password123!",
         "profile_image_url": user.profile_image_url,
@@ -183,7 +188,7 @@ async def test_user_2(db_session: AsyncSession, test_tier: dict):
     fake = Faker()
     user = User(
         name=fake.name(),
-        username=f"u{fake.random_int(10000, 99999)}",
+        phone_number=f"09{fake.random_int(100_000_000, 999_999_999)}",
         email=fake.email(),
         hashed_password=get_password_hash("Password123!"),
         is_superuser=False,
@@ -195,11 +200,16 @@ async def test_user_2(db_session: AsyncSession, test_tier: dict):
     return {
         "id": user.id,
         "name": user.name,
-        "username": user.username,
+        "phone_number": user.phone_number,
         "email": user.email,
         "is_superuser": user.is_superuser,
+        "is_deleted": user.is_deleted,
+        "user_type": UserType(user.user_type),
+        "email_verified": user.email_verified,
+        "oauth_provider": user.oauth_provider,
         "tier_id": user.tier_id,
         "password": "Password123!",
+        "profile_image_url": user.profile_image_url,
     }
 
 
@@ -209,7 +219,7 @@ async def test_superuser(db_session: AsyncSession, test_tier: dict):
     fake = Faker()
     user = User(
         name=fake.name(),
-        username=f"su{fake.random_int(10000, 99999)}",
+        phone_number=f"09{fake.random_int(100_000_000, 999_999_999)}",
         email=fake.email(),
         hashed_password=get_password_hash("SuperuserPass123!"),
         is_superuser=True,
@@ -221,11 +231,16 @@ async def test_superuser(db_session: AsyncSession, test_tier: dict):
     return {
         "id": user.id,
         "name": user.name,
-        "username": user.username,
+        "phone_number": user.phone_number,
         "email": user.email,
         "is_superuser": user.is_superuser,
+        "is_deleted": user.is_deleted,
+        "user_type": UserType(user.user_type),
+        "email_verified": user.email_verified,
+        "oauth_provider": user.oauth_provider,
         "tier_id": user.tier_id,
         "password": "SuperuserPass123!",
+        "profile_image_url": user.profile_image_url,
     }
 
 

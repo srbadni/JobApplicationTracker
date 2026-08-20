@@ -8,12 +8,15 @@ the route handlers in ``routes.py``.
 """
 
 from crudauth.oauth import OAuthAccountService, OAuthProviderFactory
+from crudauth.provisioning import NewUserContext
 from crudauth.storage import get_session_storage
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config.settings import settings
 from .setup import _session_redis_url, _use_redis, auth
 
 OAUTH_STATE_TTL_SECONDS = 1800
+OAUTH_PLACEHOLDER_PHONE_NUMBER = "09000000000"
 
 _redirect_base = settings.OAUTH_REDIRECT_BASE_URL.rstrip("/")
 
@@ -25,6 +28,32 @@ def _build_provider(name: str, client_id: str, client_secret: str):
         client_secret=client_secret,
         redirect_uri=f"{_redirect_base}/api/v1/auth/oauth/callback/{name}",
     )
+
+
+class PhoneNumberOAuthAccountService(OAuthAccountService):
+    """Provision OAuth users when the application has no ``username`` column.
+
+    crudauth 0.6 still generates and queries a username while creating an OAuth
+    account, even when email is the only configured login identity. The project
+    removed that column, so skip only the obsolete availability lookup. The
+    returned compatibility value is ignored by ``UserRepository.create`` because
+    the model has no username attribute; the base class keeps ownership of the
+    remaining OAuth linking and provisioning flow.
+    """
+
+    async def _unique_username(self, db: AsyncSession, base: str) -> str:
+        return base
+
+
+def _oauth_new_user_fields(context: NewUserContext) -> dict[str, str]:
+    """Fill application-required fields that OAuth providers do not guarantee."""
+    display_name = context.suggested_name.strip()
+    if len(display_name) < 2:
+        display_name = "OAuth User"
+    return {
+        "name": display_name[:30],
+        "phone_number": OAUTH_PLACEHOLDER_PHONE_NUMBER,
+    }
 
 
 # Only Google has a wired route; add a "github" entry here (and its routes) to enable it.
@@ -39,7 +68,7 @@ oauth_state_storage = get_session_storage(
     redis_url=_session_redis_url if _use_redis else None,
 )
 
-oauth_account_service = OAuthAccountService(
+oauth_account_service = PhoneNumberOAuthAccountService(
     repo=auth.repo,
-    new_user_fields=lambda ctx: {"name": ctx.suggested_name},
+    new_user_fields=_oauth_new_user_fields,
 )

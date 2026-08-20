@@ -10,24 +10,25 @@ logger = logging.getLogger(__name__)
 pytestmark = pytest.mark.asyncio
 
 
-async def test_get_user_by_username_success(auth_client: AsyncClient, db_session: AsyncSession, test_user: dict):
-    """Test successful retrieval of a user by username."""
-    logger.info("Testing successful user retrieval by username")
-    username = test_user["username"]
-    response = await auth_client.get(f"/api/v1/users/{username}")
+async def test_get_user_by_email_success(auth_client: AsyncClient, db_session: AsyncSession, test_user: dict):
+    """Test successful retrieval of a user by email."""
+    logger.info("Testing successful user retrieval by email")
+    email = test_user["email"]
+    response = await auth_client.get(f"/api/v1/users/{email}")
 
     assert response.status_code == 200
     data = response.json()
-    assert data["username"] == username
+    assert data["email"] == email
+    assert data["phone_number"] == test_user["phone_number"]
     assert "id" in data
     assert "email" in data
     assert "name" in data
 
 
-async def test_get_user_by_username_not_found(auth_client: AsyncClient, db_session: AsyncSession):
+async def test_get_user_by_email_not_found(auth_client: AsyncClient, db_session: AsyncSession):
     """Test 404 when user not found."""
     logger.info("Testing 404 when user not found")
-    response = await auth_client.get("/api/v1/users/nonexistentuser")
+    response = await auth_client.get("/api/v1/users/missing@example.com")
 
     assert response.status_code == 404
     data = response.json()
@@ -77,14 +78,14 @@ async def test_get_current_user_profile(auth_client: AsyncClient, db_session: As
 
     assert response.status_code == 200
     data = response.json()
-    assert data["username"] == test_user["username"]
     assert data["email"] == test_user["email"]
+    assert data["phone_number"] == test_user["phone_number"]
 
 
 async def test_get_user_tier_info(auth_client: AsyncClient, db_session: AsyncSession, test_user: dict):
     """Test retrieval of user's tier information."""
     logger.info("Testing user tier information retrieval")
-    response = await auth_client.get(f"/api/v1/users/{test_user['username']}/tier")
+    response = await auth_client.get(f"/api/v1/users/{test_user['email']}/tier")
 
     assert response.status_code == 200
     data = response.json()
@@ -94,7 +95,7 @@ async def test_get_user_tier_info(auth_client: AsyncClient, db_session: AsyncSes
 async def test_get_user_rate_limits(auth_client: AsyncClient, db_session: AsyncSession, test_user: dict):
     """Test retrieval of user's rate limits."""
     logger.info("Testing user rate limits retrieval")
-    response = await auth_client.get(f"/api/v1/users/{test_user['username']}/rate-limits")
+    response = await auth_client.get(f"/api/v1/users/{test_user['email']}/rate-limits")
 
     assert response.status_code == 200
     data = response.json()

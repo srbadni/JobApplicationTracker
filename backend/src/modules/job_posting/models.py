@@ -15,11 +15,11 @@ from ...infrastructure.database.models import TimestampMixin
 from ...infrastructure.database.session import Base
 from .enums import (
     EmploymentType,
-    WorkMode,
-    RelevantWorkExperience,
-    MinimumEducationLevel,
     Gender,
     MilitaryServiceStatus,
+    MinimumEducationLevel,
+    RelevantWorkExperience,
+    WorkMode,
 )
 
 if TYPE_CHECKING:

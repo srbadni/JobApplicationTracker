@@ -19,3 +19,4 @@ class EmployerRegistrationRead(BaseModel):
 
     user: UserRead
     company: CompanyRead
+    membership: CompanyMembershipRead

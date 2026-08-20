@@ -1,43 +1,36 @@
-import pytest
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.modules.company.models import Company
 
 
-@pytest.mark.parametrize("name", ["", "   ", "x"])
-async def test_create_company_rejects_invalid_name(client: AsyncClient, name: str) -> None:
-    response = await client.post("/api/v1/companies", json={"name": name})
+async def test_standalone_company_creation_is_not_exposed(client: AsyncClient) -> None:
+    """Companies are created only as part of atomic employer registration."""
+    response = await client.post("/api/v1/companies", json={"name": "Acme"})
 
-    assert response.status_code == 422
+    assert response.status_code == 404
 
 
-async def test_create_company_rejects_invalid_website(client: AsyncClient) -> None:
-    response = await client.post(
-        "/api/v1/companies",
-        json={"name": "Acme", "website": "ftp://example.com"},
+async def test_get_company(client: AsyncClient, db_session: AsyncSession) -> None:
+    company = Company(
+        name="Acme Corporation",
+        description="Makes useful things.",
+        website="https://example.com/about",
     )
+    db_session.add(company)
+    await db_session.commit()
+    await db_session.refresh(company)
 
-    assert response.status_code == 422
+    response = await client.get(f"/api/v1/companies/{company.id}")
 
-
-async def test_create_and_get_company(client: AsyncClient) -> None:
-    payload = {
-        "name": "  Acme Corporation  ",
-        "description": "Makes useful things.",
-        "website": "https://example.com/about",
-    }
-    created = await client.post("/api/v1/companies", json=payload)
-
-    assert created.status_code == 201
-    body = created.json()
-    assert body["name"] == "Acme Corporation"
-    assert body["description"] == payload["description"]
-    assert body["website"] == payload["website"]
-    assert body["id"] > 0
+    assert response.status_code == 200
+    body = response.json()
+    assert body["id"] == company.id
+    assert body["name"] == company.name
+    assert body["description"] == company.description
+    assert body["website"] == company.website
     assert body["created_at"]
     assert body["updated_at"]
-
-    fetched = await client.get(f"/api/v1/companies/{body['id']}")
-    assert fetched.status_code == 200
-    assert fetched.json() == body
 
 
 async def test_get_missing_company_returns_404(client: AsyncClient) -> None:
