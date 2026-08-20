@@ -1,12 +1,9 @@
 import os
 
-# Configure the environment BEFORE importing anything from ``src``: the crudauth
-# ``auth`` singleton is constructed at import time and reads ``SESSION_BACKEND``,
-# so it must be set to the in-memory backend (no Redis) before that import runs.
-os.environ.setdefault("SESSION_BACKEND", "memory")
-# Tests run over http (base_url http://test), so the session/CSRF cookies must not be
-# Secure-only or httpx won't send them back on follow-up requests.
-os.environ.setdefault("SESSION_SECURE_COOKIES", "false")
+# Configure the environment BEFORE importing anything from ``src``: the auth
+# singleton and OAuth stores are constructed at import time. Tests keep temporary
+# auth state in memory so no Redis service is required.
+os.environ.setdefault("AUTH_STATE_BACKEND", "memory")
 os.environ.setdefault("SECRET_KEY", "test_secret_key_for_tests")
 os.environ.setdefault("SQLITE_URI", ":memory:")
 os.environ.setdefault("SQLITE_ASYNC_PREFIX", "sqlite+aiosqlite:///")
@@ -156,7 +153,7 @@ async def test_user(db_session: AsyncSession, test_tier: dict):
     fake = Faker()
     user = User(
         name=fake.name(),
-        username=f"u{fake.random_int(10000, 99999)}",
+        phone_number=f"09{fake.random_int(100000000, 999999999)}",
         email=fake.email(),
         hashed_password=get_password_hash("Password123!"),
         is_superuser=False,
@@ -168,7 +165,7 @@ async def test_user(db_session: AsyncSession, test_tier: dict):
     return {
         "id": user.id,
         "name": user.name,
-        "username": user.username,
+        "phone_number": user.phone_number,
         "email": user.email,
         "is_superuser": user.is_superuser,
         "tier_id": user.tier_id,
@@ -183,7 +180,7 @@ async def test_user_2(db_session: AsyncSession, test_tier: dict):
     fake = Faker()
     user = User(
         name=fake.name(),
-        username=f"u{fake.random_int(10000, 99999)}",
+        phone_number=f"09{fake.random_int(100000000, 999999999)}",
         email=fake.email(),
         hashed_password=get_password_hash("Password123!"),
         is_superuser=False,
@@ -195,7 +192,7 @@ async def test_user_2(db_session: AsyncSession, test_tier: dict):
     return {
         "id": user.id,
         "name": user.name,
-        "username": user.username,
+        "phone_number": user.phone_number,
         "email": user.email,
         "is_superuser": user.is_superuser,
         "tier_id": user.tier_id,
@@ -209,7 +206,7 @@ async def test_superuser(db_session: AsyncSession, test_tier: dict):
     fake = Faker()
     user = User(
         name=fake.name(),
-        username=f"su{fake.random_int(10000, 99999)}",
+        phone_number=f"09{fake.random_int(100000000, 999999999)}",
         email=fake.email(),
         hashed_password=get_password_hash("SuperuserPass123!"),
         is_superuser=True,
@@ -221,7 +218,7 @@ async def test_superuser(db_session: AsyncSession, test_tier: dict):
     return {
         "id": user.id,
         "name": user.name,
-        "username": user.username,
+        "phone_number": user.phone_number,
         "email": user.email,
         "is_superuser": user.is_superuser,
         "tier_id": user.tier_id,

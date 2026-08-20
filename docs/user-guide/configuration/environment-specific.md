@@ -52,9 +52,10 @@ POSTGRES_PORT=5432
 # Security — keep a placeholder, never reuse for staging/prod
 SECRET_KEY=insecure-dev-key-replace-me
 
-# Sessions — relax cookie security for plain HTTP
-SESSION_SECURE_COOKIES=false
-CSRF_ENABLED=false             # often easier when testing with curl
+# JWT bearer credentials; temporary auth state stays local to this process
+AUTH_STATE_BACKEND=memory
+JWT_ACCESS_TOKEN_TTL_SECONDS=900
+JWT_REFRESH_TOKEN_TTL_DAYS=30
 
 # Cache / Rate limiter / Taskiq — point at localhost
 CACHE_REDIS_HOST=localhost
@@ -75,8 +76,9 @@ ADMIN_PASSWORD=admin123
 LOG_DEVELOPMENT_VERBOSE=true   # gives you DEBUG-level console output
 ```
 
-!!! tip "Why disable CSRF in dev?"
-    The session cookie is HTTP-only and a CSRF token is also returned. Browser-based clients should send both. For curl/Postman testing, setting `CSRF_ENABLED=false` removes one moving piece. Re-enable it when testing the real frontend flow.
+!!! tip "Bearer requests"
+    Login returns access and refresh tokens. Send the access token as
+    `Authorization: Bearer <token>`; no cookie jar or CSRF header is needed.
 
 ## Staging
 
@@ -98,9 +100,10 @@ POSTGRES_DB=myapp_staging
 # Real key, distinct from prod
 SECRET_KEY=<openssl rand -hex 32>
 
-# Lock cookies and CSRF down
-SESSION_SECURE_COOKIES=true
-CSRF_ENABLED=true
+# Shared OAuth and login-lockout state
+AUTH_STATE_BACKEND=redis
+AUTH_STATE_REDIS_HOST=staging-redis.example.com
+AUTH_STATE_REDIS_PASSWORD=<from secrets manager>
 
 # Restrict CORS to staging domains
 CORS_ORIGINS=https://staging.example.com
@@ -154,11 +157,14 @@ SECRET_KEY=<from secrets manager>
 PRODUCTION_SECURITY_VALIDATION_ENABLED=true
 PRODUCTION_SECURITY_STRICT_MODE=true
 
-# Sessions
-SESSION_SECURE_COOKIES=true
-SESSION_TIMEOUT_MINUTES=30
-SESSION_BACKEND=redis
-CSRF_ENABLED=true
+# JWT bearer authentication and shared OAuth/login-lockout state
+JWT_ALGORITHM=HS256
+JWT_ACCESS_TOKEN_TTL_SECONDS=900
+JWT_REFRESH_TOKEN_TTL_DAYS=30
+AUTH_STATE_BACKEND=redis
+AUTH_STATE_REDIS_HOST=prod-redis.example.com
+AUTH_STATE_REDIS_PASSWORD=<from secrets manager>
+AUTH_STATE_REDIS_DB=2
 # Trusted reverse proxies in front of the app, so crudauth keys login lockout on
 # the real client IP. Set 1 behind a single nginx/Caddy, 2 if Cloudflare is also in front.
 TRUSTED_PROXY_HOPS=1
@@ -264,7 +270,8 @@ print(f'app       : {s.APP_NAME} v{s.VERSION}')
 print(f'db host   : {s.POSTGRES_SERVER}:{s.POSTGRES_PORT}/{s.POSTGRES_DB}')
 print(f'cache     : {s.CACHE_BACKEND} -> {s.CACHE_REDIS_HOST}:{s.CACHE_REDIS_PORT}')
 print(f'cors      : {s.CORS_ORIGINS}')
-print(f'sessions  : secure={s.SESSION_SECURE_COOKIES} csrf={s.CSRF_ENABLED}')
+print(f'jwt       : access={s.JWT_ACCESS_TOKEN_TTL_SECONDS}s refresh={s.JWT_REFRESH_TOKEN_TTL_DAYS}d')
+print(f'auth state: {s.AUTH_STATE_BACKEND} -> {s.AUTH_STATE_REDIS_HOST}:{s.AUTH_STATE_REDIS_PORT}/{s.AUTH_STATE_REDIS_DB}')
 "
 ```
 
@@ -275,7 +282,7 @@ For production deployment specifically, the security validator runs at startup �
 ### Security
 - Generate a fresh `SECRET_KEY` per environment (never reuse)
 - Pull secrets from a manager, not files committed to git
-- Always set `SESSION_SECURE_COOKIES=true` outside development
+- Use HTTPS and keep JWT lifetimes appropriately short
 - Restrict `CORS_ORIGINS` to your real domains in staging/production
 - Set Redis passwords for staging/production
 - Leave `PRODUCTION_SECURITY_VALIDATION_ENABLED=true` in production

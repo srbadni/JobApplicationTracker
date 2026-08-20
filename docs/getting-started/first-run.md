@@ -95,31 +95,35 @@ This creates:
 
 ## Testing Core Features
 
-### Authentication Flow (Sessions)
+### Authentication Flow (JWT Bearer)
 
-This project uses **server-side sessions** with HTTP-only cookies — no JWT.
+The API uses JWT access and refresh tokens. It does not authenticate API requests with cookies.
 
 #### 1. Log In
 
 ```bash
 curl -X POST "http://localhost:8000/api/v1/auth/login" \
   -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "username=admin&password=your_admin_password" \
-  -c cookies.txt
+  -d "username=admin@example.com&password=your_admin_password"
 ```
 
-Response sets an HTTP-only `session_id` cookie and returns a CSRF token:
+Response:
 
 ```json
-{ "csrf_token": "..." }
+{
+  "access_token": "...",
+  "refresh_token": "...",
+  "token_type": "bearer"
+}
 ```
 
-`cookies.txt` now holds your session — pass it back with `-b cookies.txt` on subsequent requests.
+Pass `access_token` in the `Authorization` header on subsequent requests.
 
 #### 2. Get the Current User
 
 ```bash
-curl http://localhost:8000/api/v1/users/me -b cookies.txt
+curl http://localhost:8000/api/v1/users/me \
+  -H "Authorization: Bearer <access_token>"
 ```
 
 #### 3. Create a New User
@@ -129,7 +133,7 @@ curl -X POST "http://localhost:8000/api/v1/users/" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "John Doe",
-    "username": "johndoe",
+    "phone_number": "09123456789",
     "email": "john@example.com",
     "password": "securepassword123"
   }'
@@ -140,7 +144,8 @@ curl -X POST "http://localhost:8000/api/v1/users/" \
 #### 4. Check Auth Status
 
 ```bash
-curl http://localhost:8000/api/v1/auth/check-auth -b cookies.txt
+curl http://localhost:8000/api/v1/auth/check-auth \
+  -H "Authorization: Bearer <access_token>"
 ```
 
 Returns `{"authenticated": true, "user": {...}, "session": {...}}` when logged in.

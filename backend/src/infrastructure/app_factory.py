@@ -15,6 +15,7 @@ from fastapi.openapi.utils import get_openapi
 
 from ..modules.common.utils.error_handler import register_exception_handlers
 from .auth.dependencies import get_current_superuser
+from .auth.oauth import close_oauth_storage, initialize_oauth_storage
 from .auth.setup import auth
 from .cache.initialize import close_cache, initialize_cache
 from .config.settings import (
@@ -64,12 +65,14 @@ def lifespan_factory(
                 await initialize_rate_limiter()
 
             await auth.initialize()
+            await initialize_oauth_storage()
 
             initialization_complete.set()
 
             yield
 
         finally:
+            await close_oauth_storage()
             await auth.shutdown()
 
             if isinstance(settings, CacheSettings) and settings.CACHE_ENABLED:

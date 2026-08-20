@@ -5,7 +5,7 @@
 The current codebase provides a modular FastAPI foundation with:
 
 - asynchronous SQLAlchemy and PostgreSQL persistence;
-- session authentication, OAuth, CSRF protection, and API keys;
+- JWT bearer authentication, OAuth, and API keys;
 - tier-based rate limiting;
 - SQLAdmin administration;
 - Taskiq background workers;

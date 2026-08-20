@@ -1,9 +1,13 @@
+"""Authentication endpoints for password and OAuth JWT bearer flows."""
+
+import secrets
 from typing import Annotated, Any
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from crudauth import Principal
 from crudauth.exceptions import UnauthorizedException
 from crudauth.oauth import OAuthState
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import RedirectResponse
 
 from ...modules.user.crud import crud_users
@@ -11,161 +15,106 @@ from ...modules.user.enums import OAuthProvider
 from ..dependencies import AsyncSessionDep, OAuth2FormDep
 from ..logging import get_logger
 from .dependencies import get_current_principal, get_optional_principal
-from .oauth import OAUTH_STATE_TTL_SECONDS, oauth_account_service, oauth_providers, oauth_state_storage
+from .oauth import (
+    OAUTH_EXCHANGE_TTL_SECONDS,
+    OAUTH_STATE_TTL_SECONDS,
+    oauth_account_service,
+    oauth_exchange_storage,
+    oauth_providers,
+    oauth_state_storage,
+)
+from .schemas import OAuthExchangeRecord, OAuthExchangeRequest, RefreshTokenRequest, TokenPair
 from .setup import auth as crud_auth
+from .tokens import issue_token_pair, refresh_token_pair, revoke_user_tokens
 
 logger = get_logger()
 
 router = APIRouter(tags=["Authentication"])
 
 
+def _with_query_parameter(url: str, name: str, value: str) -> str:
+    """Append a query parameter without discarding existing parameters/fragments."""
+    parts = urlsplit(url)
+    query = parse_qsl(parts.query, keep_blank_values=True)
+    query.append((name, value))
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
+
+
 @router.post(
     "/login",
+    response_model=TokenPair,
     summary="User Login",
-    description="""
-            Authenticates a user and creates a new session.
-
-            This endpoint accepts email and password credentials and verifies them.
-            On successful authentication:
-            - A new session is created
-            - A session ID is set as an HTTP-only cookie
-            - A CSRF token is generated for protection against CSRF attacks
-
-            The endpoint is protected by rate limiting to prevent brute force attacks.
-            After multiple failed attempts, further login attempts will be temporarily blocked.
-            """,
+    description=(
+        "Authenticate an email/password pair and return JWT access and refresh "
+        "tokens. Send the access token as `Authorization: Bearer <token>`."
+    ),
     responses={
-        200: {"description": "Login successful, session created"},
+        200: {"description": "Login successful; JWT token pair issued"},
         401: {"description": "Authentication failed"},
         429: {"description": "Too many login attempts, try again later"},
     },
-    response_description="CSRF token for use in subsequent requests",
 )
 async def login(
     request: Request,
-    response: Response,
     form_data: OAuth2FormDep,
     db: AsyncSessionDep,
-) -> dict[str, str]:
-    """Login endpoint to get session cookies.
-
-    The session ID is set as an HTTP-only cookie. The CSRF token is set as a
-    regular cookie and returned in the response. Credentials are verified by
-    crudauth's hardened ``authenticate_password`` (timing-equalized check,
-    disabled-account guard, escalating lockout that returns 429 + Retry-After).
-    """
-    user = await crud_auth.authenticate_password(db, form_data.username, form_data.password, request=request)
-
-    session_id, csrf_token = await crud_auth.sessions.create_session(
-        request,
-        user_id=crud_auth.repo.user_id(user),
-        metadata={"login_type": "password", "email": crud_auth.repo.get(user, "email")},
+) -> dict[str, Any]:
+    """Exchange password credentials for a bearer access/refresh token pair."""
+    user = await crud_auth.authenticate_password(
+        db,
+        form_data.username,
+        form_data.password,
+        request=request,
     )
-    crud_auth.sessions.set_session_cookies(response, session_id, csrf_token)
+    return issue_token_pair(user, scopes=form_data.scopes)
 
-    return {"csrf_token": csrf_token}
+
+@router.post(
+    "/refresh",
+    response_model=TokenPair,
+    summary="Refresh JWT Tokens",
+    responses={401: {"description": "Refresh token is invalid, expired, or revoked"}},
+)
+async def refresh_tokens(
+    body: RefreshTokenRequest,
+    db: AsyncSessionDep,
+) -> dict[str, Any]:
+    """Exchange a valid refresh token for a new access/refresh pair."""
+    return await refresh_token_pair(db, body.refresh_token)
 
 
 @router.post(
     "/logout",
     summary="User Logout",
-    description="""
-            Terminates the current user session.
-
-            This endpoint:
-            - Invalidates the active session in the storage backend
-            - Clears all session-related cookies from the client
-
-            After logout, the user will need to authenticate again to access
-            protected resources. Any existing session tokens will no longer be valid.
-            """,
-    responses={200: {"description": "Logout successful, session terminated"}, 401: {"description": "Not authenticated"}},
-    response_description="Confirmation of successful logout",
+    description=(
+        "Revoke all access and refresh tokens issued for the authenticated user by advancing the user's token version."
+    ),
+    responses={
+        200: {"description": "All bearer tokens for the user were revoked"},
+        401: {"description": "Not authenticated"},
+    },
 )
 async def logout(
-    response: Response,
     principal: Annotated[Principal, Depends(get_current_principal)],
+    db: AsyncSessionDep,
 ) -> dict[str, str]:
-    """Logout endpoint to terminate the session and clear cookies (CSRF-protected)."""
-    session_id = principal.metadata.get("session_id")
-    if session_id:
-        await crud_auth.sessions.revoke(session_id, owner_id=principal.user_id)
-    crud_auth.sessions.clear_session_cookies(response)
-
+    """Invalidate the current user's outstanding JWT credentials."""
+    await revoke_user_tokens(db, principal.user)
     return {"message": "Logged out successfully"}
-
-
-@router.post(
-    "/refresh-csrf",
-    summary="Refresh CSRF Token",
-    description="""
-            Generates a new CSRF token for the current session.
-
-            This endpoint should be called to obtain a fresh CSRF token when:
-            - The current token is about to expire
-            - After a certain period of inactivity
-            - When increased security is needed for sensitive operations
-
-            The new token is returned in the response and also set as a cookie.
-            """,
-    responses={200: {"description": "New CSRF token generated successfully"}, 401: {"description": "Not authenticated"}},
-    response_description="The new CSRF token for the session",
-)
-async def refresh_csrf_token(
-    request: Request,
-    response: Response,
-) -> dict[str, str]:
-    """Generate a new CSRF token for the current session.
-
-    Deliberately resolves the session cookie directly rather than via
-    ``current_user`` - requiring a valid CSRF header to refresh CSRF would defeat
-    the recovery purpose. The session cookie is httpOnly and the new token only
-    lands in the (same-origin-readable) cookie + body.
-    """
-    sessions = crud_auth.sessions
-    session_id = request.cookies.get(sessions.session_cookie_name)
-    session = await sessions.validate_session(session_id) if session_id else None
-    if session is None or session_id is None:
-        raise UnauthorizedException("Not authenticated")
-
-    ttl_seconds = sessions.timeout_seconds_for(session.metadata)
-    csrf_token = await sessions.regenerate_csrf_token(
-        user_id=session.user_id, session_id=session_id, expiration_seconds=ttl_seconds
-    )
-    sessions.set_csrf_cookie(response, csrf_token, max_age=ttl_seconds)
-
-    return {"csrf_token": csrf_token}
 
 
 @router.get(
     "/oauth/google",
     summary="Initiate Google OAuth Login",
-    description="""
-            Starts the OAuth 2.0 authentication flow with Google.
-
-            This endpoint generates the authorization URL that the user should be
-            redirected to in order to authenticate with Google. The flow includes:
-            - Creation of a state parameter for CSRF protection
-            - Generation of PKCE code challenge (for enhanced security)
-            - Setting appropriate OAuth scopes for profile access
-
-            After successful authentication with Google, the user will be redirected
-            back to this application's callback endpoint.
-
-            An optional redirect_uri can be specified to control where the user
-            is sent after the entire authentication process completes.
-            """,
     responses={
         200: {"description": "Authorization URL generated successfully"},
         500: {"description": "Failed to initiate Google login"},
     },
-    response_description="The Google authorization URL to redirect the user to",
 )
 async def oauth_google_login(
-    request: Request,
     redirect_uri: str | None = Query(None),
 ) -> dict[str, str]:
-    """Initiate the Google OAuth flow: build the authorization URL and stash state + PKCE."""
+    """Build the Google authorization URL and store state plus PKCE verifier."""
     try:
         auth_data = oauth_providers["google"].get_authorization_url()
         state_obj = OAuthState(
@@ -174,56 +123,41 @@ async def oauth_google_login(
             redirect_to=redirect_uri,
             code_verifier=auth_data.get("code_verifier"),
         )
-        await oauth_state_storage.create(state_obj, session_id=auth_data["state"], expiration=OAUTH_STATE_TTL_SECONDS)
+        await oauth_state_storage.create(
+            state_obj,
+            session_id=auth_data["state"],
+            expiration=OAUTH_STATE_TTL_SECONDS,
+        )
         return {"url": auth_data["url"]}
-    except Exception as e:
-        logger.error(f"Error initiating Google OAuth: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to initiate Google login")
+    except Exception as exc:
+        logger.error("Error initiating Google OAuth: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to initiate Google login",
+        ) from exc
 
 
 @router.get(
     "/oauth/callback/google",
     summary="Google OAuth Callback Handler",
-    description="""
-            Processes the authentication callback from Google OAuth.
-
-            This endpoint handles the authorization code returned by Google after
-            the user has successfully authenticated. The process includes:
-            - Validating the state parameter to prevent CSRF attacks
-            - Exchanging the authorization code for access/refresh tokens
-            - Fetching the user profile from Google
-            - Creating or updating the user account in the system
-            - Establishing a new session for the authenticated user
-
-            Two response formats are supported:
-            - redirect: Redirects to the frontend with success/error parameters (default)
-            - json: Returns user information and tokens as a JSON response
-
-            The json format is useful for mobile apps or single-page applications that
-            handle the OAuth flow programmatically.
-            """,
     responses={
         200: {"description": "Authentication successful (JSON response)"},
-        302: {"description": "Authentication successful (redirect response)"},
-        400: {"description": "Invalid OAuth state or other parameter"},
-        401: {"description": "Authentication failed"},
+        302: {"description": "Redirect with a one-time OAuth exchange code"},
+        400: {"description": "Invalid OAuth state or provider"},
         500: {"description": "Server error during authentication"},
     },
-    response_description="Authentication result with session cookies set",
 )
 async def oauth_google_callback(
-    request: Request,
-    response: Response,
     db: AsyncSessionDep,
     code: str = Query(...),
     state: str = Query(...),
-    response_format: str = Query("redirect", description="Response format, either 'redirect' or 'json'"),
+    response_format: str = Query("redirect", description="Response format: 'redirect' or 'json'"),
 ):
-    """Handle the Google OAuth callback: verify state, link/create the user, start a session."""
-    state_data = await oauth_state_storage.get(state, OAuthState)
+    """Link/create the OAuth user and issue tokens directly or via a one-time code."""
+    state_data = await oauth_state_storage.get_and_delete(state, OAuthState)
 
     if not state_data:
-        logger.warning(f"Invalid OAuth state in callback: {state}")
+        logger.warning("Invalid OAuth state in callback: %s", state)
         if response_format == "json":
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid OAuth state")
         return RedirectResponse(
@@ -232,7 +166,10 @@ async def oauth_google_callback(
         )
 
     if state_data.provider != OAuthProvider.GOOGLE.value:
-        logger.warning(f"Provider mismatch in OAuth callback: expected google, got {state_data.provider}")
+        logger.warning(
+            "Provider mismatch in OAuth callback: expected google, got %s",
+            state_data.provider,
+        )
         if response_format == "json":
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Provider mismatch")
         return RedirectResponse(
@@ -250,20 +187,6 @@ async def oauth_google_callback(
         user_id = crud_auth.repo.user_id(user)
         email = crud_auth.repo.get(user, "email")
 
-        session_id, csrf_token = await crud_auth.sessions.create_session(
-            request,
-            user_id=user_id,
-            metadata={
-                "login_type": "oauth",
-                "oauth_provider": OAuthProvider.GOOGLE.value,
-                "email": email,
-                "is_new_user": is_new_user,
-            },
-        )
-        crud_auth.sessions.set_session_cookies(response, session_id, csrf_token)
-
-        await oauth_state_storage.delete(state)
-
         if response_format == "json":
             return {
                 "success": True,
@@ -272,24 +195,52 @@ async def oauth_google_callback(
                     "email": email,
                     "is_new_user": is_new_user,
                 },
-                "csrf_token": csrf_token,
+                **issue_token_pair(user),
             }
 
+        exchange_code = secrets.token_urlsafe(32)
+        await oauth_exchange_storage.create(
+            OAuthExchangeRecord(user_id=user_id),
+            session_id=exchange_code,
+            expiration=OAUTH_EXCHANGE_TTL_SECONDS,
+        )
         redirect_to = str(state_data.redirect_to) if state_data.redirect_to else "/"
-        return RedirectResponse(url=redirect_to, status_code=status.HTTP_302_FOUND)
-
-    except Exception as e:
-        logger.error(f"Error in Google OAuth callback: {str(e)}", exc_info=True)
-
+        return RedirectResponse(
+            url=_with_query_parameter(redirect_to, "oauth_code", exchange_code),
+            status_code=status.HTTP_302_FOUND,
+        )
+    except Exception as exc:
+        logger.error("Error in Google OAuth callback: %s", exc, exc_info=True)
         if response_format == "json":
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"OAuth authentication failed: {str(e)}"
-            )
-
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="OAuth authentication failed",
+            ) from exc
         return RedirectResponse(
             url=f"/login?error=oauth_error&provider={OAuthProvider.GOOGLE.value}",
             status_code=status.HTTP_302_FOUND,
         )
+
+
+@router.post(
+    "/oauth/exchange",
+    response_model=TokenPair,
+    summary="Exchange OAuth Redirect Code",
+    responses={401: {"description": "Exchange code is invalid, expired, or already used"}},
+)
+async def exchange_oauth_code(
+    body: OAuthExchangeRequest,
+    db: AsyncSessionDep,
+) -> dict[str, Any]:
+    """Consume a one-time redirect code and return a JWT token pair."""
+    exchange = await oauth_exchange_storage.get_and_delete(body.code, OAuthExchangeRecord)
+    if exchange is None:
+        raise UnauthorizedException("Invalid or expired OAuth exchange code")
+
+    user = await crud_auth.repo.get_by_id(db, exchange.user_id)
+    if user is None or not crud_auth.repo.is_active(user):
+        raise UnauthorizedException("Invalid or expired OAuth exchange code")
+    return issue_token_pair(user)
 
 
 @router.get("/check-auth")
@@ -297,27 +248,14 @@ async def check_auth(
     principal: Annotated[Principal | None, Depends(get_optional_principal)],
     db: AsyncSessionDep,
 ) -> dict[str, Any]:
-    """
-    Check if the user is authenticated and return basic user information.
-
-    This is useful for clients to verify authentication status. It responds to both
-    authenticated and anonymous callers (anonymous gets ``authenticated: false``
-    rather than a 401).
-
-    Returns:
-        Authentication status and user information if authenticated.
-    """
+    """Return bearer authentication status and basic user information."""
     if principal is None:
         return {"authenticated": False, "message": "Not authenticated"}
 
     try:
         user = await crud_users.get(db=db, id=principal.user_id, is_deleted=False)
-
         if not user:
             return {"authenticated": False, "message": "User not found"}
-
-        session_id = principal.metadata.get("session_id")
-        session = await crud_auth.sessions.validate_session(session_id) if session_id else None
 
         return {
             "authenticated": True,
@@ -326,11 +264,11 @@ async def check_auth(
                 "email": user["email"],
                 "oauth_provider": user.get("oauth_provider"),
             },
-            "session": {
-                "created_at": session.created_at.isoformat() if session and session.created_at else None,
-                "last_activity": session.last_activity.isoformat() if session and session.last_activity else None,
+            "authentication": {
+                "transport": principal.transport,
+                "scopes": list(principal.scopes),
             },
         }
-    except Exception as e:
-        logger.error(f"Error checking authentication: {str(e)}", exc_info=True)
+    except Exception as exc:
+        logger.error("Error checking authentication: %s", exc, exc_info=True)
         return {"authenticated": False, "message": "Error checking authentication status"}

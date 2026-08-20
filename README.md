@@ -6,7 +6,7 @@
 
 - FastAPI and SQLAlchemy 2.0 with PostgreSQL
 - Pydantic v2 validation
-- Session authentication, OAuth, CSRF protection, and API keys
+- JWT bearer authentication, OAuth, and API keys
 - Tier-based rate limiting
 - SQLAdmin administration panel
 - Taskiq background workers

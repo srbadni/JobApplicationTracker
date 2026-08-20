@@ -106,7 +106,7 @@ Both backends work with the decorator and provider. They have different strength
 | Rich data structures (lists, sets, hashes) | Yes | Key/value only |
 | Memory efficiency | Good | Excellent |
 
-**Pick Redis** if you need pattern-based invalidation (`pattern_to_invalidate_extra` on the decorator, or `delete_pattern` directly), persistence across restarts, or you're already running Redis for sessions / rate limits / Taskiq.
+**Pick Redis** if you need pattern-based invalidation (`pattern_to_invalidate_extra` on the decorator, or `delete_pattern` directly), persistence across restarts, or you're already running Redis for OAuth state / rate limits / Taskiq.
 
 **Pick Memcached** if you have an existing Memcached deployment or you specifically want simpler key/value semantics.
 

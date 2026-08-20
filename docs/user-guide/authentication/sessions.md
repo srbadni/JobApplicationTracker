@@ -1,255 +1,123 @@
-# Sessions
+# JWT Bearer Token Lifecycle
 
-Sessions are the project's default authentication mechanism. All built-in API routes use session auth.
+!!! note "Legacy page path"
+    This file keeps its historical `sessions.md` path so existing documentation
+    links continue to work. API authentication is now bearer-only; only the
+    separate SQLAdmin UI uses a cookie session.
 
-## Auth Architecture
+## Architecture
 
-Authentication is provided by the [`crudauth`](https://pypi.org/project/crudauth/) library. The composition root is a single singleton in `infrastructure/auth/setup.py`:
-
-```python
-# infrastructure/auth/setup.py
-auth = CRUDAuth(session=async_session, user_model=User, SECRET_KEY=settings.SECRET_KEY, ...)
-```
-
-Routers and dependencies reference `auth` at import time, and the app lifespan calls `auth.initialize()` on startup and `auth.shutdown()` on teardown (wired in `app_factory`) to open and close the session backend connections. Everything below — the dependencies, login flow, CSRF, lockout, and session storage — is this singleton in action; the project only supplies the wiring and route handlers.
-
-## Protecting Routes
-
-Import the session dependencies and add them to your routes:
+`infrastructure/auth/setup.py` configures one crudauth `BearerTransport`:
 
 ```python
-from typing import Annotated, Any
-from fastapi import APIRouter, Depends
-
-from ...infrastructure.auth.dependencies import get_current_user
-
-router = APIRouter()
-
-
-@router.get("/my-profile")
-async def get_profile(
-    current_user: Annotated[dict[str, Any], Depends(get_current_user)],
-) -> dict[str, Any]:
-    return {"user_id": current_user["id"], "email": current_user["email"]}
-```
-
-If the request doesn't have a valid session, the project returns `401 Unauthorized`.
-
-### Available Dependencies
-
-All from `src/infrastructure/auth/dependencies.py`. They wrap the `crudauth` `auth` singleton, so cookie validation, CSRF, and login lockout live in the library while your handlers keep working with plain user dicts.
-
-**`get_current_user`** — Returns the authenticated user dict. Raises 401 if not authenticated.
-
-```python
-@router.get("/dashboard")
-async def dashboard(
-    current_user: Annotated[dict[str, Any], Depends(get_current_user)],
-) -> dict[str, Any]:
-    return {"welcome": current_user["username"]}
-```
-
-**`get_current_superuser`** — Same as `get_current_user`, plus checks `is_superuser=True`. Raises 403 if not a superuser.
-
-```python
-@router.delete("/users/{user_id}")
-async def delete_user(
-    user_id: int,
-    current_user: Annotated[dict[str, Any], Depends(get_current_superuser)],
-) -> None:
-    # Only superusers reach this code
-    ...
-```
-
-**`get_optional_user`** — Returns the user dict if authenticated, `None` otherwise. Never raises.
-
-```python
-@router.get("/products")
-async def list_products(
-    current_user: Annotated[dict[str, Any] | None, Depends(get_optional_user)],
-) -> list[dict[str, Any]]:
-    if current_user:
-        # Personalize for logged-in users
-        ...
-```
-
-**`get_current_principal`** — Returns the crudauth `Principal` (session-validated, CSRF-enforced). Use it when you need the session id (`principal.metadata["session_id"]`) or the `user_id` directly rather than the full user dict. `get_optional_principal` is the never-raises variant.
-
-### Protecting Entire Routers
-
-Apply auth to every route in a router:
-
-```python
-router = APIRouter(
-    prefix="/admin",
-    dependencies=[Depends(get_current_superuser)],
+bearer_transport = BearerTransport(
+    access_ttl=settings.JWT_ACCESS_TOKEN_TTL_SECONDS,
+    refresh_ttl_days=settings.JWT_REFRESH_TOKEN_TTL_DAYS,
+    refresh="body",
 )
 
-
-@router.get("/stats")
-async def stats() -> dict[str, Any]:
-    # Already authenticated at the router level
-    ...
+auth = CRUDAuth(
+    session=async_session,
+    user_model=User,
+    SECRET_KEY=settings.SECRET_KEY,
+    transports=[bearer_transport],
+    algorithm=settings.JWT_ALGORITHM,
+)
 ```
 
-Note: router-level dependencies don't inject values into handlers. If you need the user object inside the handler, also add `Depends(get_current_user)` to that specific route.
+The `session=` argument above is the SQLAlchemy database dependency expected by
+crudauth; it does not enable browser sessions. `transports` contains only the
+bearer transport.
 
-## How Sessions Work
+## Access tokens
 
-The login route delegates to the `crudauth` `auth` singleton (see [Auth Architecture](#auth-architecture)). When a user hits `POST /api/v1/auth/login`, crudauth:
+Access tokens are short-lived JWTs. The bearer transport verifies:
 
-1. Applies its per-IP / per-identifier login lockout (returns `429` + `Retry-After` if tripped)
-2. Validates the credentials against the user row (soft-deleted users — `is_active == False` — are rejected)
-3. Writes a session record to the configured backend (Redis by default)
-4. Generates a CSRF token bound to the session
-5. Sets two cookies on the response:
-    - `session_id` — HTTP-only, the session identifier
-    - `csrf_token` — readable by JS, mirrors the CSRF token returned in the JSON body
+1. Signature and expiry.
+2. The `token_type=access` claim.
+3. The subject maps to an active, non-deleted user.
+4. The token's `ver` claim equals the user's current `token_version`.
 
-On every subsequent request, the auth dependency (via crudauth):
+Protected requests send the token explicitly:
 
-1. Reads `session_id` from cookies
-2. Looks it up in the configured backend; rejects expired or missing sessions
-3. For mutating requests (POST/PUT/DELETE/PATCH), validates the CSRF token if `CSRF_ENABLED=true`
-4. Hands back a `Principal`; `get_current_user` then re-loads the full user row (joined with the `Tier` relationship via `lazy="selectin"`)
-
-Logout (`POST /api/v1/auth/logout`) terminates the session record and clears the cookies.
-
-## CSRF Protection
-
-Session auth ships with CSRF protection. For non-GET requests, send the CSRF token via either:
-
-- The `csrf_token` cookie (browsers send it automatically), or
-- The `X-CSRF-Token` header (typical for JS clients)
-
-```javascript
-const csrfToken = getCookie('csrf_token');
-
-await fetch('/api/v1/users/', {
-    method: 'POST',
-    credentials: 'include',          // include cookies cross-origin
-    headers: {
-        'X-CSRF-Token': csrfToken,
-        'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-});
+```http
+Authorization: Bearer eyJ...
 ```
 
-Need a fresh token mid-session? Hit `POST /api/v1/auth/refresh-csrf` — it returns a new token and sets the cookie.
+Missing, expired, revoked, or invalid credentials produce 401 on required-auth
+routes. Optional-auth routes resolve to an anonymous caller when no valid token
+is present.
 
-For dev/test environments where CSRF gets in the way, set `CSRF_ENABLED=false`.
+## Refresh tokens
 
-## Device Tracking
-
-`crudauth` records session metadata (IP address, User-Agent, timestamps) internally as part of each session record. The project does **not** surface a device-listing route or a `SessionData` schema — that metadata lives inside the library's session store. If you need an "active sessions" UI, build it on crudauth's session APIs (`auth.sessions`) rather than expecting a ready-made dependency here.
-
-## Login Lockout
-
-Failed login attempts are throttled by `crudauth` itself. It applies an **escalating per-IP / per-identifier lockout** and, once tripped, returns `429 Too Many Requests` with a `Retry-After` header on `/api/v1/auth/login`. This happens automatically inside the login flow — there's nothing to wire up and no env vars to tune. Behind a reverse proxy, set `TRUSTED_PROXY_HOPS` so the lockout keys on the real client IP rather than the proxy's.
-
-## Session Limits
-
-Per-user concurrent session count is capped by `MAX_SESSIONS_PER_USER` (default 5). When a user logs in beyond this cap, the oldest session is terminated.
-
-## Storage Backends
-
-Sessions are stored server-side. Configure via `SESSION_BACKEND`:
-
-| Value | When to use |
-|-------|-------------|
-| `redis` *(default)* | Production. Supports key expiration, pattern scans for cleanup, persists across restarts |
-| `memory` | Tests only. Cleared on restart, not safe for multi-process deploys |
-
-The backends ship inside the `crudauth` library, not the project — `setup.py` just selects `redis` or `memory` based on `SESSION_BACKEND`. (Memcached is no longer a session option; it remains available for the general cache and rate limiter.)
-
-## Configuration
-
-```env
-# Backend
-SESSION_BACKEND=redis                # redis | memory
-
-# Lifetime
-SESSION_TIMEOUT_MINUTES=30           # inactive sessions expire
-SESSION_CLEANUP_INTERVAL_MINUTES=15  # how often the storage backend sweeps expired entries
-
-# Per-user cap
-MAX_SESSIONS_PER_USER=5
-
-# Cookie security (HTTPS only)
-SESSION_SECURE_COOKIES=true
-
-# CSRF
-CSRF_ENABLED=true
-
-# Trusted reverse proxies in front of the app (real client IP for login lockout)
-TRUSTED_PROXY_HOPS=0
-```
-
-For development you'll typically set `SESSION_SECURE_COOKIES=false` and `CSRF_ENABLED=false` so cookies work over plain HTTP and curl/Postman aren't blocked. Re-enable both for staging and production.
-
-## Login & Logout Flow
-
-### Login
-
-```bash
-curl -X POST http://localhost:8000/api/v1/auth/login \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "username=admin&password=your_admin_password" \
-  -c cookies.txt
-```
-
-Response:
+Refresh JWTs have `token_type=refresh` and a longer lifetime. They cannot be used
+as access credentials. `POST /api/v1/auth/refresh` verifies the token and returns
+a new pair:
 
 ```json
-{ "csrf_token": "..." }
+{"refresh_token":"<refresh-jwt>"}
 ```
 
-The HTTP-only `session_id` cookie is now in `cookies.txt`. The CSRF token is also set as a cookie *and* returned in the body so JS clients can store it (browsers can't read HTTP-only cookies).
+The current crudauth bearer transport is stateless and does not keep a per-token
+refresh blacklist. Keep refresh tokens protected and use a suitably short
+lifetime for the application.
 
-### Authenticated Request
+## Revocation and logout
 
-```bash
-curl http://localhost:8000/api/v1/users/me -b cookies.txt
+The `user.token_version` column is a credential epoch embedded in both token
+types. `POST /api/v1/auth/logout` increments it. Every older access and refresh
+token for that account then fails validation without maintaining a token table.
+
+This means logout is account-wide rather than device-specific. Per-device
+revocation would require a server-side refresh-token registry and rotation,
+which this bearer-only implementation intentionally does not add.
+
+## CSRF boundary
+
+The API no longer accepts an automatically attached authentication cookie, so it
+does not check `X-CSRF-Token`. The client must explicitly attach its access token
+to the `Authorization` header. The SQLAdmin browser session remains a separate
+surface under `/admin`.
+
+## OAuth state is not an API session
+
+`AUTH_STATE_BACKEND` selects Redis or memory for short-lived OAuth state,
+one-time OAuth exchange codes, and login-lockout counters. This state does not
+authenticate ordinary API requests and does not make JWTs stateful.
+
+Use Redis for multi-worker production deployments:
+
+```env
+AUTH_STATE_BACKEND=redis
+AUTH_STATE_REDIS_HOST=redis
+AUTH_STATE_REDIS_DB=2
+JWT_ACCESS_TOKEN_TTL_SECONDS=900
+JWT_REFRESH_TOKEN_TTL_DAYS=30
 ```
 
-For mutating requests, add the CSRF header:
+## Route dependencies
 
-```bash
-curl -X POST http://localhost:8000/api/v1/users/ \
-  -b cookies.txt \
-  -H "Content-Type: application/json" \
-  -H "X-CSRF-Token: <token-from-login-response>" \
-  -d '{"name": "...", "username": "...", "email": "...", "password": "..."}'
+`get_current_principal` deliberately narrows crudauth to
+`transport="bearer"`. An `OAuth2PasswordBearer` dependency declares the same
+flow in OpenAPI, which is why Swagger UI can log in and attach the header.
+
+The business-facing dependency remains unchanged:
+
+```python
+CurrentUserDep = Annotated[dict[str, Any], Depends(get_current_user)]
 ```
 
-### Refresh CSRF Token
+`get_current_user` re-loads the full active user row after JWT validation, so
+services continue to receive the same user dictionary they used before the auth
+transport migration.
 
-```bash
-curl -X POST http://localhost:8000/api/v1/auth/refresh-csrf -b cookies.txt
-```
+## Operational checklist
 
-### Logout
+- Run `uv run alembic upgrade head` to add `token_version`.
+- Use a strong, private `SECRET_KEY` and HTTPS.
+- Keep access tokens short-lived.
+- Treat refresh tokens as credentials, never log them or place them in URLs.
+- Use `AUTH_STATE_BACKEND=redis` when running multiple API workers.
+- Send no `X-CSRF-Token`; send `Authorization: Bearer <access_token>`.
 
-```bash
-curl -X POST http://localhost:8000/api/v1/auth/logout -b cookies.txt
-```
-
-Terminates the session and clears the cookies.
-
-## Key Files
-
-| Component | Location |
-|-----------|----------|
-| `auth = CRUDAuth(...)` singleton | `backend/src/infrastructure/auth/setup.py` |
-| Dependencies | `backend/src/infrastructure/auth/dependencies.py` |
-| OAuth building blocks | `backend/src/infrastructure/auth/oauth.py` |
-| Login/logout/OAuth routes | `backend/src/infrastructure/auth/routes.py` |
-| HTTP exceptions (fastcrud re-export) | `backend/src/infrastructure/auth/http_exceptions.py` |
-| Auth settings | `backend/src/infrastructure/config/settings.py` (`AuthSettings`) |
-
-Session storage, CSRF, and lockout themselves live in the `crudauth` library, not the project.
-
----
-
-[← Authentication Overview](index.md){ .md-button } [User Management →](user-management.md){ .md-button .md-button--primary }
+See the [Authentication Overview](index.md) for endpoint and client examples.

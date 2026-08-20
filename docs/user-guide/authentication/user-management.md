@@ -10,17 +10,17 @@ All under `/api/v1/users/` (defined in `modules/user/routes.py`):
 |--------|------|-------------|------|
 | `POST` | `/api/v1/users/` | Create a new user | Open |
 | `GET` | `/api/v1/users/` | Paginated list of users | Superuser |
-| `GET` | `/api/v1/users/me` | Current user's profile | Session |
+| `GET` | `/api/v1/users/me` | Current user's profile | Bearer |
 | `GET` | `/api/v1/users/{username}` | Get a user by username (active only) | Open |
 | `GET` | `/api/v1/users/active-and-inactive/{username}` | Same as above, includes soft-deleted | Superuser |
-| `PATCH` | `/api/v1/users/{username}` | Update profile (own or admin) | Session |
-| `DELETE` | `/api/v1/users/{username}` | Soft-delete a user (own or admin) | Session |
+| `PATCH` | `/api/v1/users/{username}` | Update profile (own or admin) | Bearer |
+| `DELETE` | `/api/v1/users/{username}` | Soft-delete a user (own or admin) | Bearer |
 | `DELETE` | `/api/v1/users/db/{username}` | GDPR anonymize (admin) | Superuser |
-| `GET` | `/api/v1/users/{username}/rate-limits` | User's rate limits via tier | Session |
-| `GET` | `/api/v1/users/{username}/tier` | User's tier details | Session |
+| `GET` | `/api/v1/users/{username}/rate-limits` | User's rate limits via tier | Bearer |
+| `GET` | `/api/v1/users/{username}/tier` | User's tier details | Bearer |
 | `PATCH` | `/api/v1/users/{username}/tier` | Change a user's tier | Superuser |
 
-Plus the auth endpoints under `/api/v1/auth/` documented in [Sessions](sessions.md).
+Plus the auth endpoints under `/api/v1/auth/` documented in [Bearer Tokens](sessions.md).
 
 ## Registration
 
@@ -84,11 +84,11 @@ class UserCreate(UserBase):
 
 ## Authentication
 
-Authentication happens via `POST /api/v1/auth/login`. See [Sessions](sessions.md) for the full flow. The credential check itself now lives inside the `crudauth` library — the login route delegates to the `auth` singleton (`infrastructure/auth/setup.py`), which looks the user up, verifies the password, and creates the session. The project no longer ships an `authenticate_user` helper.
+Authentication happens via `POST /api/v1/auth/login`. See [Bearer Tokens](sessions.md) for the full flow. The login route delegates credential verification to the `crudauth` singleton and returns an access/refresh JWT pair. The project no longer ships an `authenticate_user` helper.
 
 Two things to note about the login behavior:
 
-- **Username or email** — both forms work in the same field
+- **Email login** — put the email address in OAuth2's `username` form field
 - **Soft-deleted users can't log in** — crudauth reads `User.is_active` (defined as `not is_deleted`), so deactivated accounts are rejected before the password is even checked
 
 ### Password Hashing (bcrypt)
@@ -109,7 +109,8 @@ bcrypt handles salt generation automatically and is computationally expensive en
 ### Get Current User
 
 ```bash
-curl http://localhost:8000/api/v1/users/me -b cookies.txt
+curl http://localhost:8000/api/v1/users/me \
+  -H "Authorization: Bearer <access_token>"
 ```
 
 Trivial route — `get_current_user` already returns the user dict:
@@ -137,10 +138,9 @@ Returns 404 if not found or soft-deleted. The admin-only `/active-and-inactive/{
 Users can update their own profile; superusers can update anyone's. Tier updates are gated on a separate endpoint (see [Permissions](permissions.md)).
 
 ```bash
-curl -X PATCH http://localhost:8000/api/v1/users/johndoe \
-  -b cookies.txt \
+curl -X PATCH http://localhost:8000/api/v1/users/john@example.com \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
-  -H "X-CSRF-Token: <token>" \
   -d '{"name": "John Updated"}'
 ```
 
@@ -184,9 +184,8 @@ The project distinguishes three deletion modes — pick based on what the reques
 `DELETE /api/v1/users/{username}` — sets `is_deleted=True` and `deleted_at=now()`. The row stays in the database; the user can no longer log in but their data is preserved.
 
 ```bash
-curl -X DELETE http://localhost:8000/api/v1/users/johndoe \
-  -b cookies.txt \
-  -H "X-CSRF-Token: <token>"
+curl -X DELETE http://localhost:8000/api/v1/users/john@example.com \
+  -H "Authorization: Bearer <access_token>"
 ```
 
 Permission rules:
@@ -203,9 +202,8 @@ There's no public hard-delete endpoint by design — deleting rows from `user` w
 `DELETE /api/v1/users/db/{username}` — superuser only. Replaces PII with neutral values while keeping the row (and therefore foreign-key relationships) intact.
 
 ```bash
-curl -X DELETE http://localhost:8000/api/v1/users/db/johndoe \
-  -b superuser_cookies.txt \
-  -H "X-CSRF-Token: <token>"
+curl -X DELETE http://localhost:8000/api/v1/users/db/john@example.com \
+  -H "Authorization: Bearer <superuser_access_token>"
 ```
 
 Service implementation:
@@ -263,7 +261,8 @@ See [Pagination](../api/pagination.md) for the full pattern.
 ### View a User's Tier
 
 ```bash
-curl http://localhost:8000/api/v1/users/johndoe/tier -b cookies.txt
+curl http://localhost:8000/api/v1/users/john@example.com/tier \
+  -H "Authorization: Bearer <access_token>"
 ```
 
 Returns the user record joined with their tier. Permission: own profile or superuser.
@@ -273,10 +272,9 @@ Returns the user record joined with their tier. Permission: own profile or super
 `PATCH /api/v1/users/{username}/tier` — superuser only.
 
 ```bash
-curl -X PATCH http://localhost:8000/api/v1/users/johndoe/tier \
-  -b superuser_cookies.txt \
+curl -X PATCH http://localhost:8000/api/v1/users/john@example.com/tier \
+  -H "Authorization: Bearer <superuser_access_token>" \
   -H "Content-Type: application/json" \
-  -H "X-CSRF-Token: <token>" \
   -d '{"tier_id": 2}'
 ```
 
@@ -364,13 +362,14 @@ result = await crud_users.get_multi(db=db, username__icontains="ad")
 
 ## Frontend Integration
 
-Use cookies, not bearer tokens. The browser will send the session cookie automatically as long as you set `credentials: 'include'`:
+Store the access token according to your frontend threat model and explicitly attach it as a Bearer header:
 
 ```javascript
 class UserClient {
     constructor(baseUrl = '/api/v1') {
         this.baseUrl = baseUrl;
-        this.csrfToken = null;
+        this.accessToken = null;
+        this.refreshToken = null;
     }
 
     async register(userData) {
@@ -383,34 +382,37 @@ class UserClient {
         return await res.json();
     }
 
-    async login(username, password) {
+    async login(email, password) {
         const res = await fetch(`${this.baseUrl}/auth/login`, {
             method: 'POST',
-            credentials: 'include',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ username, password }),
+            body: new URLSearchParams({ username: email, password }),
         });
         if (!res.ok) throw new Error((await res.json()).detail);
-        const { csrf_token } = await res.json();
-        this.csrfToken = csrf_token;
-        return csrf_token;
+        const tokens = await res.json();
+        this.accessToken = tokens.access_token;
+        this.refreshToken = tokens.refresh_token;
+        return tokens;
+    }
+
+    authHeaders() {
+        return { Authorization: `Bearer ${this.accessToken}` };
     }
 
     async getProfile() {
         const res = await fetch(`${this.baseUrl}/users/me`, {
-            credentials: 'include',
+            headers: this.authHeaders(),
         });
         if (!res.ok) throw new Error('Failed to get profile');
         return await res.json();
     }
 
-    async updateProfile(username, updates) {
-        const res = await fetch(`${this.baseUrl}/users/${username}`, {
+    async updateProfile(email, updates) {
+        const res = await fetch(`${this.baseUrl}/users/${email}`, {
             method: 'PATCH',
-            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-Token': this.csrfToken,
+                ...this.authHeaders(),
             },
             body: JSON.stringify(updates),
         });
@@ -418,29 +420,29 @@ class UserClient {
         return await res.json();
     }
 
-    async deleteAccount(username) {
-        const res = await fetch(`${this.baseUrl}/users/${username}`, {
+    async deleteAccount(email) {
+        const res = await fetch(`${this.baseUrl}/users/${email}`, {
             method: 'DELETE',
-            credentials: 'include',
-            headers: { 'X-CSRF-Token': this.csrfToken },
+            headers: this.authHeaders(),
         });
         if (!res.ok) throw new Error((await res.json()).detail);
-        this.csrfToken = null;
+        this.accessToken = null;
+        this.refreshToken = null;
         return await res.json();
     }
 
     async logout() {
         await fetch(`${this.baseUrl}/auth/logout`, {
             method: 'POST',
-            credentials: 'include',
-            headers: { 'X-CSRF-Token': this.csrfToken },
+            headers: this.authHeaders(),
         });
-        this.csrfToken = null;
+        this.accessToken = null;
+        this.refreshToken = null;
     }
 }
 ```
 
-`credentials: 'include'` makes the browser send/store cookies cross-origin — pair this with `CORS_ALLOW_CREDENTIALS=true` and an explicit `CORS_ORIGINS` list (no `*`) on the server.
+The API does not use authentication cookies or `X-CSRF-Token`; every protected request must carry the access token explicitly.
 
 ## Security Considerations
 
@@ -450,7 +452,7 @@ All input validation runs server-side via Pydantic schemas. Client-side checks a
 
 ### Login lockout
 
-The login endpoint is automatically throttled by `crudauth` — an escalating per-IP / per-identifier lockout that returns `429` with a `Retry-After` header. There are no env vars to tune it. See [Sessions](sessions.md#login-lockout).
+The login endpoint is automatically throttled by `crudauth` — an escalating per-IP / per-identifier lockout that returns `429` with a `Retry-After` header.
 
 ### Generic auth error messages
 
@@ -463,5 +465,5 @@ The default `DELETE /api/v1/users/{username}` is a soft delete. Hard deletion on
 ## Next Steps
 
 1. **[Permissions](permissions.md)** — Role-based access control patterns
-2. **[Sessions](sessions.md)** — Cookie / CSRF / session lifecycle
+2. **[Bearer Tokens](sessions.md)** — Access, refresh, and revocation lifecycle
 3. **[Production Guide](../production.md)** — Hardening checklist

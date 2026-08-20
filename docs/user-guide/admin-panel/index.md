@@ -13,7 +13,7 @@ The admin panel is mounted at `/admin`. It's enabled by default — toggle it wi
 ADMIN_ENABLED=true   # set to false to disable entirely
 ```
 
-Authentication is **separate from your app's session auth**. Admin login uses simple username/password credentials read from environment variables:
+Authentication is **separate from the API's JWT bearer auth**. Admin login uses simple username/password credentials read from environment variables:
 
 ```env
 ADMIN_USERNAME=admin
@@ -58,7 +58,7 @@ The Tier delete button calls `TierService.permanent_delete`, which **fails** if 
 
 ## How Authentication Works
 
-The admin panel uses session-based auth via `SessionMiddleware` (Starlette), separate from the API's session system. When you submit the login form:
+The admin panel uses session-based auth via `SessionMiddleware` (Starlette), separate from the API's JWT bearer system. When you submit the login form:
 
 1. `AdminAuth.login` validates the credentials against `ADMIN_USERNAME` / `ADMIN_PASSWORD`
 2. On success, sets `request.session["admin_authenticated"] = True`

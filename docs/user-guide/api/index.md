@@ -57,7 +57,7 @@ Final URL: `POST /api/v1/users/`.
 
 ### Built-in Authentication
 
-Session-based auth with HTTP-only cookies. Pull the current user from `infrastructure/auth/dependencies`:
+JWT bearer auth through `Authorization: Bearer <token>`. Pull the current user from `infrastructure/auth/dependencies`:
 
 ```python
 from ...infrastructure.auth.dependencies import get_current_user
@@ -182,11 +182,11 @@ What ships out of the box (40 total routes):
 
 | Prefix | Source | Notes |
 |--------|--------|-------|
-| `POST/GET/PATCH/DELETE /api/v1/users/*` | `modules/user/routes.py` | Open create, session/superuser-gated reads/updates |
+| `POST/GET/PATCH/DELETE /api/v1/users/*` | `modules/user/routes.py` | Open create, bearer/superuser-gated reads/updates |
 | `GET /api/v1/tiers/*` | `modules/tier/routes.py` | Public list + lookup by name |
 | `GET/PATCH/DELETE /api/v1/rate-limits/*` | `modules/rate_limit/routes.py` | List/get public; PATCH/DELETE require superuser |
-| `POST /api/v1/auth/login`, `logout`, `refresh-csrf`, `check-auth` | `infrastructure/auth/routes.py` | Session auth |
-| `GET /api/v1/auth/oauth/google`, `oauth/callback/google` | `infrastructure/auth/routes.py` | Google OAuth |
+| `POST /api/v1/auth/login`, `refresh`, `logout`; `GET check-auth` | `infrastructure/auth/routes.py` | JWT bearer auth |
+| `GET /api/v1/auth/oauth/google`, callback; `POST oauth/exchange` | `infrastructure/auth/routes.py` | Google OAuth to JWT |
 | `POST/GET/PATCH/DELETE /api/v1/api-keys/*` | `modules/api_keys/routes.py` | Authenticated key management |
 | `GET /admin/*` | `interfaces/admin/initialize.py` | SQLAdmin UI |
 | `GET /docs`, `/redoc`, `/openapi.json` | FastAPI built-ins | Disabled in production unless `ENABLE_DOCS_IN_PRODUCTION=true` |

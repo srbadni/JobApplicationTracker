@@ -1,6 +1,6 @@
 from typing import Annotated, Any
 
-from fastapi import Depends, Header
+from fastapi import Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,7 +10,6 @@ from .auth.dependencies import (
     get_optional_user,
 )
 from .database.session import async_session
-
 
 # Database
 AsyncSessionDep = Annotated[
@@ -33,13 +32,6 @@ CurrentSuperUserDep = Annotated[
 OptionalUserDep = Annotated[
     dict[str, Any] | None,
     Depends(get_optional_user),
-]
-
-
-# CSRF
-CSRFTokenHeaderDep = Annotated[
-    str | None,
-    Header(alias="X-CSRF-Token"),
 ]
 
 

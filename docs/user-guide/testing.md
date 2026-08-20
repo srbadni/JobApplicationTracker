@@ -182,7 +182,7 @@ async def test_get_by_id_raises_when_missing(mocker):
 
 ## Writing Integration Tests
 
-Integration tests use the real database via `client` and `db_session`. The session-based auth flow needs to be honored — `httpx.AsyncClient` keeps cookies between calls, so log in once and reuse the client.
+Integration tests use the real database via `client` and `db_session`. Login returns a JWT pair; explicitly add the access token to protected requests.
 
 ```python
 # tests/integration/api/test_users.py
@@ -195,23 +195,25 @@ from tests.helpers.factories import build_user_create_payload
 @pytest.mark.integration
 async def test_register_login_and_fetch_me(client, db_session):
     # Register
-    payload = build_user_create_payload(email="alice@example.com", username="alice")
+    payload = build_user_create_payload(email="alice@example.com")
     register_response = await client.post("/api/v1/users/", json=payload)
     assert register_response.status_code == 201
-    user_data = register_response.json()
-    assert user_data["username"] == "alice"
+    assert register_response.json()["email"] == "alice@example.com"
 
-    # Log in — sets session cookie on the client
+    # OAuth2 password form: the username field carries the email address
     login_response = await client.post(
         "/api/v1/auth/login",
-        json={"username": "alice", "password": payload["password"]},
+        data={"username": "alice@example.com", "password": payload["password"]},
     )
     assert login_response.status_code == 200
+    access_token = login_response.json()["access_token"]
 
-    # Authenticated request reuses the cookie automatically
-    me_response = await client.get("/api/v1/users/me/")
+    me_response = await client.get(
+        "/api/v1/users/me",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
     assert me_response.status_code == 200
-    assert me_response.json()["username"] == "alice"
+    assert me_response.json()["email"] == "alice@example.com"
 ```
 
 A small factory to keep payloads readable:
@@ -226,7 +228,7 @@ fake = Faker()
 def build_user_create_payload(**overrides) -> dict:
     return {
         "name": fake.name(),
-        "username": fake.user_name(),
+        "phone_number": f"09{fake.random_int(100000000, 999999999)}",
         "email": fake.email(),
         "password": "TestPass123!",
         **overrides,
@@ -235,7 +237,7 @@ def build_user_create_payload(**overrides) -> dict:
 
 ### Authenticating as a Specific User
 
-Because session auth is cookie-based, the client retains the session for subsequent requests. For tests that need a logged-in superuser without going through the registration flow, seed a superuser directly via the service:
+For tests that need a logged-in superuser without going through registration, seed the user and have the fixture attach the returned bearer token:
 
 ```python
 # tests/conftest.py (additional fixture)
@@ -245,7 +247,7 @@ async def superuser_client(client, db_session):
     await service.create(
         payload={
             "name": "Super",
-            "username": "super",
+            "phone_number": "09123456789",
             "email": "super@test.com",
             "password": "SuperPass123!",
         },
@@ -254,37 +256,30 @@ async def superuser_client(client, db_session):
     # Manually flip is_superuser via crud_users.update if your service doesn't expose it
     await db_session.commit()
 
-    await client.post("/api/v1/auth/login",
-                      json={"username": "super", "password": "SuperPass123!"})
+    login = await client.post(
+        "/api/v1/auth/login",
+        data={"username": "super@test.com", "password": "SuperPass123!"},
+    )
+    client.headers["Authorization"] = f"Bearer {login.json()['access_token']}"
     yield client
 ```
 
 Then `superuser_client` is a logged-in `AsyncClient` for any test that needs admin access.
 
-### Resetting the Session Between Tests
+### Resetting Authentication Between Tests
 
-By default, `httpx.AsyncClient` carries cookies for the lifetime of the client fixture. Since `client` is function-scoped, each test starts with no session. If you ever need to log out mid-test, call `await client.post("/api/v1/auth/logout/")` or clear cookies via `client.cookies.clear()`.
+Since `client` is function-scoped, each test starts without a bearer header. To log out mid-test, call `POST /api/v1/auth/logout` with the current token; this advances `token_version` and revokes existing access and refresh tokens.
 
-## CSRF in Tests
+## Bearer Authentication in Tests
 
-If `CSRF_ENABLED=true` (the default), state-changing requests need a CSRF token. The project's CSRF flow uses double-submit cookies — the server sets a cookie, and you echo the value back in a header.
+API tests do not send cookies or `X-CSRF-Token`. Use the same Bearer header for GET, POST, PATCH, and DELETE requests:
 
-Either:
+```python
+headers = {"Authorization": f"Bearer {access_token}"}
+response = await client.post("/api/v1/widgets/", json={...}, headers=headers)
+```
 
-- **Disable CSRF in the test environment** by setting `CSRF_ENABLED=false` in the test fixture. Quick and pragmatic for service-layer integration tests where CSRF isn't the focus.
-- **Honor the flow** for tests that need to assert it works:
-  ```python
-  # Hit a GET first so the server sets the CSRF cookie
-  await client.get("/api/v1/auth/me/")  # any safe endpoint
-  csrf_token = client.cookies["csrf_token"]   # cookie name from your config
-  response = await client.post(
-      "/api/v1/widgets/",
-      json={...},
-      headers={"X-CSRF-Token": csrf_token},
-  )
-  ```
-
-See [Authentication → Sessions](authentication/sessions.md) for the CSRF specifics.
+Set `AUTH_STATE_BACKEND=memory` before importing the application in tests so OAuth state and login lockout do not require Redis. See [Authentication → Bearer Tokens](authentication/sessions.md).
 
 ## Testing Cached Endpoints
 
@@ -398,4 +393,4 @@ If you're using the `Base.metadata.create_all` shortcut (as in the conftest abov
 
 - **[Development](development.md)** — broader development workflow
 - **[Production](production.md)** — what changes when shipping the test suite to CI
-- **[Authentication → Sessions](authentication/sessions.md)** — full session/CSRF flow you'll exercise in tests
+- **[Authentication → Bearer Tokens](authentication/sessions.md)** — JWT login, refresh, and revocation flow

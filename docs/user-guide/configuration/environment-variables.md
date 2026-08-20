@@ -195,26 +195,22 @@ Generate a strong key:
 python -c "import secrets; print(secrets.token_urlsafe(64))"
 ```
 
-### Sessions
+### JWT Bearer Authentication
 
 ```env
-SESSION_TIMEOUT_MINUTES=30
-SESSION_CLEANUP_INTERVAL_MINUTES=15
-MAX_SESSIONS_PER_USER=5
-SESSION_SECURE_COOKIES=true
-SESSION_BACKEND=redis            # redis | memory
+JWT_ALGORITHM=HS256
+JWT_ACCESS_TOKEN_TTL_SECONDS=900
+JWT_REFRESH_TOKEN_TTL_DAYS=30
+AUTH_STATE_BACKEND=redis         # redis | memory; OAuth/lockout state only
+AUTH_STATE_REDIS_HOST=redis
+AUTH_STATE_REDIS_PORT=6379
+AUTH_STATE_REDIS_DB=2
+AUTH_STATE_REDIS_PASSWORD=
 
 # Number of trusted reverse proxies in front of the app. crudauth uses this to
 # resolve the real client IP (from X-Forwarded-For) for login lockout.
 # 0 = no proxy; set 1 behind a single nginx/Caddy, 2 if Cloudflare is also in front.
 TRUSTED_PROXY_HOPS=0
-```
-
-### CSRF
-
-```env
-# Set false to disable CSRF validation in dev/test
-CSRF_ENABLED=true
 ```
 
 ### Login Lockout

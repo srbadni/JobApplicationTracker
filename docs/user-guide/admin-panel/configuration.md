@@ -92,9 +92,9 @@ app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 Cookie behavior:
 
 - HTTP-only by default
-- Encrypted/signed with `SECRET_KEY`
+- Signed with `SECRET_KEY`
 - Same-site `lax`
-- **Not** marked `Secure` automatically — if you serve the app over HTTPS, set `SESSION_SECURE_COOKIES=true` and adjust the middleware as needed (the Starlette `SessionMiddleware` doesn't have a built-in production-secure flag the way our session backend does)
+- **Not** marked `Secure` by the current configuration — when serving over HTTPS, pass `https_only=True` to `SessionMiddleware`
 
 For production behind HTTPS, you'll typically want to:
 
@@ -144,7 +144,7 @@ The admin panel itself doesn't change behavior between `local` / `development` /
 
 - **Cookie security**: derived from your reverse proxy / TLS setup, not from the `ENVIRONMENT` setting
 - **Logging**: admin actions go through the same logger configured by `infrastructure/logging/`
-- **Session backend**: Starlette's `SessionMiddleware` is in-memory + cookie-based, not the same as the API's `SESSION_BACKEND` (Redis/memory). Restart-resilience for the *admin* login isn't relevant — admins re-log-in fine.
+- **Session boundary**: Starlette's cookie is used only by SQLAdmin. API routes accept JWT bearer tokens and ignore this admin cookie.
 
 ## Troubleshooting
 

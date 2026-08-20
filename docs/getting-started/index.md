@@ -77,7 +77,7 @@ Pick whichever workflow fits you:
 
     - **FastAPI app** on port 8000
     - **PostgreSQL** database
-    - **Redis** for cache, rate limiting, and sessions
+    - **Redis** for cache, rate limiting, and temporary OAuth/auth state
 
 ## Verify It's Running
 
@@ -94,7 +94,7 @@ You now have a working FastAPI app with:
 - REST API with automatic OpenAPI docs
 - PostgreSQL database with Alembic migrations
 - Redis-backed cache and rate limiting
-- Session-based authentication with optional OAuth (Google, GitHub)
+- JWT bearer authentication with optional OAuth (Google)
 - API keys with per-key permissions
 - SQLAdmin admin interface at `/admin`
 - Async background task support via Taskiq
@@ -114,27 +114,27 @@ curl -X POST "http://localhost:8000/api/v1/users/" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "John Doe",
-    "username": "johndoe",
+    "phone_number": "09123456789",
     "email": "john@example.com",
     "password": "securepassword"
   }'
 ```
 
-### 3. Log In (Session Cookie)
+### 3. Log In (JWT Bearer)
 
 ```bash
 curl -X POST "http://localhost:8000/api/v1/auth/login" \
   -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "username=johndoe&password=securepassword" \
-  -c cookies.txt
+  -d "username=john@example.com&password=securepassword"
 ```
 
-The response sets an HTTP-only session cookie and returns a CSRF token. Use `-b cookies.txt` on subsequent requests to send the session along.
+The response returns `access_token` and `refresh_token`. Send the access token in the Bearer header.
 
 ### 4. Get the Current User
 
 ```bash
-curl http://localhost:8000/api/v1/users/me -b cookies.txt
+curl http://localhost:8000/api/v1/users/me \
+  -H "Authorization: Bearer <access_token>"
 ```
 
 ## Next Steps
@@ -143,7 +143,7 @@ curl http://localhost:8000/api/v1/users/me -b cookies.txt
 
 - **[Configuration Guide](configuration.md)** - Environment variables and settings
 - **[Project Structure](../user-guide/project-structure.md)** - How the code is organized
-- **[Authentication](../user-guide/authentication/index.md)** - Sessions, OAuth, and API keys
+- **[Authentication](../user-guide/authentication/index.md)** - JWT bearer, OAuth, and API keys
 
 ### Popular Features
 

@@ -234,7 +234,7 @@ async def delete_widget(
 
 ## Authentication
 
-All session-based auth dependencies live in `infrastructure/auth/dependencies`.
+All JWT bearer auth dependencies live in `infrastructure/auth/dependencies`.
 
 ### Require Login
 
@@ -359,7 +359,6 @@ Re-exported from FastCRUD in `infrastructure/auth/http_exceptions.py`:
 - `UnprocessableEntityException` — 422
 - `DuplicateValueException` — 409
 - `RateLimitException` — 429
-- `CSRFException` — 403 with `X-CSRF-Error` header (defined locally for CSRF flows)
 
 ### The `handle_exception` Bridge
 

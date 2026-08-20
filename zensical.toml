@@ -108,7 +108,7 @@ name = "FastAPI on PyPI"
     ] },
     { "Authentication" = [
         { "Overview" = "user-guide/authentication/index.md" },
-        { "Sessions" = "user-guide/authentication/sessions.md" },
+        { "Bearer Tokens" = "user-guide/authentication/sessions.md" },
         { "User Management" = "user-guide/authentication/user-management.md" },
         { "Permissions" = "user-guide/authentication/permissions.md" },
     ] },

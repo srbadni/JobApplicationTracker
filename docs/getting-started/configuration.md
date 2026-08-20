@@ -67,17 +67,17 @@ PRODUCTION_SECURITY_VALIDATION_ENABLED=true
 PRODUCTION_SECURITY_STRICT_MODE=false
 ```
 
-### Sessions
+### JWT Bearer Authentication
 
 ```env
-SESSION_TIMEOUT_MINUTES=30
-SESSION_CLEANUP_INTERVAL_MINUTES=15
-MAX_SESSIONS_PER_USER=5
-SESSION_SECURE_COOKIES=true
-SESSION_BACKEND=redis            # redis | memory
+JWT_ALGORITHM=HS256
+JWT_ACCESS_TOKEN_TTL_SECONDS=900
+JWT_REFRESH_TOKEN_TTL_DAYS=30
 
-# CSRF protection (set false to disable in dev/test)
-CSRF_ENABLED=true
+# OAuth state and login-lockout counters; JWTs themselves remain stateless.
+AUTH_STATE_BACKEND=redis         # redis | memory
+AUTH_STATE_REDIS_HOST=redis
+AUTH_STATE_REDIS_DB=2
 
 # Trusted reverse proxies in front of the app (used to resolve the real client
 # IP for login lockout). 0 = none; set 1 behind a single nginx/Caddy.

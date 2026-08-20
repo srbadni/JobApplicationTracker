@@ -25,14 +25,17 @@ class TestProductionSecurityValidator:
             "REDIS_PASSWORD": "secure_redis_password",
             "CACHE_BACKEND": "memcached",
             "RATE_LIMITER_BACKEND": "memcached",
-            "SESSION_BACKEND": "redis",
+            "AUTH_STATE_BACKEND": "redis",
+            "AUTH_STATE_REDIS_HOST": "localhost",
+            "AUTH_STATE_REDIS_PORT": 6379,
+            "AUTH_STATE_REDIS_DB": 2,
+            "AUTH_STATE_REDIS_PASSWORD": "secure_auth_state_password",
             "CORS_ENABLED": True,
             "CORS_ORIGINS": "https://example.com",
             "DEBUG": False,
             "ENABLE_DOCS_IN_PRODUCTION": False,
-            "SESSION_SECURE_COOKIES": True,
-            "SESSION_TIMEOUT_MINUTES": 30,
-            "CSRF_ENABLED": True,
+            "JWT_ACCESS_TOKEN_TTL_SECONDS": 900,
+            "JWT_REFRESH_TOKEN_TTL_DAYS": 30,
             "ADMIN_ENABLED": True,
             "ADMIN_USERNAME": "secure_admin_user",
             "ADMIN_PASSWORD": "very_secure_admin_password_123",
@@ -279,27 +282,22 @@ class TestProductionSecurityValidator:
         docs_warnings = [log for log in warning_logs if "API documentation" in log.message]
         assert len(docs_warnings) > 0
 
-    def test_insecure_session_config_logs_warning(self, caplog):
-        """Test that insecure session configuration logs warnings."""
+    def test_excessive_jwt_lifetimes_log_warnings(self, caplog):
+        """Test that excessive access and refresh lifetimes log warnings."""
         settings = self.create_mock_settings(
-            SESSION_SECURE_COOKIES=False,
-            SESSION_TIMEOUT_MINUTES=180,  # 3 hours
-            CSRF_ENABLED=False,
+            JWT_ACCESS_TOKEN_TTL_SECONDS=7200,
+            JWT_REFRESH_TOKEN_TTL_DAYS=180,
         )
         validator = ProductionSecurityValidator(settings)
 
         validator.validate_production_security()
 
-        # Check for session warnings
         warning_logs = [record for record in caplog.records if record.levelname == "WARNING"]
+        access_warnings = [log for log in warning_logs if "access-token lifetime" in log.message]
+        refresh_warnings = [log for log in warning_logs if "refresh-token lifetime" in log.message]
 
-        cookie_warnings = [log for log in warning_logs if "SESSION_SECURE_COOKIES" in log.message]
-        timeout_warnings = [log for log in warning_logs if "Session timeout" in log.message]
-        csrf_warnings = [log for log in warning_logs if "CSRF protection" in log.message]
-
-        assert len(cookie_warnings) > 0
-        assert len(timeout_warnings) > 0
-        assert len(csrf_warnings) > 0
+        assert len(access_warnings) > 0
+        assert len(refresh_warnings) > 0
 
     def test_weak_admin_credentials_logs_warning(self, caplog):
         """Test that weak admin credentials log warnings."""

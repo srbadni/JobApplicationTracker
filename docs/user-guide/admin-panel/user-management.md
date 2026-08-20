@@ -22,7 +22,7 @@ class AdminAuth(AuthenticationBackend):
         return False
 ```
 
-On success, `admin_authenticated=True` is stored in a `SECRET_KEY`-encrypted Starlette session cookie. Subsequent requests check that flag.
+On success, `admin_authenticated=True` is stored in a `SECRET_KEY`-signed Starlette session cookie. Subsequent requests check that flag.
 
 There is no admin user model, no admin password hashing, no admin user table — credentials live in the environment.
 
@@ -117,19 +117,22 @@ Skip the SQLAdmin login entirely. Restrict `/admin` access to authenticated app 
 from sqladmin.authentication import AuthenticationBackend
 from starlette.requests import Request
 
-# Pseudocode — wire to your existing session backend
+# Pseudocode — SQLAdmin keeps its own signed Starlette session
 class AdminAuth(AuthenticationBackend):
     async def login(self, request: Request) -> bool:
-        # Reuse your /api/v1/auth/login flow:
-        # validate credentials, look up the user, check is_superuser
+        # Validate credentials with the application auth service, check
+        # is_superuser, then store that user's id in request.session.
         ...
 
     async def authenticate(self, request: Request) -> bool:
-        # Read the app's session_id cookie, validate it, confirm is_superuser
+        # Read the SQLAdmin-only session value, reload the user, and confirm
+        # that the account is still active and is_superuser.
         ...
 ```
 
-Trade-offs: now any app superuser can log in. You also need to think about CSRF (the app uses double-submit; SQLAdmin posts forms separately).
+Trade-offs: now any app superuser can log in. Protect SQLAdmin's cookie-authenticated
+forms against CSRF separately; the API's Bearer-token model does not cover admin
+browser sessions.
 
 ### Option B: Add an `AdminUser` Model
 

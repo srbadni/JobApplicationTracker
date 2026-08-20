@@ -27,8 +27,8 @@ This guide covers all aspects of working with the job-tracker:
 - **[API Versioning](api/versioning.md)** - Manage API versions and backward compatibility
 
 ### Security & Authentication
-- **[Authentication Overview](authentication/index.md)** - Secure your API with session-based auth, OAuth, and API keys
-- **[Sessions](authentication/sessions.md)** - Server-side sessions with HTTP-only cookies and CSRF protection
+- **[Authentication Overview](authentication/index.md)** - Secure your API with JWT bearer auth, OAuth, and API keys
+- **[Bearer Tokens](authentication/sessions.md)** - Access, refresh, and revocation lifecycle
 - **[User Management](authentication/user-management.md)** - Handle user registration, login, and profiles
 - **[Permissions](authentication/permissions.md)** - Implement role-based access control
 

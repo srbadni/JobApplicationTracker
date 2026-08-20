@@ -1,43 +1,43 @@
-"""Auth dependencies: resolve the crudauth ``Principal`` and the dict-compat user.
-
-Routes depend on these; they wrap the crudauth ``auth`` singleton so the session
-engine (validation, CSRF, lockout) lives in crudauth while handlers keep their
-existing dict/Principal contracts. ``get_current_user`` returns the same user
-dict the rest of the app (and the API-key module) already consumes, so the public
-contract is unchanged.
-"""
+"""Bearer-auth dependencies and the application's dict-compatible user contract."""
 
 from typing import Annotated, Any
 
 from crudauth import Principal
 from crudauth.exceptions import ForbiddenException, UnauthorizedException
 from fastapi import Depends
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...modules.user.crud import crud_users
 from ..database.session import async_session
 from .setup import auth
 
+oauth2_bearer = OAuth2PasswordBearer(
+    tokenUrl="/api/v1/auth/login",
+    auto_error=False,
+)
+
 
 async def get_current_principal(
-    principal: Annotated[Principal, Depends(auth.current_user())],
+    _access_token: Annotated[str | None, Depends(oauth2_bearer)],
+    principal: Annotated[Principal, Depends(auth.current_user(transport="bearer"))],
 ) -> Principal:
-    """The authenticated crudauth ``Principal`` (session-validated, CSRF-enforced).
+    """Return the principal resolved from a valid bearer access token.
 
-    A single named dependency so routes that need the session id
-    (``principal.metadata["session_id"]``) or the transport can depend on it and
-    tests can override it. Raises 401 when there is no valid session.
+    ``oauth2_bearer`` exposes the password/bearer flow in OpenAPI so Swagger UI
+    can obtain and attach the token. crudauth performs the actual JWT validation.
     """
     return principal
 
 
 async def get_optional_principal(
-    principal: Annotated[Principal | None, Depends(auth.current_user(optional=True))],
+    _access_token: Annotated[str | None, Depends(oauth2_bearer)],
+    principal: Annotated[
+        Principal | None,
+        Depends(auth.current_user(optional=True, transport="bearer")),
+    ],
 ) -> Principal | None:
-    """The crudauth ``Principal`` if authenticated, else ``None`` (never raises on absence).
-
-    Still enforces CSRF on unsafe methods when a session is present.
-    """
+    """Return the bearer principal, or ``None`` when no credential is present."""
     return principal
 
 
@@ -47,9 +47,8 @@ async def get_current_user(
 ) -> dict[str, Any]:
     """Get the current authenticated user as a dict (resolved by crudauth).
 
-    crudauth validates the cookie and enforces CSRF on unsafe methods; we re-load
-    the full row (filtering soft-deleted users) so the return value stays the dict
-    the handlers expect.
+    crudauth validates the bearer token; this dependency re-loads the full row
+    (filtering soft-deleted users) so handlers keep their existing user-dict API.
 
     Raises:
         UnauthorizedException: If not authenticated or the user doesn't exist.

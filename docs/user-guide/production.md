@@ -20,11 +20,11 @@ The password checked is the one actually used to connect: when `DATABASE_URL` is
 
 These don't block startup but you should fix them before the app sees real traffic:
 
-- **Redis without a password** (`CACHE_REDIS_PASSWORD`, `SESSION_REDIS_PASSWORD`, `RATE_LIMITER_REDIS_PASSWORD`, `TASKIQ_REDIS_PASSWORD` all unset)
+- **Redis without a password** (`CACHE_REDIS_PASSWORD`, `RATE_LIMITER_REDIS_PASSWORD`, `AUTH_STATE_REDIS_PASSWORD`, `TASKIQ_REDIS_PASSWORD` all unset)
 - **`CORS_ORIGINS=*`** — allows any origin to send credentialed requests
 - **`DEBUG=true`** — exposes stack traces in error responses
 - **API docs (`/docs`, `/redoc`) reachable** — see "Documentation" below
-- **Session config too loose** (cookies not marked `Secure`, very long max-age, etc.)
+- **Excessive JWT lifetimes** (access or refresh tokens remain valid longer than recommended)
 - **Weak admin credentials** (default username/password patterns)
 
 The validator is **not** a substitute for a thorough threat model — it catches the most common deployment mistakes, not all of them. Treat it as a smoke test.
@@ -67,12 +67,14 @@ CACHE_BACKEND=redis
 CACHE_REDIS_HOST=<redis-host>
 CACHE_REDIS_PASSWORD=<redis-password>
 
-# Sessions
-SESSION_BACKEND=redis                  # redis | memory
-SESSION_REDIS_HOST=<redis-host>
-SESSION_REDIS_PASSWORD=<redis-password>
-SESSION_SECURE_COOKIES=true            # required when serving over HTTPS
-CSRF_ENABLED=true
+# JWT bearer auth and shared OAuth/login-lockout state
+JWT_ALGORITHM=HS256
+JWT_ACCESS_TOKEN_TTL_SECONDS=900
+JWT_REFRESH_TOKEN_TTL_DAYS=30
+AUTH_STATE_BACKEND=redis
+AUTH_STATE_REDIS_HOST=<redis-host>
+AUTH_STATE_REDIS_PASSWORD=<redis-password>
+AUTH_STATE_REDIS_DB=2
 TRUSTED_PROXY_HOPS=1                    # set to the number of proxies in front of the app
 
 # Rate limiting
@@ -105,7 +107,7 @@ Notes worth calling out:
 
 - **`CREATE_TABLES_ON_STARTUP=false`** — production should run schema changes via Alembic, not by `Base.metadata.create_all` on every boot.
 - **`CONFIRM_PRODUCTION_MIGRATION=yes`** — `migrations/env.py` calls `validate_production_migration` which **refuses** to run migrations against production unless this is explicitly set. Ship deployment commands with it; never set it in long-lived env files.
-- **`SESSION_SECURE_COOKIES=true`** — cookies are sent only over HTTPS. Required if you're terminating TLS at a proxy.
+- **Short JWT lifetimes** — reduce the exposure window if a bearer credential leaks.
 - **`OPENAPI_URL=`** (empty) disables the Swagger UI and OpenAPI spec entirely. The validator warns when this is exposed in production.
 
 See [Configuration → Environment-Specific](configuration/environment-specific.md) for the full per-environment matrix.
@@ -293,23 +295,23 @@ Before shipping:
 - [ ] `DEBUG=false` (validator warns otherwise)
 - [ ] `CORS_ORIGINS` lists only your frontend origins; no `*`
 - [ ] `OPENAPI_URL=` (empty) — `/docs` and `/redoc` are not exposed
-- [ ] `SESSION_SECURE_COOKIES=true` and you're terminating TLS at a proxy
-- [ ] `CSRF_ENABLED=true`
+- [ ] JWT access and refresh lifetimes match your security policy
+- [ ] `AUTH_STATE_BACKEND=redis` for multi-worker OAuth/login-lockout state
 - [ ] All Redis instances have `*_REDIS_PASSWORD` set
 - [ ] `ADMIN_ENABLED=false` (or restricted at the network layer)
 - [ ] Database migrations run via the `migrate` Dockerfile stage with `CONFIRM_PRODUCTION_MIGRATION=yes`
 - [ ] `CREATE_TABLES_ON_STARTUP=false`
 - [ ] Pre-commit and CI are running on every PR (lint, mypy, tests)
-- [ ] Backups configured for the production database and Redis (if you're using Redis for sessions / state you can't lose)
+- [ ] Backups configured for the production database and required Redis state
 - [ ] Monitoring set up: error rates, latency p95/p99, DB connection saturation, queue depth, Redis memory
 
 ## Scaling Considerations
 
 ### API instances
 
-Horizontal scaling is straightforward — add more `prod` containers behind your load balancer. Sessions are stored in Redis (when `SESSION_BACKEND=redis`), so any instance can serve any user.
+Horizontal scaling is straightforward — add more `prod` containers behind your load balancer. JWT validation is stateless, so any instance can serve any bearer-authenticated user.
 
-If you're stuck on `SESSION_BACKEND=memory`, you can't horizontally scale safely: each instance has its own session table. Switch backends before scaling.
+OAuth state, one-time exchange codes, and login-lockout counters must be shared across workers; use `AUTH_STATE_BACKEND=redis` rather than memory.
 
 ### Database
 
@@ -321,7 +323,7 @@ Managed Postgres works the same way — point `DATABASE_URL` at the provider and
 
 ### Redis
 
-The defaults use four separate DB numbers (`CACHE_REDIS_DB=0`, `SESSION_REDIS_DB=1`, `RATE_LIMITER_REDIS_DB=1`, `TASKIQ_REDIS_DB=3`) on the **same** Redis instance. Fine for small deployments. At scale, split sessions and the cache onto different Redis clusters — sessions are small and durability-sensitive; the cache is large, eviction-tolerant, and high-traffic. Mixing them puts your sessions at risk during cache memory pressure.
+The defaults use Redis for cache, authentication state, rate limiting, and Taskiq. A shared instance is fine for small deployments; at scale, isolate eviction-tolerant cache data from authentication state and other operational data.
 
 ### Taskiq workers
 
@@ -333,9 +335,9 @@ Worker scaling is independent of API scaling. If your tasks become a bottleneck,
 
 Read the message — it tells you which check failed. Don't bypass it; fix the underlying config.
 
-### "Sessions invalidate after every deploy"
+### "Google OAuth callback fails on another worker"
 
-You're on `SESSION_BACKEND=memory`. Switch to `redis` and add the relevant `SESSION_REDIS_*` env vars. (Sessions support only `redis` and `memory`; memcached is not a session backend.)
+You're on `AUTH_STATE_BACKEND=memory`. Switch it to `redis` so OAuth state and one-time exchange codes are shared across workers.
 
 ### "Sudden burst of 429s after a config change"
 
@@ -367,5 +369,5 @@ The worker process isn't running, isn't pointed at the same Redis, or hasn't imp
 
 - **[Configuration → Environment-Specific](configuration/environment-specific.md)** — per-environment env-var matrix
 - **[Database → Migrations](database/migrations.md)** — zero-downtime schema-change patterns
-- **[Authentication → Sessions](authentication/sessions.md)** — production session configuration
+- **[Authentication → Bearer Tokens](authentication/sessions.md)** — production JWT configuration
 - **[Testing](testing.md)** — the test setup that ships with the project

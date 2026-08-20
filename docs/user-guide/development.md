@@ -231,19 +231,20 @@ docker compose exec redis redis-cli
 > LRANGE default 0 -1                # pending tasks
 ```
 
-Each subsystem uses a different Redis DB number; see `.env.example` for the conventions (`CACHE_REDIS_DB=0`, `SESSION_REDIS_DB=1`, `RATE_LIMITER_REDIS_DB=1` (yes, the rate limiter shares with sessions in defaults — change one if you want isolation), `TASKIQ_REDIS_DB=3`).
+Each subsystem uses a Redis DB; see `.env.example` for the conventions (`CACHE_REDIS_DB=0`, `RATE_LIMITER_REDIS_DB=1`, `AUTH_STATE_REDIS_DB=2`, `TASKIQ_REDIS_DB=3`).
 
-### Watch sessions live
+### Inspect authentication state
 
-Session storage is managed by the `crudauth` library, so there's no project `SessionManager` to call. If a user reports being logged out unexpectedly, inspect the session store directly in Redis:
+JWT validation is stateless; there is no session table to inspect. OAuth state, one-time exchange codes, and login-lockout counters use Redis when `AUTH_STATE_BACKEND=redis`:
 
 ```bash
 redis-cli
-> SELECT 1                           # session backend DB (SESSION_REDIS_DB)
-> KEYS 'session:*'
+> SELECT 2                           # AUTH_STATE_REDIS_DB by default
+> KEYS 'oauth_state:*'
+> KEYS 'oauth_exchange:*'
 ```
 
-See [Authentication → Sessions](authentication/sessions.md) for full details.
+See [Authentication → Bearer Tokens](authentication/sessions.md) for full details.
 
 ### Use the interactive docs
 

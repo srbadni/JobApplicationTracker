@@ -159,7 +159,7 @@ Confirm the response actually carries the no-cache header:
 
 ```bash
 curl -I http://localhost:8000/api/v1/users/me \
-    -H "Cookie: session_id=..."
+    -H "Authorization: Bearer <access_token>"
 # look for: Cache-Control: private, no-cache, no-store, must-revalidate
 ```
 

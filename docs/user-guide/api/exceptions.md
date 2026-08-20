@@ -53,7 +53,6 @@ Re-exported from FastCRUD in `backend/src/infrastructure/auth/http_exceptions.py
 | `UnprocessableEntityException` | 422 |
 | `RateLimitException` | 429 |
 | `HTTPException` | base FastAPI class |
-| `CSRFException` | 403 with `X-CSRF-Error: true` header (defined locally) |
 
 Use these from routes when you have an HTTP-shaped failure and no service involvement:
 
@@ -251,7 +250,7 @@ The global handler (and `handle_exception()`) picks up the new mapping automatic
 
 ## Adding a Custom HTTP Exception
 
-If you need an HTTP exception not already exported, define it in `infrastructure/auth/http_exceptions.py` like the existing `CSRFException`:
+If you need an HTTP exception not already exported, define it in `infrastructure/auth/http_exceptions.py`:
 
 ```python
 class PaymentRequiredException(HTTPException):

@@ -15,7 +15,7 @@ The project ships four overlapping mechanisms. Pick the one(s) that fit your use
 
 These compose. A typical request goes through:
 
-1. **Authentication** — session cookie (or API key) identifies *who*
+1. **Authentication** — bearer access token (or API key) identifies *who*
 2. **Coarse access** — superuser flag for admin endpoints
 3. **Fine-grained access** — service-layer ownership / tier checks
 4. **Rate limiting** — tier-based per-route limits (separate concern)
@@ -45,7 +45,7 @@ async def gdpr_anonymize(
 
 The leading `_:` is the codebase convention for dependency-only parameters whose value isn't used.
 
-`get_current_superuser` returns 401 if not authenticated and 403 if authenticated but not a superuser. See [Sessions](sessions.md) for the dependency reference.
+`get_current_superuser` returns 401 if not authenticated and 403 if authenticated but not a superuser. See [Bearer Tokens](sessions.md) for the dependency reference.
 
 ### When to Use the Superuser Flag
 
@@ -175,9 +175,8 @@ To configure rate limits for a tier:
 ```bash
 # Create a rate limit (admin only)
 curl -X POST http://localhost:8000/api/v1/rate-limits/ \
-  -b superuser_cookies.txt \
+  -H "Authorization: Bearer <superuser_access_token>" \
   -H "Content-Type: application/json" \
-  -H "X-CSRF-Token: <token>" \
   -d '{
     "tier_id": 2,
     "name": "pro_users",
@@ -242,9 +241,8 @@ Permissions are passed at creation time:
 
 ```bash
 curl -X POST http://localhost:8000/api/v1/api-keys/ \
-  -b cookies.txt \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
-  -H "X-CSRF-Token: <token>" \
   -d '{
     "name": "Read-only analytics integration",
     "permissions": {
@@ -380,7 +378,7 @@ Superuser endpoints touch sensitive data. Log the actor + action server-side —
 
 ## Next Steps
 
-- **[Sessions](sessions.md)** — How session-based authentication works
+- **[Bearer Tokens](sessions.md)** — Access, refresh, and revocation lifecycle
 - **[Rate Limiting](../rate-limiting/index.md)** — Tier-based rate limit middleware
 - **[Exceptions](../api/exceptions.md)** — How `PermissionDeniedError` becomes 403
 - **[Production](../production.md)** — Hardening checklist

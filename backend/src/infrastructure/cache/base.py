@@ -119,8 +119,8 @@ class CacheBackend(ABC):
             # Delete user cache when user is updated
             await cache.delete("user:123")
 
-            # Delete session on logout
-            await cache.delete(f"session:{session_id}")
+            # Delete a cached job posting after an update
+            await cache.delete(f"job_posting:{job_posting_id}")
             ```
         """
         pass

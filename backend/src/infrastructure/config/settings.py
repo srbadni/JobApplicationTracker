@@ -6,7 +6,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings
 from starlette.config import Config
 
-from .enums import CacheBackend, LogFormat, LogLevel, SessionBackend, TaskiqBrokerType
+from .enums import AuthStateBackend, CacheBackend, LogFormat, LogLevel, TaskiqBrokerType
 
 logger = logging.getLogger(__name__)
 
@@ -235,14 +235,14 @@ class AuthSettings(BaseSettings):
     """Authentication-related settings."""
 
     SECRET_KEY: str = config("SECRET_KEY", default="insecure-secret-key-change-this")
-
-    SESSION_TIMEOUT_MINUTES: int = config("SESSION_TIMEOUT_MINUTES", default=30, cast=int)
-    SESSION_CLEANUP_INTERVAL_MINUTES: int = config("SESSION_CLEANUP_INTERVAL_MINUTES", default=15, cast=int)
-    MAX_SESSIONS_PER_USER: int = config("MAX_SESSIONS_PER_USER", default=5, cast=int)
-    SESSION_SECURE_COOKIES: bool = config("SESSION_SECURE_COOKIES", default=True, cast=bool)
-    SESSION_BACKEND: str = config("SESSION_BACKEND", default=SessionBackend.REDIS.value)
-
-    CSRF_ENABLED: bool = config("CSRF_ENABLED", default=True, cast=bool)
+    JWT_ALGORITHM: str = config("JWT_ALGORITHM", default="HS256")
+    JWT_ACCESS_TOKEN_TTL_SECONDS: int = config("JWT_ACCESS_TOKEN_TTL_SECONDS", default=900, cast=int)
+    JWT_REFRESH_TOKEN_TTL_DAYS: int = config("JWT_REFRESH_TOKEN_TTL_DAYS", default=30, cast=int)
+    AUTH_STATE_BACKEND: str = config("AUTH_STATE_BACKEND", default=AuthStateBackend.REDIS.value)
+    AUTH_STATE_REDIS_HOST: str = config("AUTH_STATE_REDIS_HOST", default="localhost")
+    AUTH_STATE_REDIS_PORT: int = config("AUTH_STATE_REDIS_PORT", default=6379, cast=int)
+    AUTH_STATE_REDIS_DB: int = config("AUTH_STATE_REDIS_DB", default=2, cast=int)
+    AUTH_STATE_REDIS_PASSWORD: str | None = config("AUTH_STATE_REDIS_PASSWORD", default=None)
 
     # Number of trusted reverse proxies in front of the app. crudauth resolves the
     # client IP for login lockout from the last hop of X-Forwarded-For; 0 = the socket

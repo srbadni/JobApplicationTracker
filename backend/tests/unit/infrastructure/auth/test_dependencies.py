@@ -1,4 +1,4 @@
-"""Unit tests for the crudauth-backed auth dependencies.
+"""Unit tests for the crudauth-backed bearer auth dependencies.
 
 The integration fixtures (`auth_client` / `superuser_auth_client`) override these
 functions, so the real bodies — the dict re-load, the soft-delete filter, and the

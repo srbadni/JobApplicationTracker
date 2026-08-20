@@ -11,9 +11,10 @@ from crudauth.oauth import OAuthAccountService, OAuthProviderFactory
 from crudauth.storage import get_session_storage
 
 from ..config.settings import settings
-from .setup import _session_redis_url, _use_redis, auth
+from .setup import _auth_state_redis_url, _use_redis_state, auth
 
 OAUTH_STATE_TTL_SECONDS = 1800
+OAUTH_EXCHANGE_TTL_SECONDS = 60
 
 _redirect_base = settings.OAUTH_REDIRECT_BASE_URL.rstrip("/")
 
@@ -33,13 +34,32 @@ oauth_providers = {
 }
 
 oauth_state_storage = get_session_storage(
-    "redis" if _use_redis else "memory",
+    "redis" if _use_redis_state else "memory",
     prefix="oauth_state:",
     expiration=OAUTH_STATE_TTL_SECONDS,
-    redis_url=_session_redis_url if _use_redis else None,
+    redis_url=_auth_state_redis_url if _use_redis_state else None,
+)
+
+oauth_exchange_storage = get_session_storage(
+    "redis" if _use_redis_state else "memory",
+    prefix="oauth_exchange:",
+    expiration=OAUTH_EXCHANGE_TTL_SECONDS,
+    redis_url=_auth_state_redis_url if _use_redis_state else None,
 )
 
 oauth_account_service = OAuthAccountService(
     repo=auth.repo,
     new_user_fields=lambda ctx: {"name": ctx.suggested_name},
 )
+
+
+async def initialize_oauth_storage() -> None:
+    """Open connections used by OAuth state and exchange-code storage."""
+    await oauth_state_storage.initialize()
+    await oauth_exchange_storage.initialize()
+
+
+async def close_oauth_storage() -> None:
+    """Close OAuth state and exchange-code storage connections."""
+    await oauth_exchange_storage.close()
+    await oauth_state_storage.close()

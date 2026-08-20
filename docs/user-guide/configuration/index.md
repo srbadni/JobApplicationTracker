@@ -105,15 +105,17 @@ POSTGRES_DB=your_database
 CREATE_TABLES_ON_STARTUP=true
 ```
 
-### Security & Sessions
+### Security & JWT Bearer Authentication
 
 ```env
 SECRET_KEY=your-super-secret-key-here
 
-SESSION_TIMEOUT_MINUTES=30
-SESSION_SECURE_COOKIES=true
-SESSION_BACKEND=redis           # redis | memory
-CSRF_ENABLED=true
+JWT_ALGORITHM=HS256
+JWT_ACCESS_TOKEN_TTL_SECONDS=900
+JWT_REFRESH_TOKEN_TTL_DAYS=30
+AUTH_STATE_BACKEND=redis        # redis | memory; OAuth/lockout state only
+AUTH_STATE_REDIS_HOST=redis
+AUTH_STATE_REDIS_DB=2
 TRUSTED_PROXY_HOPS=0            # trusted reverse proxies in front of the app
 ```
 
@@ -182,7 +184,7 @@ ENVIRONMENT=staging
 DEBUG=false
 POSTGRES_SERVER=staging-db.example.com
 CACHE_REDIS_HOST=staging-redis.example.com
-SESSION_SECURE_COOKIES=true
+AUTH_STATE_BACKEND=redis
 ```
 
 ### Production
@@ -223,7 +225,7 @@ To run a Taskiq worker, add a worker service to your Compose file with the comma
 
 ### Feature Toggles
 
-The project already exposes toggles like `CACHE_ENABLED`, `RATE_LIMITER_ENABLED`, `TASKIQ_ENABLED`, `ADMIN_ENABLED`, and `CSRF_ENABLED`. You can add your own in a settings class:
+The project already exposes toggles like `CACHE_ENABLED`, `RATE_LIMITER_ENABLED`, `TASKIQ_ENABLED`, and `ADMIN_ENABLED`. You can add your own in a settings class:
 
 ```python
 class FeatureSettings(BaseSettings):
@@ -266,7 +268,7 @@ python -c "import secrets; print(secrets.token_urlsafe(64))"
 ### Performance
 - Tune `POSTGRES_POOL_SIZE` and `POSTGRES_MAX_OVERFLOW` for your workload
 - Use separate Redis databases for cache (`CACHE_REDIS_DB=0`), rate limiting (`RATE_LIMITER_REDIS_DB=1`), and taskiq (`TASKIQ_REDIS_DB=3`)
-- Set sensible `SESSION_TIMEOUT_MINUTES` and `MAX_SESSIONS_PER_USER`
+- Keep access and refresh token lifetimes appropriate for your threat model
 
 ### Maintenance
 - Document custom environment variables in `.env.example`

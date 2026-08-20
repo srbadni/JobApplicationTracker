@@ -57,7 +57,7 @@ class ProductionSecurityValidator:
     - Database credential security checks
     - Redis configuration security analysis
     - CORS policy validation
-    - Session security configuration checks
+    - JWT lifetime configuration checks
     - Admin interface security validation
     - Debug mode and documentation exposure checks
 
@@ -82,7 +82,7 @@ class ProductionSecurityValidator:
 
         Note:
             The validator examines all security-relevant settings including
-            database credentials, Redis configurations, session settings,
+            database credentials, Redis configurations, JWT settings,
             and admin interface configurations.
         """
         self.settings = settings
@@ -182,7 +182,7 @@ class ProductionSecurityValidator:
         if self._is_insecure_secret_key():
             errors.append(
                 "SECRET_KEY is using default or insecure value. "
-                "This compromises session security, CSRF protection, and JWT tokens. "
+                "This compromises JWT signatures and admin session cookie signatures. "
                 "Generate a strong, unique secret key for production."
             )
 
@@ -215,7 +215,7 @@ class ProductionSecurityValidator:
             - Overly permissive CORS settings
             - Debug mode enabled in production
             - API documentation exposed
-            - Insecure session configurations
+            - Excessive JWT lifetimes
             - Weak admin credentials
 
             While these don't prevent startup, they should be addressed
@@ -225,7 +225,7 @@ class ProductionSecurityValidator:
             Warning issues that would be detected:
             - CORS_ORIGINS set to '*'
             - Redis without password authentication
-            - Session timeout too long
+            - Access or refresh token lifetime too long
             - Weak admin usernames or passwords
         """
         warnings = []
@@ -256,8 +256,8 @@ class ProductionSecurityValidator:
         if docs_warning:
             warnings.append(docs_warning)
 
-        session_warnings = self._check_session_security()
-        warnings.extend(session_warnings)
+        jwt_warnings = self._check_jwt_security()
+        warnings.extend(jwt_warnings)
 
         admin_warnings = self._check_admin_credentials()
         warnings.extend(admin_warnings)
@@ -496,8 +496,8 @@ class ProductionSecurityValidator:
 
         Note:
             This method collects Redis configurations from all services
-            that may use Redis including cache, rate limiting, admin
-            interface, and session storage.
+            that may use Redis including cache, rate limiting, and temporary
+            authentication state.
         """
         configs = []
 
@@ -525,14 +525,14 @@ class ProductionSecurityValidator:
                 }
             )
 
-        if self.settings.SESSION_BACKEND == "redis":
+        if self.settings.AUTH_STATE_BACKEND == "redis":
             configs.append(
                 {
-                    "service": "sessions",
-                    "host": self.settings.CACHE_REDIS_HOST,
-                    "port": self.settings.CACHE_REDIS_PORT,
-                    "db": self.settings.CACHE_REDIS_DB,
-                    "password": self.settings.CACHE_REDIS_PASSWORD,
+                    "service": "authentication_state",
+                    "host": self.settings.AUTH_STATE_REDIS_HOST,
+                    "port": self.settings.AUTH_STATE_REDIS_PORT,
+                    "db": self.settings.AUTH_STATE_REDIS_DB,
+                    "password": self.settings.AUTH_STATE_REDIS_PASSWORD,
                     "ssl": False,
                 }
             )
@@ -621,41 +621,31 @@ class ProductionSecurityValidator:
             )
         return ""
 
-    def _check_session_security(self) -> list[str]:
-        """Check session security configuration.
+    def _check_jwt_security(self) -> list[str]:
+        """Check JWT lifetime configuration.
 
         Returns:
-            List of session security warning messages.
+            List of JWT security warning messages.
 
         Note:
-            Session security checks include:
-            - Secure cookie configuration
-            - Appropriate session timeout settings
-            - CSRF protection enablement
-
-            Insecure session configurations can lead to session hijacking
-            and other session-based attacks.
+            Bearer tokens are explicitly attached by clients and therefore do
+            not need CSRF protection. Their exposure window is governed by the
+            access and refresh token lifetimes.
         """
         warnings: list[str] = []
 
-        if not self.settings.SESSION_SECURE_COOKIES:
+        if self.settings.JWT_ACCESS_TOKEN_TTL_SECONDS > 3600:
             warnings.append(
-                "SESSION_SECURE_COOKIES is disabled. This allows session cookies to be "
-                "transmitted over unencrypted HTTP connections, making them vulnerable "
-                "to interception. Enable secure cookies in production."
+                f"JWT access-token lifetime is {self.settings.JWT_ACCESS_TOKEN_TTL_SECONDS} "
+                "seconds (more than 1 hour). Consider a shorter lifetime to reduce "
+                "the impact of a leaked access token."
             )
 
-        if self.settings.SESSION_TIMEOUT_MINUTES > 120:
+        if self.settings.JWT_REFRESH_TOKEN_TTL_DAYS > 90:
             warnings.append(
-                f"Session timeout is set to {self.settings.SESSION_TIMEOUT_MINUTES} minutes "
-                f"(more than 2 hours). Long session timeouts increase security risk if "
-                f"a session is compromised. Consider reducing the timeout for production."
-            )
-
-        if not self.settings.CSRF_ENABLED:
-            warnings.append(
-                "CSRF protection is disabled. This makes your application vulnerable to "
-                "Cross-Site Request Forgery attacks. Enable CSRF protection in production."
+                f"JWT refresh-token lifetime is {self.settings.JWT_REFRESH_TOKEN_TTL_DAYS} "
+                "days (more than 90 days). Consider a shorter lifetime to reduce the "
+                "impact of a leaked refresh token."
             )
 
         return warnings

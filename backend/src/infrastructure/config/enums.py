@@ -14,10 +14,11 @@ class CacheBackend(StrEnum):
     MEMORY = "memory"
 
 
-class SessionBackend(StrEnum):
-    """Session storage backend types.
+class AuthStateBackend(StrEnum):
+    """Server-side authentication state backend types.
 
-    Supported backends for session storage (crudauth supports redis and memory only).
+    JWT credentials remain stateless. This backend stores only OAuth state,
+    short-lived OAuth exchange codes, and shared login-lockout counters.
     """
 
     REDIS = "redis"

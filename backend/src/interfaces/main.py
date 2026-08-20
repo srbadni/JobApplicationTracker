@@ -44,7 +44,7 @@ app = create_application(
     A modern FastAPI starter with:
 
     * Vertical-slice modules and a clean infrastructure layer
-    * Session-based auth with OAuth providers
+    * JWT bearer auth with OAuth providers
     * Swappable cache, queue, and rate-limit backends
     * SQLAdmin admin UI
     """,
@@ -62,6 +62,7 @@ app = create_application(
     openapi_url="/openapi.json",
 )
 
+# SQLAdmin uses this cookie session independently from the bearer-only API.
 app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 create_admin_interface(app)
 

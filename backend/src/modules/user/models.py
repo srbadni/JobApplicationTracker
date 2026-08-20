@@ -17,9 +17,7 @@ class User(Base, TimestampMixin, SoftDeleteMixin):
     """User model representing application users."""
 
     __tablename__ = "user"
-    __table_args__ = (
-        CheckConstraint("user_type IN ('applicant', 'employer')", name="ck_user_user_type"),
-    )
+    __table_args__ = (CheckConstraint("user_type IN ('applicant', 'employer')", name="ck_user_user_type"),)
 
     id: Mapped[int] = mapped_column(
         "id",
@@ -91,6 +89,12 @@ class User(Base, TimestampMixin, SoftDeleteMixin):
 
     email_verified: Mapped[bool] = mapped_column(
         default=False,
+    )
+
+    token_version: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        nullable=False,
     )
 
     oauth_created_at: Mapped[datetime | None] = mapped_column(

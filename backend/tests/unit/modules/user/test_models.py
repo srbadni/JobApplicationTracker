@@ -6,7 +6,7 @@ from src.modules.user.models import User
 def _make_user() -> User:
     return User(
         name="Test User",
-        username="testuser",
+        phone_number="09123456789",
         email="test@example.com",
         hashed_password="hashed",
     )
@@ -24,3 +24,8 @@ def test_is_active_false_when_soft_deleted():
     user = _make_user()
     user.is_deleted = True
     assert user.is_active is False
+
+
+def test_token_version_defaults_to_zero():
+    """New users start with the initial JWT credential epoch."""
+    assert _make_user().token_version == 0

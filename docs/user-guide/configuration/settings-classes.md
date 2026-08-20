@@ -63,7 +63,7 @@ The actual classes that ship with the project, all in `src/infrastructure/config
 | `CORSSettings` | `CORS_*` |
 | `CompressionSettings` | `GZIP_*` |
 | `APIDocSettings` | `ENABLE_DOCS_IN_PRODUCTION`, `OPENAPI_PREFIX` |
-| `AuthSettings` | `SECRET_KEY`, `SESSION_*`, `CSRF_ENABLED`, `TRUSTED_PROXY_HOPS`, `OAUTH_*` |
+| `AuthSettings` | `SECRET_KEY`, `JWT_*`, `AUTH_STATE_BACKEND`, `TRUSTED_PROXY_HOPS`, `OAUTH_*` |
 | `APISettings` | API path overrides (`API_PREFIX`, `DOCS_URL`, `REDOC_URL`) |
 | `AppSettings` | `APP_NAME`, `APP_DESCRIPTION`, `VERSION`, `DEBUG`, contact info |
 | `AdminSettings` | `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `DEFAULT_TIER_NAME` |

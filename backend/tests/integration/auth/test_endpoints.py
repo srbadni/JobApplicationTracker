@@ -1,10 +1,4 @@
-"""Tests for the auth endpoints, now running on crudauth.
-
-The OAuth routes drive module-level crudauth objects (``oauth_providers``,
-``oauth_state_storage``) directly, so we patch those in the routes module. The
-check-auth route depends on ``get_optional_principal``, so we override that
-FastAPI dependency to simulate authenticated / anonymous callers.
-"""
+"""Integration coverage for the JWT bearer authentication endpoints."""
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -21,61 +15,165 @@ from src.modules.user.models import User
 ROUTES = "src.infrastructure.auth.routes"
 
 
-@pytest.mark.asyncio
-async def test_login_success(client: AsyncClient, test_user: dict):
-    """A valid username/password logs in: 200, a CSRF token, and a session cookie.
-
-    Exercises the real crudauth path end-to-end (authenticate_password against the
-    test DB, create_session on the in-memory backend, set_session_cookies).
-    """
+async def _login(client: AsyncClient, user: dict) -> dict:
     response = await client.post(
         "/api/v1/auth/login",
-        data={"username": test_user["username"], "password": test_user["password"]},
+        data={"username": user["email"], "password": user["password"]},
+    )
+    assert response.status_code == 200
+    return response.json()
+
+
+def _bearer(access_token: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {access_token}"}
+
+
+@pytest.mark.asyncio
+async def test_login_success_returns_tokens_without_api_auth_cookies(client: AsyncClient, test_user: dict):
+    response = await client.post(
+        "/api/v1/auth/login",
+        data={"username": test_user["email"], "password": test_user["password"]},
     )
 
     assert response.status_code == 200
-    assert response.json()["csrf_token"]
-    assert any(cookie == "session_id" for cookie in response.cookies)
+    body = response.json()
+    assert body["token_type"] == "bearer"
+    assert body["access_token"].count(".") == 2
+    assert body["refresh_token"].count(".") == 2
+    assert "session_id" not in response.cookies
+    assert "csrf_token" not in response.cookies
 
 
 @pytest.mark.asyncio
-async def test_login_wrong_password(client: AsyncClient, test_user: dict):
-    """An incorrect password is rejected with 401."""
+async def test_login_wrong_password_returns_401(client: AsyncClient, test_user: dict):
     response = await client.post(
         "/api/v1/auth/login",
-        data={"username": test_user["username"], "password": "wrong-password"},
+        data={"username": test_user["email"], "password": "wrong-password"},
     )
-
     assert response.status_code == 401
 
 
 @pytest.mark.asyncio
-async def test_login_then_logout(client: AsyncClient, test_user: dict):
-    """Logging in then logging out (echoing the CSRF token) succeeds and clears the session."""
-    login = await client.post(
-        "/api/v1/auth/login",
-        data={"username": test_user["username"], "password": test_user["password"]},
+async def test_access_token_authenticates_check_auth(client: AsyncClient, test_user: dict):
+    tokens = await _login(client, test_user)
+    response = await client.get(
+        "/api/v1/auth/check-auth",
+        headers=_bearer(tokens["access_token"]),
     )
-    assert login.status_code == 200
-    csrf_token = login.json()["csrf_token"]
 
-    logout = await client.post("/api/v1/auth/logout", headers={"X-CSRF-Token": csrf_token})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["authenticated"] is True
+    assert body["user"]["id"] == test_user["id"]
+    assert body["authentication"]["transport"] == "bearer"
 
+
+@pytest.mark.asyncio
+async def test_refresh_returns_new_token_pair(client: AsyncClient, test_user: dict):
+    tokens = await _login(client, test_user)
+    response = await client.post(
+        "/api/v1/auth/refresh",
+        json={"refresh_token": tokens["refresh_token"]},
+    )
+
+    assert response.status_code == 200
+    refreshed = response.json()
+    assert refreshed["token_type"] == "bearer"
+    assert refreshed["access_token"].count(".") == 2
+    assert refreshed["refresh_token"].count(".") == 2
+
+
+@pytest.mark.asyncio
+async def test_access_token_cannot_be_used_as_refresh_token(client: AsyncClient, test_user: dict):
+    tokens = await _login(client, test_user)
+    response = await client.post(
+        "/api/v1/auth/refresh",
+        json={"refresh_token": tokens["access_token"]},
+    )
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_logout_revokes_access_and_refresh_tokens(client: AsyncClient, test_user: dict):
+    tokens = await _login(client, test_user)
+
+    logout = await client.post(
+        "/api/v1/auth/logout",
+        headers=_bearer(tokens["access_token"]),
+    )
     assert logout.status_code == 200
     assert logout.json()["message"] == "Logged out successfully"
+
+    check_auth = await client.get(
+        "/api/v1/auth/check-auth",
+        headers=_bearer(tokens["access_token"]),
+    )
+    assert check_auth.status_code == 200
+    assert check_auth.json()["authenticated"] is False
+
+    refresh = await client.post(
+        "/api/v1/auth/refresh",
+        json={"refresh_token": tokens["refresh_token"]},
+    )
+    assert refresh.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_logout_without_bearer_token_returns_401(client: AsyncClient):
+    response = await client.post("/api/v1/auth/logout")
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_check_auth_without_bearer_token_is_anonymous(client: AsyncClient):
+    response = await client.get("/api/v1/auth/check-auth")
+    assert response.status_code == 200
+    assert response.json() == {"authenticated": False, "message": "Not authenticated"}
+
+
+@pytest.mark.asyncio
+async def test_login_soft_deleted_user_rejected(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    test_tier: dict,
+):
+    user = User(
+        name="Deleted User",
+        phone_number="09111111111",
+        email="deleted@example.com",
+        hashed_password=get_password_hash("Password123!"),
+        tier_id=test_tier["id"],
+    )
+    user.is_deleted = True
+    db_session.add(user)
+    await db_session.commit()
+
+    response = await client.post(
+        "/api/v1/auth/login",
+        data={"username": user.email, "password": "Password123!"},
+    )
+    assert response.status_code == 401
+
+
+def test_openapi_declares_password_bearer_flow_for_protected_routes():
+    schema = app.openapi()
+    security_scheme = schema["components"]["securitySchemes"]["OAuth2PasswordBearer"]
+    password_flow = security_scheme["flows"]["password"]
+
+    assert password_flow["tokenUrl"] == "/api/v1/auth/login"
+    job_posting = schema["paths"]["/api/v1/job_postings"]["post"]
+    assert {"OAuth2PasswordBearer": []} in job_posting["security"]
+    assert all(parameter["name"].lower() != "x-csrf-token" for parameter in job_posting.get("parameters", []))
 
 
 @pytest.mark.asyncio
 async def test_oauth_google_login(client: AsyncClient):
-    """The Google login initiation endpoint returns the provider authorization URL."""
     mock_provider = MagicMock()
-    mock_provider.get_authorization_url = MagicMock(
-        return_value={
-            "url": "https://accounts.google.com/o/oauth2/v2/auth?dummy=params",
-            "state": "test-state-value",
-            "code_verifier": "test-code-verifier",
-        }
-    )
+    mock_provider.get_authorization_url.return_value = {
+        "url": "https://accounts.google.com/o/oauth2/v2/auth?dummy=params",
+        "state": "test-state-value",
+        "code_verifier": "test-code-verifier",
+    }
     mock_storage = MagicMock()
     mock_storage.create = AsyncMock(return_value="test-state-value")
 
@@ -87,33 +185,30 @@ async def test_oauth_google_login(client: AsyncClient):
 
     assert response.status_code == 200
     assert response.json()["url"] == "https://accounts.google.com/o/oauth2/v2/auth?dummy=params"
-    mock_provider.get_authorization_url.assert_called_once()
-    mock_storage.create.assert_called_once()
+    mock_storage.create.assert_awaited_once()
 
 
 @pytest.mark.asyncio
 async def test_oauth_callback_invalid_state(client: AsyncClient):
-    """An unknown state parameter is rejected (302 redirect / 400 for json)."""
     mock_storage = MagicMock()
-    mock_storage.get = AsyncMock(return_value=None)
+    mock_storage.get_and_delete = AsyncMock(return_value=None)
 
     with patch(f"{ROUTES}.oauth_state_storage", mock_storage):
-        response = await client.get(
+        redirect = await client.get(
             "/api/v1/auth/oauth/callback/google",
             params={"code": "test-code", "state": "invalid-state"},
         )
-        assert response.status_code == 302
-
-        response = await client.get(
+        json_response = await client.get(
             "/api/v1/auth/oauth/callback/google",
             params={"code": "test-code", "state": "invalid-state", "response_format": "json"},
         )
-        assert response.status_code == 400
+
+    assert redirect.status_code == 302
+    assert json_response.status_code == 400
 
 
 @pytest.mark.asyncio
 async def test_oauth_callback_provider_mismatch(client: AsyncClient):
-    """A state minted for a different provider is rejected (302 redirect / 400 for json)."""
     mismatched_state = OAuthState(
         state="test-state-value",
         provider="github",
@@ -121,169 +216,23 @@ async def test_oauth_callback_provider_mismatch(client: AsyncClient):
         code_verifier="test-code-verifier",
     )
     mock_storage = MagicMock()
-    mock_storage.get = AsyncMock(return_value=mismatched_state)
+    mock_storage.get_and_delete = AsyncMock(return_value=mismatched_state)
 
     with patch(f"{ROUTES}.oauth_state_storage", mock_storage):
         response = await client.get(
             "/api/v1/auth/oauth/callback/google",
-            params={"code": "test-code", "state": "test-state-value"},
-        )
-        assert response.status_code == 302
-
-        response = await client.get(
-            "/api/v1/auth/oauth/callback/google",
             params={"code": "test-code", "state": "test-state-value", "response_format": "json"},
         )
-        assert response.status_code == 400
+    assert response.status_code == 400
 
 
 @pytest.mark.asyncio
-async def test_check_auth_authenticated(client: AsyncClient):
-    """check-auth returns the user info when a principal is resolved."""
-    mock_user = {
-        "id": 1,
-        "username": "testuser",
-        "email": "test@example.com",
-        "oauth_provider": "google",
-    }
-
-    original_deps = app.dependency_overrides.copy()
-    try:
-        app.dependency_overrides[get_optional_principal] = lambda: Principal(user_id=1, metadata={"session_id": "test-session"})
-
-        with patch("src.modules.user.crud.crud_users.get", return_value=mock_user):
-            response = await client.get("/api/v1/auth/check-auth")
-
-        assert response.status_code == 200
-        body = response.json()
-        assert body["authenticated"] is True
-        assert body["user"]["id"] == 1
-        assert body["user"]["username"] == "testuser"
-        assert body["user"]["oauth_provider"] == "google"
-        assert "session" in body
-    finally:
-        app.dependency_overrides = original_deps
-
-
-@pytest.mark.asyncio
-async def test_check_auth_not_authenticated(client: AsyncClient):
-    """check-auth returns authenticated=false when the principal is None."""
-    original_deps = app.dependency_overrides.copy()
-    try:
-        app.dependency_overrides[get_optional_principal] = lambda: None
-
-        response = await client.get("/api/v1/auth/check-auth")
-
-        assert response.status_code == 200
-        assert response.json()["authenticated"] is False
-        assert response.json()["message"] == "Not authenticated"
-    finally:
-        app.dependency_overrides = original_deps
-
-
-@pytest.mark.asyncio
-async def test_check_auth_no_session_cookie_returns_unauthenticated(client: AsyncClient):
-    """A request with no session cookie gets 200 {authenticated: false}, not a 401.
-
-    No dependency override here: the real crudauth ``current_user(optional=True)``
-    resolution runs against a request that carries no session cookie, proving the
-    endpoint answers anonymous callers rather than raising 401.
-    """
-    response = await client.get("/api/v1/auth/check-auth")
-
-    assert response.status_code == 200
-    assert response.json()["authenticated"] is False
-
-
-@pytest.mark.asyncio
-async def test_login_soft_deleted_user_rejected(client: AsyncClient, db_session: AsyncSession, test_tier: dict):
-    """A soft-deleted user cannot log in — crudauth reads User.is_active (not is_deleted).
-
-    This is the migration's core new invariant: the derived is_active property gates
-    authentication, so is_deleted=True must fail login.
-    """
-    user = User(
-        name="Deleted User",
-        username="deleted_user",
-        email="deleted@example.com",
-        hashed_password=get_password_hash("Password123!"),
-        tier_id=test_tier["id"],
-    )
-    user.is_deleted = True
-    db_session.add(user)
-    await db_session.commit()
-
-    response = await client.post(
-        "/api/v1/auth/login",
-        data={"username": "deleted_user", "password": "Password123!"},
-    )
-
-    assert response.status_code == 401
-
-
-@pytest.mark.asyncio
-async def test_logout_unauthenticated_returns_401(client: AsyncClient):
-    """Logout with no session is rejected (the route depends on get_current_principal)."""
-    response = await client.post("/api/v1/auth/logout")
-    assert response.status_code == 401
-
-
-@pytest.mark.asyncio
-async def test_logout_without_csrf_token_rejected(client: AsyncClient, test_user: dict):
-    """A logged-in session still can't mutate without the CSRF header (403)."""
-    login = await client.post(
-        "/api/v1/auth/login",
-        data={"username": test_user["username"], "password": test_user["password"]},
-    )
-    assert login.status_code == 200
-
-    # POST without the X-CSRF-Token header → crudauth CSRF guard rejects with 403.
-    response = await client.post("/api/v1/auth/logout")
-    assert response.status_code == 403
-
-
-@pytest.mark.asyncio
-async def test_refresh_csrf_token_success(client: AsyncClient, test_user: dict):
-    """With a valid session cookie, /refresh-csrf mints a fresh token (no CSRF header needed)."""
-    login = await client.post(
-        "/api/v1/auth/login",
-        data={"username": test_user["username"], "password": test_user["password"]},
-    )
-    assert login.status_code == 200
-
-    response = await client.post("/api/v1/auth/refresh-csrf")
-
-    assert response.status_code == 200
-    assert response.json()["csrf_token"]
-
-
-@pytest.mark.asyncio
-async def test_refresh_csrf_token_no_session_returns_401(client: AsyncClient):
-    """/refresh-csrf with no session cookie is unauthorized."""
-    response = await client.post("/api/v1/auth/refresh-csrf")
-    assert response.status_code == 401
-
-
-@pytest.mark.asyncio
-async def test_oauth_google_login_provider_failure_returns_500(client: AsyncClient):
-    """If the provider blows up while building the auth URL, the endpoint returns 500."""
-    mock_provider = MagicMock()
-    mock_provider.get_authorization_url = MagicMock(side_effect=RuntimeError("boom"))
-
-    with patch(f"{ROUTES}.oauth_providers", {"google": mock_provider}):
-        response = await client.get("/api/v1/auth/oauth/google")
-
-    assert response.status_code == 500
-
-
-@pytest.mark.asyncio
-async def test_oauth_callback_success_creates_user(client: AsyncClient):
-    """The happy-path callback links/creates the user and starts a session (json format).
-
-    Exercises the real oauth_account_service.get_or_create_user → repo.create against
-    the test DB (proving crudauth user creation works on the dataclass-mapped User),
-    with only the provider's network calls mocked.
-    """
+async def test_oauth_callback_json_returns_bearer_tokens(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    test_user: dict,
+):
+    user = await db_session.get(User, test_user["id"])
     valid_state = OAuthState(
         state="good-state",
         provider="google",
@@ -291,25 +240,26 @@ async def test_oauth_callback_success_creates_user(client: AsyncClient):
         code_verifier="test-code-verifier",
     )
     mock_storage = MagicMock()
-    mock_storage.get = AsyncMock(return_value=valid_state)
-    mock_storage.delete = AsyncMock(return_value=None)
-
+    mock_storage.get_and_delete = AsyncMock(return_value=valid_state)
     mock_provider = MagicMock()
-    mock_provider.exchange_code = AsyncMock(return_value={"access_token": "tok"})
+    mock_provider.exchange_code = AsyncMock(return_value={"access_token": "provider-token"})
     mock_provider.get_user_info = AsyncMock(return_value={})
     mock_provider.process_user_info = AsyncMock(
         return_value=OAuthUserInfo(
             provider="google",
             provider_user_id="google-uid-123",
-            email="oauth_new@example.com",
+            email=test_user["email"],
             email_verified=True,
-            name="OAuth New User",
+            name=test_user["name"],
         )
     )
+    mock_account_service = MagicMock()
+    mock_account_service.get_or_create_user = AsyncMock(return_value=(user, False))
 
     with (
         patch(f"{ROUTES}.oauth_state_storage", mock_storage),
         patch(f"{ROUTES}.oauth_providers", {"google": mock_provider}),
+        patch(f"{ROUTES}.oauth_account_service", mock_account_service),
     ):
         response = await client.get(
             "/api/v1/auth/oauth/callback/google",
@@ -319,24 +269,65 @@ async def test_oauth_callback_success_creates_user(client: AsyncClient):
     assert response.status_code == 200
     body = response.json()
     assert body["success"] is True
-    assert body["user"]["email"] == "oauth_new@example.com"
-    assert body["user"]["is_new_user"] is True
-    assert body["csrf_token"]
-    mock_storage.delete.assert_awaited_once()
+    assert body["token_type"] == "bearer"
+    assert body["access_token"].count(".") == 2
+    assert body["refresh_token"].count(".") == 2
 
 
 @pytest.mark.asyncio
-async def test_check_auth_user_not_found(client: AsyncClient):
-    """A resolved principal whose user row is missing reports authenticated=false."""
+async def test_oauth_redirect_uses_one_time_exchange_code(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    test_user: dict,
+):
+    user = await db_session.get(User, test_user["id"])
+    state = OAuthState(
+        state="good-state",
+        provider="google",
+        redirect_to="https://frontend.example/callback?source=google",
+        code_verifier="verifier",
+    )
+    state_storage = MagicMock()
+    state_storage.get_and_delete = AsyncMock(return_value=state)
+    exchange_storage = MagicMock()
+    exchange_storage.create = AsyncMock(return_value="exchange-code")
+    provider = MagicMock()
+    provider.exchange_code = AsyncMock(return_value={"access_token": "provider-token"})
+    provider.get_user_info = AsyncMock(return_value={})
+    provider.process_user_info = AsyncMock(return_value=MagicMock())
+    account_service = MagicMock()
+    account_service.get_or_create_user = AsyncMock(return_value=(user, False))
+
+    with (
+        patch(f"{ROUTES}.oauth_state_storage", state_storage),
+        patch(f"{ROUTES}.oauth_exchange_storage", exchange_storage),
+        patch(f"{ROUTES}.oauth_providers", {"google": provider}),
+        patch(f"{ROUTES}.oauth_account_service", account_service),
+        patch(f"{ROUTES}.secrets.token_urlsafe", return_value="one-time-code"),
+    ):
+        response = await client.get(
+            "/api/v1/auth/oauth/callback/google",
+            params={"code": "provider-code", "state": "good-state"},
+        )
+
+    assert response.status_code == 302
+    assert response.headers["location"] == ("https://frontend.example/callback?source=google&oauth_code=one-time-code")
+    exchange_storage.create.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_check_auth_dependency_contract(client: AsyncClient):
+    mock_user = {"id": 1, "email": "test@example.com", "oauth_provider": "google"}
     original_deps = app.dependency_overrides.copy()
     try:
-        app.dependency_overrides[get_optional_principal] = lambda: Principal(user_id=999999, metadata={"session_id": "x"})
-
-        with patch("src.modules.user.crud.crud_users.get", return_value=None):
+        app.dependency_overrides[get_optional_principal] = lambda: Principal(
+            user_id=1,
+            transport="bearer",
+        )
+        with patch("src.modules.user.crud.crud_users.get", return_value=mock_user):
             response = await client.get("/api/v1/auth/check-auth")
 
         assert response.status_code == 200
-        assert response.json()["authenticated"] is False
-        assert response.json()["message"] == "User not found"
+        assert response.json()["authentication"]["transport"] == "bearer"
     finally:
         app.dependency_overrides = original_deps

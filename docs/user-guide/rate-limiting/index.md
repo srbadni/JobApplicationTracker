@@ -124,11 +124,11 @@ else:
 ```
 
 !!! warning "`request.state.user` is not populated automatically"
-    The default session auth dependency (`get_current_user`) does not write the user back to `request.state.user`. Until you add a small helper that does, **every request looks anonymous to the rate limiter**, and tier-specific limits won't apply.
+    The default bearer auth dependency (`get_current_user`) does not write the user back to `request.state.user`. Until you add a small helper that does, **every request looks anonymous to the rate limiter**, and tier-specific limits won't apply.
 
 A minimal middleware to bridge the two:
 
-Session validation now lives in the `crudauth` library — the `auth` singleton in `infrastructure/auth/setup.py` resolves the cookie (and enforces CSRF/lockout) and yields a `Principal`. The simplest way to bring the user into the rate limiter is at the route layer: depend on `get_optional_user` (from `infrastructure/auth/dependencies.py`) and stash the result on `request.state.user` before the limiter reads it.
+Bearer validation lives in the `crudauth` library — the `auth` singleton in `infrastructure/auth/setup.py` verifies the JWT and yields a `Principal`. The simplest way to bring the user into the rate limiter is at the route layer: depend on `get_optional_user` (from `infrastructure/auth/dependencies.py`) and stash the result on `request.state.user` before the limiter reads it.
 
 ```python
 # a router-level dependency you can attach where tier limits matter
