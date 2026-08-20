@@ -4,8 +4,9 @@ from ...infrastructure.dependencies import AsyncSessionDep
 from .dependencies import EmployerRegistrationServiceDep
 from .schemas import EmployerRegistration, EmployerRegistrationRead
 
-router = APIRouter(tags=["Employers"])
+from ..job_posting.routes import router as job_posting_router
 
+router = APIRouter(tags=["Employers"])
 
 @router.post(
     "/register",
@@ -20,3 +21,5 @@ async def register_employer(
 ) -> EmployerRegistrationRead:
     """Atomically create the employer, company, and founder membership."""
     return await registration_service.create(payload, db)
+
+router.include_router(job_posting_router)

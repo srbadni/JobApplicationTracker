@@ -4,7 +4,7 @@ from ...infrastructure.dependencies import AsyncSessionDep, CurrentUserDep, CSRF
 from .dependencies import JobPostingServiceDep
 from .schemas import JobPostingRequest, JobPostingResponse
 
-router = APIRouter(tags=["JobPostings"])
+router = APIRouter(prefix="/job_postings")
 
 @router.post(
     "",
