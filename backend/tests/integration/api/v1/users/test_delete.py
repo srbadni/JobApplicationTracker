@@ -135,7 +135,13 @@ async def test_permanent_delete_inactive_user(
     assert data_perma["message"] == "User data anonymized in compliance with GDPR"
 
     get_response = await superuser_auth_client.get(f"/api/v1/users/active-and-inactive/{email}")
-    assert get_response.status_code == 404
+    assert get_response.status_code == 200
+    anonymized_user = get_response.json()
+    assert anonymized_user["email"] == email
+    assert anonymized_user["name"] == "[DELETED]"
+    assert anonymized_user["phone_number"] == f"090{test_user['id'] % 100_000_000:08d}"
+    assert anonymized_user["is_deleted"] is True
+    assert anonymized_user["is_superuser"] is False
 
 
 async def test_permanent_delete_nonexistent_user(
