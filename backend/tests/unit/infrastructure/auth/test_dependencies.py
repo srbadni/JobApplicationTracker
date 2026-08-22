@@ -31,7 +31,7 @@ async def test_get_current_user_missing_row_raises():
 
 @pytest.mark.asyncio
 async def test_get_current_user_returns_dict_and_filters_soft_deleted():
-    user = {"id": 1, "username": "x", "is_superuser": False}
+    user = {"id": 1, "email": "user@example.com", "is_superuser": False}
     mock_get = AsyncMock(return_value=user)
     with patch.object(deps.crud_users, "get", new=mock_get):
         result = await deps.get_current_user(principal=Principal(user_id=1), db=MagicMock())

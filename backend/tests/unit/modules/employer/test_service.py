@@ -39,9 +39,11 @@ async def test_register_employer_creates_all_records_atomically() -> None:
         )
 
         assert result.user.user_type == UserType.EMPLOYER
-        assert result.membership.user_id == result.user.id
-        assert result.membership.company_id == result.company.id
-        assert result.membership.is_admin is True
+        membership = await session.scalar(select(CompanyMembership))
+        assert membership is not None
+        assert membership.user_id == result.user.id
+        assert membership.company_id == result.company.id
+        assert membership.is_admin is True
         assert await session.scalar(select(func.count()).select_from(User)) == 1
         assert await session.scalar(select(func.count()).select_from(Company)) == 1
         assert await session.scalar(select(func.count()).select_from(CompanyMembership)) == 1

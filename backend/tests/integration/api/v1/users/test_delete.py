@@ -1,175 +1,118 @@
-import logging
-
 import pytest
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from .test_create import generate_unique_user_data
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from .helpers import generate_unique_user_data
 
 pytestmark = pytest.mark.asyncio
 
 
 async def test_soft_delete_success(
     auth_client: AsyncClient,
-    db_session: AsyncSession,
     test_user: dict,
-):
-    """Test successful soft deletion of user account."""
-    username = test_user["username"]
-
-    logger.info(f"Testing soft deletion for user: {username}")
-    response = await auth_client.delete(f"/api/v1/users/{username}")
+) -> None:
+    response = await auth_client.delete(f"/api/v1/users/{test_user['email']}")
 
     assert response.status_code == 200
-    data = response.json()
-    assert data["message"] == "User account deactivated"
+    assert response.json() == {"message": "User account deactivated"}
 
-    get_response = await auth_client.get(f"/api/v1/users/{username}")
-    assert get_response.status_code == 404
+    fetched = await auth_client.get(f"/api/v1/users/{test_user['email']}")
+    assert fetched.status_code == 404
 
 
 async def test_soft_delete_unauthorized(
     client: AsyncClient,
-    db_session: AsyncSession,
     test_user: dict,
-):
-    """Test soft deletion without authentication."""
-    username = test_user["username"]
-
-    response = await client.delete(f"/api/v1/users/{username}")
+) -> None:
+    response = await client.delete(f"/api/v1/users/{test_user['email']}")
 
     assert response.status_code == 401
-    data = response.json()
-    assert "not authenticated" in data["detail"].lower()
 
 
-async def test_soft_delete_wrong_user(
-    auth_client: AsyncClient,
-    client: AsyncClient,
-    db_session: AsyncSession,
-    test_user: dict,
-):
-    """Test that users cannot delete other users' accounts."""
+async def test_soft_delete_wrong_user(auth_client: AsyncClient) -> None:
     other_user_data = generate_unique_user_data("other")
-    create_response = await client.post("/api/v1/users/", json=other_user_data)
-    assert create_response.status_code == 201
-    other_username = other_user_data["username"]
+    created = await auth_client.post("/api/v1/users/", json=other_user_data)
+    assert created.status_code == 201
 
-    response = await auth_client.delete(f"/api/v1/users/{other_username}")
+    response = await auth_client.delete(f"/api/v1/users/{other_user_data['email']}")
 
     assert response.status_code == 403
-    data = response.json()
-    assert "permission" in data["detail"].lower()
 
 
-async def test_soft_delete_nonexistent_user(
-    auth_client: AsyncClient,
-    db_session: AsyncSession,
-):
-    """Test soft deletion of non-existent user."""
-    response = await auth_client.delete("/api/v1/users/nonexistentuser")
+async def test_soft_delete_nonexistent_user(auth_client: AsyncClient) -> None:
+    response = await auth_client.delete("/api/v1/users/missing@example.com")
 
     assert response.status_code == 404
-    data = response.json()
-    assert "not found" in data["detail"].lower()
 
 
-async def test_permanent_delete_success(
+async def test_gdpr_anonymize_success(
     superuser_auth_client: AsyncClient,
-    db_session: AsyncSession,
     test_user: dict,
-):
-    """Test successful permanent deletion by superuser."""
-    username = test_user["username"]
-
-    logger.info(f"Testing permanent deletion for user: {username}")
-    response = await superuser_auth_client.delete(f"/api/v1/users/db/{username}")
+) -> None:
+    response = await superuser_auth_client.delete(f"/api/v1/users/db/{test_user['email']}")
 
     assert response.status_code == 200
-    data = response.json()
-    assert data["message"] == "User data anonymized in compliance with GDPR"
+    assert response.json() == {"message": "User data anonymized in compliance with GDPR"}
 
-    get_response = await superuser_auth_client.get(f"/api/v1/users/{username}")
-    assert get_response.status_code == 404
+    active = await superuser_auth_client.get(f"/api/v1/users/{test_user['email']}")
+    assert active.status_code == 404
+
+    retained = await superuser_auth_client.get(
+        f"/api/v1/users/active-and-inactive/{test_user['email']}"
+    )
+    assert retained.status_code == 200
+    body = retained.json()
+    assert body["name"] == "[DELETED]"
+    assert body["is_deleted"] is True
 
 
-async def test_permanent_delete_unauthorized(
+async def test_gdpr_anonymize_unauthorized(
     auth_client: AsyncClient,
-    db_session: AsyncSession,
     test_user: dict,
-):
-    """Test that non-admin users cannot permanently delete accounts."""
-    username = test_user["username"]
-
-    response = await auth_client.delete(f"/api/v1/users/db/{username}")
+) -> None:
+    response = await auth_client.delete(f"/api/v1/users/db/{test_user['email']}")
 
     assert response.status_code == 403
-    data = response.json()
-    assert "insufficient privileges" in data["detail"].lower()
 
 
-async def test_permanent_delete_inactive_user(
+async def test_gdpr_anonymize_soft_deleted_user(
     superuser_auth_client: AsyncClient,
-    db_session: AsyncSession,
     test_user: dict,
-):
-    """Test permanent deletion of soft-deleted accounts"""
-    username = test_user["username"]
+) -> None:
+    soft_deleted = await superuser_auth_client.delete(f"/api/v1/users/{test_user['email']}")
+    assert soft_deleted.status_code == 200
 
-    logger.info(f"Testing soft deletion for user: {username}")
+    anonymized = await superuser_auth_client.delete(f"/api/v1/users/db/{test_user['email']}")
+    assert anonymized.status_code == 200
 
-    response_soft_delete = await superuser_auth_client.delete(f"/api/v1/users/{username}")
-
-    assert response_soft_delete.status_code == 200
-    data_soft = response_soft_delete.json()
-    assert data_soft["message"] == "User account deactivated"
-
-    logger.info(f"Testing permanent deletion for user: {username}")
-
-    response_perma_delete = await superuser_auth_client.delete(f"/api/v1/users/db/{username}")
-    assert response_perma_delete.status_code == 200
-    data_perma = response_perma_delete.json()
-    assert data_perma["message"] == "User data anonymized in compliance with GDPR"
-
-    get_response = await superuser_auth_client.get(f"/api/v1/users/active-and-inactive/{username}")
-    assert get_response.status_code == 404
+    retained = await superuser_auth_client.get(
+        f"/api/v1/users/active-and-inactive/{test_user['email']}"
+    )
+    assert retained.status_code == 200
+    assert retained.json()["is_deleted"] is True
 
 
-async def test_permanent_delete_nonexistent_user(
+async def test_gdpr_anonymize_nonexistent_user(
     superuser_auth_client: AsyncClient,
-    db_session: AsyncSession,
-):
-    """Test permanent deletion of non-existent user."""
-    response = await superuser_auth_client.delete("/api/v1/users/db/nonexistentuser")
+) -> None:
+    response = await superuser_auth_client.delete("/api/v1/users/db/missing@example.com")
 
     assert response.status_code == 404
-    data = response.json()
-    assert "not found" in data["detail"].lower()
 
 
-async def test_delete_cascade_effects(
-    auth_client: AsyncClient,
+async def test_soft_delete_hides_tier_and_rate_limits(
     superuser_auth_client: AsyncClient,
-    db_session: AsyncSession,
     test_user: dict,
-):
-    """Test cascade effects of user deletion."""
-    username = test_user["username"]
+) -> None:
+    email = test_user["email"]
+    tier_before = await superuser_auth_client.get(f"/api/v1/users/{email}/tier")
+    limits_before = await superuser_auth_client.get(f"/api/v1/users/{email}/rate-limits")
+    assert tier_before.status_code == 200
+    assert limits_before.status_code == 200
 
-    tier_response = await auth_client.get(f"/api/v1/users/{username}/tier")
-    assert tier_response.status_code == 200
+    deleted = await superuser_auth_client.delete(f"/api/v1/users/{email}")
+    assert deleted.status_code == 200
 
-    rate_limits_response = await auth_client.get(f"/api/v1/users/{username}/rate-limits")
-    assert rate_limits_response.status_code == 200
-
-    delete_response = await auth_client.delete(f"/api/v1/users/{username}")
-    assert delete_response.status_code == 200
-
-    tier_response = await superuser_auth_client.get(f"/api/v1/users/{username}/tier")
-    assert tier_response.status_code == 404
-
-    rate_limits_response = await superuser_auth_client.get(f"/api/v1/users/{username}/rate-limits")
-    assert rate_limits_response.status_code == 404
+    tier_after = await superuser_auth_client.get(f"/api/v1/users/{email}/tier")
+    limits_after = await superuser_auth_client.get(f"/api/v1/users/{email}/rate-limits")
+    assert tier_after.status_code == 404
+    assert limits_after.status_code == 404

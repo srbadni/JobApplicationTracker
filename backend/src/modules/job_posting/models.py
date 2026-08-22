@@ -15,17 +15,17 @@ from ...infrastructure.database.models import TimestampMixin
 from ...infrastructure.database.session import Base
 from .enums import (
     EmploymentType,
-    WorkMode,
-    RelevantWorkExperience,
-    MinimumEducationLevel,
     Gender,
     MilitaryServiceStatus,
+    MinimumEducationLevel,
+    RelevantWorkExperience,
+    WorkMode,
 )
 
 if TYPE_CHECKING:
     from ..company.models import Company
-    from ..user.models import User
     from ..job_categories.models import JobCategory
+    from ..user.models import User
 
 
 class JobPosting(Base, TimestampMixin):

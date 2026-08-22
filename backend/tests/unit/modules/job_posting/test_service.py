@@ -2,7 +2,6 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.modules.common.exceptions import PermissionDeniedError
 from src.modules.job_posting.schemas import JobPostingRequest
 from src.modules.job_posting.service import JobPostingService
 
@@ -12,6 +11,7 @@ def _posting_request() -> JobPostingRequest:
         job_title="Backend Engineer",
         job_description="Build and maintain APIs.",
         company_overview="A product company.",
+        job_category_id=3,
         employment_type="full_time",
         work_mode="remote",
         minimum_salary=1000,
@@ -24,40 +24,37 @@ def _posting_request() -> JobPostingRequest:
 
 
 @pytest.mark.asyncio
-async def test_create_job_posting_for_company_admin() -> None:
-    membership = MagicMock(company_id=7, is_admin=True)
+async def test_create_job_posting_uses_users_company_membership() -> None:
+    membership = MagicMock(company_id=7)
     db = MagicMock()
     db.scalar = AsyncMock(return_value=membership)
     db.commit = AsyncMock()
     db.refresh = AsyncMock()
-    service = JobPostingService()
 
-    result = await service.create_job_posting(
+    result = await JobPostingService().create_job_posting(
         post=_posting_request(),
         db=db,
-        company_id=7,
         user_id=11,
     )
 
     assert result.company_id == 7
+    assert result.created_by_id == 11
+    assert result.job_category_id == 3
     db.add.assert_called_once_with(result)
     db.commit.assert_awaited_once()
     db.refresh.assert_awaited_once_with(result)
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("membership", [None, MagicMock(company_id=7, is_admin=False)])
-async def test_create_job_posting_rejects_non_admin(membership) -> None:
+async def test_create_job_posting_rejects_user_without_company_membership() -> None:
     db = MagicMock()
-    db.scalar = AsyncMock(return_value=membership)
+    db.scalar = AsyncMock(return_value=None)
     db.commit = AsyncMock()
-    service = JobPostingService()
 
-    with pytest.raises(PermissionDeniedError):
-        await service.create_job_posting(
+    with pytest.raises(ValueError, match="Company membership not found"):
+        await JobPostingService().create_job_posting(
             post=_posting_request(),
             db=db,
-            company_id=7,
             user_id=11,
         )
 

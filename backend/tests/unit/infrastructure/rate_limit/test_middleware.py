@@ -48,7 +48,6 @@ def mock_user():
     """Create a mock user dict."""
     return {
         "id": 123,
-        "username": "testuser",
         "email": "test@example.com",
         "tier_id": 1,
     }

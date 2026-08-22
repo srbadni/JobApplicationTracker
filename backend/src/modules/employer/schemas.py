@@ -1,7 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 
 from ..company.schemas import CompanyCreate, CompanyRead
-from ..company_membership.schemas import CompanyMembershipRead
 from ..user.schemas import UserCreate, UserRead
 
 
