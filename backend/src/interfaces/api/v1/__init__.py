@@ -2,10 +2,12 @@ from fastapi import APIRouter
 
 from ....infrastructure.auth.routes import router as auth_router
 from ....modules.api_keys.routes import router as api_keys_router
+from ....modules.city.routes import router as cities_router
 from ....modules.company.routes import router as companies_router
 from ....modules.employer.route import router as employers_router
 from ....modules.job_categories.route import router as job_categories_router
 from ....modules.job_posting.routes import router as job_postings_router
+from ....modules.province.routes import router as provinces_router
 from ....modules.rate_limit.routes import router as rate_limits_router
 from ....modules.tier.routes import router as tiers_router
 from ....modules.user.routes import router as users_router
@@ -20,3 +22,5 @@ router.include_router(companies_router, prefix="/companies")
 router.include_router(employers_router, prefix="/employers")
 router.include_router(job_postings_router, prefix="/companies/job-postings", tags=["Companies"])
 router.include_router(job_categories_router, prefix="/job_categories")
+router.include_router(provinces_router, prefix="/provinces")
+router.include_router(cities_router, prefix="/cities")
