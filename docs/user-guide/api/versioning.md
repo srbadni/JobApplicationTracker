@@ -261,32 +261,6 @@ main.mount("/api/v2", v2)
 
 You'll get `/api/v1/docs` and `/api/v2/docs` independently. Note the project ships a single mounted app today — adopt this only when you genuinely need separate docs.
 
-## Testing Multiple Versions
-
-Once v2 exists, run the test suite against both:
-
-```python
-import pytest
-from httpx import AsyncClient
-
-
-@pytest.mark.asyncio
-async def test_v1_users_returns_list(client: AsyncClient):
-    resp = await client.get("/api/v1/users/")
-    # whatever v1's contract is — list, paginated, etc.
-    assert resp.status_code in {200, 401, 403}
-
-
-@pytest.mark.asyncio
-async def test_v2_users_paginated(client: AsyncClient):
-    resp = await client.get("/api/v2/users/")
-    assert resp.status_code == 200
-    body = resp.json()
-    assert "data" in body
-    assert "total_count" in body
-    assert "page" in body
-```
-
 ## Best Practices
 
 ### What counts as a breaking change?

@@ -34,14 +34,13 @@ backend/
 │   ├── create_tables.py
 │   └── setup_initial_data.py
 ├── src/                      # Application source (the three layers below)
-└── tests/                    # Test suite (unit + integration)
 ```
 
 ### Configuration Files
 
 | File | Purpose |
 |------|---------|
-| `pyproject.toml` | Project metadata, dependencies (`[project]`), tooling config (ruff, mypy, pytest) |
+| `pyproject.toml` | Project metadata, dependencies (`[project]`), tooling config (ruff and mypy) |
 | `uv.lock` | Locks exact dependency versions for reproducible installs |
 | `Dockerfile` | Multi-stage build: requirements export → base → dev/prod/migrate stages |
 | `alembic.ini` | Alembic settings (script location, logging) |
@@ -173,25 +172,6 @@ The most common entry point is `setup_initial_data` which calls all three.
 
 ```bash
 uv run python -m scripts.setup_initial_data
-```
-
-## Tests (`backend/tests/`)
-
-```text
-tests/
-├── conftest.py               # Pytest fixtures (Postgres testcontainer, db session, client, mocks)
-├── unit/                     # Unit tests (no external deps)
-│   ├── infrastructure/
-│   └── modules/
-└── integration/              # Integration tests (real Postgres via testcontainers)
-```
-
-Run from `backend/`:
-
-```bash
-uv run pytest tests/unit       # fast, no Docker
-uv run pytest tests/integration  # spins up Postgres in Docker via testcontainers
-uv run pytest                  # everything
 ```
 
 ## Architectural Patterns

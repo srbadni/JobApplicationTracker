@@ -269,7 +269,6 @@ You've verified your install and tested the main features. Now:
 ### Development Workflow
 
 1. **[Development Guide](../user-guide/development.md)** - Extend the project
-2. **[Testing](../user-guide/testing.md)** - Test your features
 3. **[Production](../user-guide/production.md)** - Deploy
 
 ## Getting Help

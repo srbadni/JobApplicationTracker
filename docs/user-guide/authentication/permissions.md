@@ -317,36 +317,6 @@ async def delete_widget(
 
 The route stays trivial. Authorization rules accumulate in the service, where they're testable and reusable.
 
-## Testing Authorization
-
-Test the **service**, not the route, for permission rules — they're easier to set up and faster to run.
-
-```python
-import pytest
-from src.modules.user.service import UserService
-from src.modules.common.exceptions import PermissionDeniedError
-
-
-@pytest.mark.asyncio
-async def test_normal_user_cannot_update_other_users():
-    service = UserService()
-    current_user = {"username": "alice", "is_superuser": False}
-
-    with pytest.raises(PermissionDeniedError):
-        await service.verify_user_permission(current_user, "bob", "update profile")
-
-
-@pytest.mark.asyncio
-async def test_superuser_can_update_other_users():
-    service = UserService()
-    current_user = {"username": "alice", "is_superuser": True}
-
-    # Should not raise
-    await service.verify_user_permission(current_user, "bob", "update profile")
-```
-
-For end-to-end coverage, integration tests against `TestClient` exercise the full session-cookie + permission-check stack. See [Testing](../testing.md).
-
 ## Best Practices
 
 ### Keep authorization in services
