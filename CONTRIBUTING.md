@@ -11,7 +11,6 @@ Start by forking and cloning the job-tracker repository:
 
 1. **Fork the Repository**: Begin by forking the project repository. You can do this by visiting https://github.com/igormagalhaesr/job-tracker and clicking the "Fork" button.
 1. **Create a Feature Branch**: Once you've forked the repo, create a branch for your feature by running `git checkout -b feature/fooBar`.
-1. **Testing Changes**: Ensure that your changes do not break existing functionality by running tests. In the root folder, execute `uv run pytest` to run the tests.
 
 ### Using uv for Dependency Management
 
@@ -43,16 +42,6 @@ uv run python your_script.py
 ### Coding Standards
 
 - Follow PEP 8 guidelines.
-- Write meaningful tests for new features or bug fixes.
-
-### Testing with Pytest
-
-job-tracker uses pytest for testing. Run tests using:
-
-```sh
-uv run pytest
-```
-
 ### Linting
 
 Use mypy for type checking:

@@ -201,12 +201,6 @@ For contributors and anyone modifying the project itself.
     cp backend/.env.example backend/.env
     ```
 
-5. **Run the test suite to verify your setup**:
-
-    ```bash
-    uv run pytest
-    ```
-
 ## Configuration
 
 ### Environment Variables
