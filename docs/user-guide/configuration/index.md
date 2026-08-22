@@ -102,7 +102,7 @@ POSTGRES_PASSWORD=your_password
 POSTGRES_SERVER=localhost   # use "db" with Docker Compose
 POSTGRES_PORT=5432
 POSTGRES_DB=your_database
-CREATE_TABLES_ON_STARTUP=true
+CREATE_TABLES_ON_STARTUP=false
 ```
 
 ### Security & Sessions

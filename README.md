@@ -44,6 +44,10 @@ uv run python -m scripts.setup_initial_data
 uv run fastapi dev src/interfaces/main.py
 ```
 
+Alembic is the only schema-management mechanism. The initial-data command is
+idempotent and inserts seed data only, so always apply migrations before running
+it.
+
 Run a Taskiq worker in a second terminal:
 
 ```bash

@@ -1,0 +1,19 @@
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from ...infrastructure.database import Base
+
+if TYPE_CHECKING:
+    from ..city.models import City
+
+
+class Province(Base):
+    __tablename__ = "provinces"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    english_name: Mapped[str] = mapped_column(String, nullable=False)
+
+    cities: Mapped["City"] = relationship("City", init=False, back_populates="province")
