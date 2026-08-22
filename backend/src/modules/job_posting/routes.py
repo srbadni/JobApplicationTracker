@@ -1,6 +1,6 @@
 from fastapi import APIRouter, status
 
-from ...infrastructure.dependencies import AsyncSessionDep, CurrentUserDep, CSRFTokenHeaderDep
+from ...infrastructure.dependencies import AsyncSessionDep, CSRFTokenHeaderDep, CurrentUserDep
 from .dependencies import JobPostingServiceDep
 from .schemas import JobPostingRequest, JobPostingResponse
 

@@ -11,7 +11,6 @@ from .auth.dependencies import (
 )
 from .database.session import async_session
 
-
 # Database
 AsyncSessionDep = Annotated[
     AsyncSession,

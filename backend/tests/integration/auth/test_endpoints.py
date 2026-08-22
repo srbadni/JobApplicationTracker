@@ -6,6 +6,7 @@ check-auth route depends on ``get_optional_principal``, so we override that
 FastAPI dependency to simulate authenticated / anonymous callers.
 """
 
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -23,14 +24,14 @@ ROUTES = "src.infrastructure.auth.routes"
 
 @pytest.mark.asyncio
 async def test_login_success(client: AsyncClient, test_user: dict):
-    """A valid username/password logs in: 200, a CSRF token, and a session cookie.
+    """A valid email/password logs in: 200, a CSRF token, and a session cookie.
 
     Exercises the real crudauth path end-to-end (authenticate_password against the
     test DB, create_session on the in-memory backend, set_session_cookies).
     """
     response = await client.post(
         "/api/v1/auth/login",
-        data={"username": test_user["username"], "password": test_user["password"]},
+        data={"username": test_user["email"], "password": test_user["password"]},
     )
 
     assert response.status_code == 200
@@ -43,7 +44,7 @@ async def test_login_wrong_password(client: AsyncClient, test_user: dict):
     """An incorrect password is rejected with 401."""
     response = await client.post(
         "/api/v1/auth/login",
-        data={"username": test_user["username"], "password": "wrong-password"},
+        data={"username": test_user["email"], "password": "wrong-password"},
     )
 
     assert response.status_code == 401
@@ -54,7 +55,7 @@ async def test_login_then_logout(client: AsyncClient, test_user: dict):
     """Logging in then logging out (echoing the CSRF token) succeeds and clears the session."""
     login = await client.post(
         "/api/v1/auth/login",
-        data={"username": test_user["username"], "password": test_user["password"]},
+        data={"username": test_user["email"], "password": test_user["password"]},
     )
     assert login.status_code == 200
     csrf_token = login.json()["csrf_token"]
@@ -142,7 +143,6 @@ async def test_check_auth_authenticated(client: AsyncClient):
     """check-auth returns the user info when a principal is resolved."""
     mock_user = {
         "id": 1,
-        "username": "testuser",
         "email": "test@example.com",
         "oauth_provider": "google",
     }
@@ -158,7 +158,7 @@ async def test_check_auth_authenticated(client: AsyncClient):
         body = response.json()
         assert body["authenticated"] is True
         assert body["user"]["id"] == 1
-        assert body["user"]["username"] == "testuser"
+        assert body["user"]["email"] == "test@example.com"
         assert body["user"]["oauth_provider"] == "google"
         assert "session" in body
     finally:
@@ -204,7 +204,7 @@ async def test_login_soft_deleted_user_rejected(client: AsyncClient, db_session:
     """
     user = User(
         name="Deleted User",
-        username="deleted_user",
+        phone_number="09123456789",
         email="deleted@example.com",
         hashed_password=get_password_hash("Password123!"),
         tier_id=test_tier["id"],
@@ -215,7 +215,7 @@ async def test_login_soft_deleted_user_rejected(client: AsyncClient, db_session:
 
     response = await client.post(
         "/api/v1/auth/login",
-        data={"username": "deleted_user", "password": "Password123!"},
+        data={"username": "deleted@example.com", "password": "Password123!"},
     )
 
     assert response.status_code == 401
@@ -233,7 +233,7 @@ async def test_logout_without_csrf_token_rejected(client: AsyncClient, test_user
     """A logged-in session still can't mutate without the CSRF header (403)."""
     login = await client.post(
         "/api/v1/auth/login",
-        data={"username": test_user["username"], "password": test_user["password"]},
+        data={"username": test_user["email"], "password": test_user["password"]},
     )
     assert login.status_code == 200
 
@@ -247,7 +247,7 @@ async def test_refresh_csrf_token_success(client: AsyncClient, test_user: dict):
     """With a valid session cookie, /refresh-csrf mints a fresh token (no CSRF header needed)."""
     login = await client.post(
         "/api/v1/auth/login",
-        data={"username": test_user["username"], "password": test_user["password"]},
+        data={"username": test_user["email"], "password": test_user["password"]},
     )
     assert login.status_code == 200
 
@@ -277,13 +277,8 @@ async def test_oauth_google_login_provider_failure_returns_500(client: AsyncClie
 
 
 @pytest.mark.asyncio
-async def test_oauth_callback_success_creates_user(client: AsyncClient):
-    """The happy-path callback links/creates the user and starts a session (json format).
-
-    Exercises the real oauth_account_service.get_or_create_user → repo.create against
-    the test DB (proving crudauth user creation works on the dataclass-mapped User),
-    with only the provider's network calls mocked.
-    """
+async def test_oauth_callback_success(client: AsyncClient):
+    """A successful provider callback returns the linked user and starts a session."""
     valid_state = OAuthState(
         state="good-state",
         provider="google",
@@ -306,10 +301,14 @@ async def test_oauth_callback_success_creates_user(client: AsyncClient):
             name="OAuth New User",
         )
     )
+    linked_user = SimpleNamespace(id=123, email="oauth_new@example.com")
+    mock_account_service = MagicMock()
+    mock_account_service.get_or_create_user = AsyncMock(return_value=(linked_user, True))
 
     with (
         patch(f"{ROUTES}.oauth_state_storage", mock_storage),
         patch(f"{ROUTES}.oauth_providers", {"google": mock_provider}),
+        patch(f"{ROUTES}.oauth_account_service", mock_account_service),
     ):
         response = await client.get(
             "/api/v1/auth/oauth/callback/google",

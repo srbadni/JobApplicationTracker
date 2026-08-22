@@ -26,7 +26,6 @@ import pytest_asyncio  # noqa: E402
 import redis as syncredis  # noqa: E402
 import redis.asyncio as aioredis  # noqa: E402
 from crudauth import get_password_hash  # noqa: E402
-from faker import Faker  # noqa: E402
 from httpx import ASGITransport, AsyncClient  # noqa: E402
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine  # noqa: E402
 from sqlalchemy.orm import sessionmaker  # noqa: E402
@@ -153,11 +152,10 @@ async def second_test_tier(db_session: AsyncSession):
 @pytest_asyncio.fixture
 async def test_user(db_session: AsyncSession, test_tier: dict):
     """Create a test user."""
-    fake = Faker()
     user = User(
-        name=fake.name(),
-        username=f"u{fake.random_int(10000, 99999)}",
-        email=fake.email(),
+        name="Test User",
+        phone_number="09123456789",
+        email="test.user@example.com",
         hashed_password=get_password_hash("Password123!"),
         is_superuser=False,
         tier_id=test_tier["id"],
@@ -168,9 +166,10 @@ async def test_user(db_session: AsyncSession, test_tier: dict):
     return {
         "id": user.id,
         "name": user.name,
-        "username": user.username,
+        "phone_number": user.phone_number,
         "email": user.email,
         "is_superuser": user.is_superuser,
+        "user_type": user.user_type,
         "tier_id": user.tier_id,
         "password": "Password123!",
         "profile_image_url": user.profile_image_url,
@@ -180,11 +179,10 @@ async def test_user(db_session: AsyncSession, test_tier: dict):
 @pytest_asyncio.fixture
 async def test_user_2(db_session: AsyncSession, test_tier: dict):
     """Second test user for permission tests."""
-    fake = Faker()
     user = User(
-        name=fake.name(),
-        username=f"u{fake.random_int(10000, 99999)}",
-        email=fake.email(),
+        name="Second Test User",
+        phone_number="09123456780",
+        email="second.user@example.com",
         hashed_password=get_password_hash("Password123!"),
         is_superuser=False,
         tier_id=test_tier["id"],
@@ -195,9 +193,10 @@ async def test_user_2(db_session: AsyncSession, test_tier: dict):
     return {
         "id": user.id,
         "name": user.name,
-        "username": user.username,
+        "phone_number": user.phone_number,
         "email": user.email,
         "is_superuser": user.is_superuser,
+        "user_type": user.user_type,
         "tier_id": user.tier_id,
         "password": "Password123!",
     }
@@ -206,11 +205,10 @@ async def test_user_2(db_session: AsyncSession, test_tier: dict):
 @pytest_asyncio.fixture
 async def test_superuser(db_session: AsyncSession, test_tier: dict):
     """Create a test superuser."""
-    fake = Faker()
     user = User(
-        name=fake.name(),
-        username=f"su{fake.random_int(10000, 99999)}",
-        email=fake.email(),
+        name="Test Superuser",
+        phone_number="09123456781",
+        email="superuser@example.com",
         hashed_password=get_password_hash("SuperuserPass123!"),
         is_superuser=True,
         tier_id=test_tier["id"],
@@ -221,9 +219,10 @@ async def test_superuser(db_session: AsyncSession, test_tier: dict):
     return {
         "id": user.id,
         "name": user.name,
-        "username": user.username,
+        "phone_number": user.phone_number,
         "email": user.email,
         "is_superuser": user.is_superuser,
+        "user_type": user.user_type,
         "tier_id": user.tier_id,
         "password": "SuperuserPass123!",
     }

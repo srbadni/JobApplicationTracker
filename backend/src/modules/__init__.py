@@ -3,8 +3,8 @@
 from .api_keys.models import APIKey, KeyPermission, KeyUsage
 from .company.models import Company
 from .company_membership.model import CompanyMembership
-from .job_posting.models import JobPosting
 from .job_categories.models import JobCategory
+from .job_posting.models import JobPosting
 from .rate_limit.models import RateLimit
 from .tier.models import Tier
 from .user.models import User

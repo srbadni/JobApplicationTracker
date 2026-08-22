@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 
+from ...infrastructure.dependencies import AsyncSessionDep
 from .dependencies import JobCategoriesServiceDep
 from .schemas import JobCategoriesResponse
-from ...infrastructure.dependencies import AsyncSessionDep
 
 router = APIRouter(tags=["Job Categories"])
 

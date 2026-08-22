@@ -226,7 +226,7 @@ class ProductionSecurityValidator:
             - CORS_ORIGINS set to '*'
             - Redis without password authentication
             - Session timeout too long
-            - Weak admin usernames or passwords
+            - Weak admin email addresses or passwords
         """
         warnings = []
 
@@ -680,14 +680,15 @@ class ProductionSecurityValidator:
         if not self.settings.ADMIN_ENABLED:
             return warnings
 
-        if not self.settings.ADMIN_USERNAME or not self.settings.ADMIN_PASSWORD:
+        if not self.settings.ADMIN_EMAIL or not self.settings.ADMIN_PASSWORD:
             return warnings
 
-        weak_usernames = ["admin", "administrator", "root", "user", "test", "demo"]
-        if self.settings.ADMIN_USERNAME.lower() in weak_usernames:
+        email_local_part = self.settings.ADMIN_EMAIL.partition("@")[0].lower()
+        weak_email_local_parts = {"admin", "administrator", "root", "user", "test", "demo"}
+        if email_local_part in weak_email_local_parts:
             warnings.append(
-                f"Admin username '{self.settings.ADMIN_USERNAME}' is predictable. "
-                f"Consider using a less obvious username for better security."
+                f"Admin email '{self.settings.ADMIN_EMAIL}' is predictable. "
+                "Consider using a less obvious address for better security."
             )
 
         password = self.settings.ADMIN_PASSWORD

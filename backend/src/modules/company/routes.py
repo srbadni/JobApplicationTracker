@@ -6,7 +6,7 @@ from ...infrastructure.dependencies import AsyncSessionDep
 from ..common.exceptions import ResourceNotFoundError
 from ..common.utils.error_handler import handle_exception
 from .dependencies import CompanyServiceDep
-from .schemas import CompanyCreate, CompanyRead
+from .schemas import CompanyRead
 
 router = APIRouter(tags=["Companies"])
 

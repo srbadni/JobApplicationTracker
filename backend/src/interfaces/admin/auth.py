@@ -12,12 +12,14 @@ class AdminAuth(AuthenticationBackend):
     async def login(self, request: Request) -> bool:
         """Validate login credentials and create session."""
         form = await request.form()
-        username = form.get("username")
+        # SQLAdmin names this login-form field ``username``. The application no
+        # longer has usernames, so its value is the configured admin email.
+        email = form.get("username")
         password = form.get("password")
 
         settings = get_settings()
 
-        if username == settings.ADMIN_USERNAME and password == settings.ADMIN_PASSWORD:
+        if email == settings.ADMIN_EMAIL and password == settings.ADMIN_PASSWORD:
             request.session.update({"admin_authenticated": True})
             return True
 

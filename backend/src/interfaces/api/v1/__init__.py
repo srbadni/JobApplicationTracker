@@ -4,11 +4,11 @@ from ....infrastructure.auth.routes import router as auth_router
 from ....modules.api_keys.routes import router as api_keys_router
 from ....modules.company.routes import router as companies_router
 from ....modules.employer.route import router as employers_router
+from ....modules.job_categories.route import router as job_categories_router
+from ....modules.job_posting.routes import router as job_postings_router
 from ....modules.rate_limit.routes import router as rate_limits_router
 from ....modules.tier.routes import router as tiers_router
 from ....modules.user.routes import router as users_router
-from ....modules.job_posting.routes import router as job_postings_router
-from ....modules.job_categories.route import router as job_categories_router
 
 router = APIRouter(prefix="/v1")
 router.include_router(users_router, prefix="/users")

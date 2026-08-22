@@ -34,7 +34,7 @@ class TestProductionSecurityValidator:
             "SESSION_TIMEOUT_MINUTES": 30,
             "CSRF_ENABLED": True,
             "ADMIN_ENABLED": True,
-            "ADMIN_USERNAME": "secure_admin_user",
+            "ADMIN_EMAIL": "secure.admin@company.example",
             "ADMIN_PASSWORD": "very_secure_admin_password_123",
             "PRODUCTION_SECURITY_VALIDATION_ENABLED": True,
             "PRODUCTION_SECURITY_STRICT_MODE": False,
@@ -109,7 +109,11 @@ class TestProductionSecurityValidator:
 
     def test_admin_disabled_does_not_check_credentials(self):
         """Test that disabled admin doesn't trigger credential checks."""
-        settings = self.create_mock_settings(ADMIN_ENABLED=False, ADMIN_USERNAME="admin", ADMIN_PASSWORD="weak")
+        settings = self.create_mock_settings(
+            ADMIN_ENABLED=False,
+            ADMIN_EMAIL="admin@example.com",
+            ADMIN_PASSWORD="weak",
+        )
         validator = ProductionSecurityValidator(settings)
 
         # Should not raise any exceptions for admin credentials
@@ -303,7 +307,7 @@ class TestProductionSecurityValidator:
 
     def test_weak_admin_credentials_logs_warning(self, caplog):
         """Test that weak admin credentials log warnings."""
-        settings = self.create_mock_settings(ADMIN_USERNAME="admin", ADMIN_PASSWORD="123456")
+        settings = self.create_mock_settings(ADMIN_EMAIL="admin@example.com", ADMIN_PASSWORD="123456")
         validator = ProductionSecurityValidator(settings)
 
         validator.validate_production_security()
@@ -311,10 +315,10 @@ class TestProductionSecurityValidator:
         # Check for admin credential warnings
         warning_logs = [record for record in caplog.records if record.levelname == "WARNING"]
 
-        username_warnings = [log for log in warning_logs if "Admin username" in log.message and "predictable" in log.message]
+        email_warnings = [log for log in warning_logs if "Admin email" in log.message and "predictable" in log.message]
         password_warnings = [log for log in warning_logs if "Admin password" in log.message]
 
-        assert len(username_warnings) > 0
+        assert len(email_warnings) > 0
         assert len(password_warnings) > 0
 
     def test_convenience_function(self):
@@ -326,14 +330,14 @@ class TestProductionSecurityValidator:
 
     def test_no_admin_credentials_skips_admin_checks(self, caplog):
         """Test that missing admin credentials skip admin checks."""
-        settings = self.create_mock_settings(ADMIN_USERNAME="", ADMIN_PASSWORD="")
+        settings = self.create_mock_settings(ADMIN_EMAIL="", ADMIN_PASSWORD="")
         validator = ProductionSecurityValidator(settings)
 
         validator.validate_production_security()
 
         # Should not have admin credential warnings
         warning_logs = [record for record in caplog.records if record.levelname == "WARNING"]
-        admin_warnings = [log for log in warning_logs if "Admin username" in log.message or "Admin password" in log.message]
+        admin_warnings = [log for log in warning_logs if "Admin email" in log.message or "Admin password" in log.message]
         assert len(admin_warnings) == 0
 
     def test_redis_ssl_with_external_host(self, caplog):
