@@ -6,6 +6,7 @@ check-auth route depends on ``get_optional_principal``, so we override that
 FastAPI dependency to simulate authenticated / anonymous callers.
 """
 
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -300,7 +301,7 @@ async def test_oauth_callback_success(client: AsyncClient):
             name="OAuth New User",
         )
     )
-    linked_user = {"id": 123, "email": "oauth_new@example.com"}
+    linked_user = SimpleNamespace(id=123, email="oauth_new@example.com")
     mock_account_service = MagicMock()
     mock_account_service.get_or_create_user = AsyncMock(return_value=(linked_user, True))
 

@@ -169,6 +169,7 @@ async def test_user(db_session: AsyncSession, test_tier: dict):
         "phone_number": user.phone_number,
         "email": user.email,
         "is_superuser": user.is_superuser,
+        "user_type": user.user_type,
         "tier_id": user.tier_id,
         "password": "Password123!",
         "profile_image_url": user.profile_image_url,
@@ -195,6 +196,7 @@ async def test_user_2(db_session: AsyncSession, test_tier: dict):
         "phone_number": user.phone_number,
         "email": user.email,
         "is_superuser": user.is_superuser,
+        "user_type": user.user_type,
         "tier_id": user.tier_id,
         "password": "Password123!",
     }
@@ -220,6 +222,7 @@ async def test_superuser(db_session: AsyncSession, test_tier: dict):
         "phone_number": user.phone_number,
         "email": user.email,
         "is_superuser": user.is_superuser,
+        "user_type": user.user_type,
         "tier_id": user.tier_id,
         "password": "SuperuserPass123!",
     }
