@@ -8,6 +8,9 @@ from .job_posting.models import JobPosting
 from .rate_limit.models import RateLimit
 from .tier.models import Tier
 from .user.models import User
+from .province.models import Province
+from .city.models import City
+from .user.models import User
 
 __all__ = [
     "User",
@@ -20,4 +23,6 @@ __all__ = [
     "CompanyMembership",
     "JobPosting",
     "JobCategory",
+    "Province",
+    "City",
 ]

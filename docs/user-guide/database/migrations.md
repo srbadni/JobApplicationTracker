@@ -2,25 +2,17 @@
 
 Schema changes are managed with [Alembic](https://alembic.sqlalchemy.org/). This guide covers the day-to-day workflow plus the production safety net the project adds on top.
 
-## Two Modes: Auto-Create vs Migrations
+## One Schema Authority: Alembic
 
-The project supports both. They are **alternatives**, not complements:
+Alembic migrations are the canonical and default way to create or change the
+database schema in every environment. Run `uv run alembic upgrade head` before
+starting the application or inserting seed data.
 
-### `CREATE_TABLES_ON_STARTUP=true` — auto-create
-
-The app calls `Base.metadata.create_all` on startup, creating any missing tables from the current models.
-
-| Use when | Don't use when |
-|----------|----------------|
-| Local dev with a throwaway database | You need version-controlled schema changes |
-| Tests with an ephemeral testcontainer | Multiple developers share a database |
-| Quick prototyping | You're deploying to staging/production |
-
-Driven by the `CREATE_TABLES_ON_STARTUP` env var, defaulting to `true`. The factory honors it via `create_application(create_tables_on_startup=...)`.
-
-### Alembic migrations
-
-Tracked, reviewable, reversible schema changes — what you want for anything beyond a local sandbox. Set `CREATE_TABLES_ON_STARTUP=false` (or leave it true; `create_all` is a no-op on existing tables) and run migrations explicitly.
+`CREATE_TABLES_ON_STARTUP` defaults to `false`. The opt-in `true` setting is
+retained only for isolated tests or disposable prototypes that never run
+Alembic. Do not combine `Base.metadata.create_all()` with migrations: it creates
+tables without recording Alembic revisions and causes later migrations to
+collide with those untracked tables.
 
 ## Configuration
 

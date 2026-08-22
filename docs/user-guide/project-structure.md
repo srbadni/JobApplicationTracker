@@ -162,15 +162,17 @@ uv run alembic upgrade head
 
 ```text
 scripts/
-├── setup_initial_data.py     # All-in-one: tables + tier + admin
+├── setup_initial_data.py     # Seed locations, default tier, and admin
 ├── create_first_superuser.py # Just the admin user
 ├── create_first_tier.py      # Just the default tier
-└── create_tables.py          # Just the database tables
+├── create_provinces_and_cities.py # Iranian location seed
+└── create_tables.py          # Deprecated; points callers to Alembic
 ```
 
-The most common entry point is `setup_initial_data` which calls all three.
+Apply migrations first, then run the idempotent initial-data seeds:
 
 ```bash
+uv run alembic upgrade head
 uv run python -m scripts.setup_initial_data
 ```
 
