@@ -60,7 +60,9 @@ requestInterceptor: (request) => {
 },
 """
     html = html.replace('"dom_id": "#swagger-ui",', f'"dom_id": "#swagger-ui",\n{request_interceptor}', 1)
-    headers = {key: value for key, value in response.headers.items() if key.lower() != "content-length"}
+    headers = {
+        key: value for key, value in response.headers.items() if key.lower() != "content-length"
+    }
     return HTMLResponse(content=html, headers=headers, status_code=response.status_code)
 
 
