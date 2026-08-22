@@ -155,7 +155,6 @@ curl http://localhost:8000/api/v1/users/me -b cookies.txt
 ### Development & Deployment
 
 - **[Development Guide](../user-guide/development.md)** - Extend and customize
-- **[Testing](../user-guide/testing.md)** - Write tests for your API
 - **[Production Deployment](../user-guide/production.md)** - Deploy to production
 
 ## Alternative Setup Methods

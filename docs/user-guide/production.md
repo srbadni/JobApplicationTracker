@@ -368,4 +368,3 @@ The worker process isn't running, isn't pointed at the same Redis, or hasn't imp
 - **[Configuration → Environment-Specific](configuration/environment-specific.md)** — per-environment env-var matrix
 - **[Database → Migrations](database/migrations.md)** — zero-downtime schema-change patterns
 - **[Authentication → Sessions](authentication/sessions.md)** — production session configuration
-- **[Testing](testing.md)** — the test setup that ships with the project

@@ -245,31 +245,6 @@ You'll also want to:
 - Drop the corresponding env vars from `.env.example`
 - Disable startup of those subsystems in `infrastructure/app_factory.py`
 
-## Testing Settings
-
-The test suite uses fixtures that override settings. The general pattern:
-
-```python
-import pytest
-from src.infrastructure.config.settings import Settings
-
-
-@pytest.fixture
-def test_settings(monkeypatch):
-    monkeypatch.setenv("ENVIRONMENT", "local")
-    monkeypatch.setenv("CACHE_ENABLED", "false")
-    monkeypatch.setenv("RATE_LIMITER_ENABLED", "false")
-    return Settings()
-```
-
-For one-off overrides without env vars, instantiate the relevant settings class directly with kwargs:
-
-```python
-def test_storage_validation():
-    with pytest.raises(ValueError, match="cannot exceed 100MB"):
-        StorageSettings(MAX_UPLOAD_SIZE_BYTES=200_000_000)
-```
-
 ## Best Practices
 
 ### Organization
