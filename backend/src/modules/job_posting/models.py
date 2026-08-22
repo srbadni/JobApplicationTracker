@@ -26,6 +26,8 @@ if TYPE_CHECKING:
     from ..company.models import Company
     from ..job_categories.models import JobCategory
     from ..user.models import User
+    from ..province.models import Province
+    from ..city.models import City
 
 
 class JobPosting(Base, TimestampMixin):
@@ -45,6 +47,16 @@ class JobPosting(Base, TimestampMixin):
 
     job_category_id: Mapped[int] = mapped_column(
         ForeignKey("job_categories.id"),
+        nullable=False,
+    )
+
+    province_id: Mapped[int] = mapped_column(
+        ForeignKey("provinces.id"),
+        nullable=False,
+    )
+
+    city_id: Mapped[int] = mapped_column(
+        ForeignKey("cities.id"),
         nullable=False,
     )
 
@@ -141,6 +153,18 @@ class JobPosting(Base, TimestampMixin):
 
     job_category: Mapped["JobCategory"] = relationship(
         "JobCategory",
+        init=False,
+        back_populates="job_postings"
+    )
+
+    province: Mapped["Province"] = relationship(
+        "Province",
+        init=False,
+        back_populates="job_postings"
+    )
+
+    city: Mapped["City"] = relationship(
+        "City",
         init=False,
         back_populates="job_postings"
     )

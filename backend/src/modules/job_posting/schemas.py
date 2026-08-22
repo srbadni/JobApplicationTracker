@@ -28,6 +28,8 @@ class JobPostingRequest(BaseModel):
     )
 
     job_category_id: int = Field()
+    province_id: int = Field()
+    city_id: int = Field()
 
     employment_type: EmploymentType
 
@@ -57,6 +59,8 @@ class JobPostingResponse(BaseModel):
     id: int
     company_id: int
     job_category_id: int
+    province_id: int
+    city_id: int
 
     job_title: str
     job_description: str
