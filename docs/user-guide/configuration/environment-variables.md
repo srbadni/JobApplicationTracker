@@ -25,7 +25,7 @@ POSTGRES_SERVER=db          # use "localhost" without Docker
 POSTGRES_PORT=5432
 POSTGRES_SYNC_PREFIX=postgresql://
 POSTGRES_ASYNC_PREFIX=postgresql+asyncpg://
-CREATE_TABLES_ON_STARTUP=true
+CREATE_TABLES_ON_STARTUP=false
 ```
 
 | Variable | Default | Purpose |
@@ -37,7 +37,7 @@ CREATE_TABLES_ON_STARTUP=true
 | `POSTGRES_PORT` | `5432` | TCP port |
 | `POSTGRES_SYNC_PREFIX` | `postgresql://` | Driver prefix for sync code (Alembic) |
 | `POSTGRES_ASYNC_PREFIX` | `postgresql+asyncpg://` | Driver prefix for async code (the app) |
-| `CREATE_TABLES_ON_STARTUP` | `true` | Auto-create tables from models on startup |
+| `CREATE_TABLES_ON_STARTUP` | `false` | Test-only opt-in to create tables from models on startup; use Alembic normally |
 | `POSTGRES_POOL_SIZE` | `20` | SQLAlchemy connection pool size |
 | `POSTGRES_MAX_OVERFLOW` | `0` | Pool overflow connections |
 | `POSTGRES_POOL_PRE_PING` | `true` | Test a pooled connection before use, replacing ones the server has dropped |

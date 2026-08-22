@@ -69,7 +69,8 @@ You should see tables like `user`, `tiers`, `rate_limits`, `api_keys`, `key_usag
 Create the first admin user and the default tier.
 
 !!! warning "Prerequisites"
-    Make sure the database tables are created before running this. With `CREATE_TABLES_ON_STARTUP=true` (default), this happens automatically the first time the app boots.
+    Apply the schema with `uv run alembic upgrade head` before running this
+    command. Seed scripts insert data only; they do not create untracked tables.
 
 ### Create Admin User and Default Tier
 

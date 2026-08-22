@@ -42,7 +42,7 @@ async def set_threadpool_tokens(number_of_tokens: int = 100) -> None:
 
 def lifespan_factory(
     settings: Settings,
-    create_tables_on_startup: bool = True,
+    create_tables_on_startup: bool = False,
 ) -> Callable[[FastAPI], AbstractAsyncContextManager[None]]:
     """Factory to create a lifespan async context manager for a FastAPI app."""
 
@@ -109,7 +109,7 @@ def create_application(
     if settings is None:
         settings = get_settings()
 
-    _create_tables_on_startup = True
+    _create_tables_on_startup = False
     if create_tables_on_startup is not None:
         _create_tables_on_startup = create_tables_on_startup
     elif hasattr(settings, "CREATE_TABLES_ON_STARTUP"):

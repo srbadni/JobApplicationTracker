@@ -173,7 +173,7 @@ app.add_middleware(
 ```
 
 ### Wrong `engine` connection / "no such table"
-The admin uses the same engine as the API, which means it requires `CREATE_TABLES_ON_STARTUP=true` (default) or applied Alembic migrations. If `/admin` shows views but they're empty / error, check:
+The admin uses the same engine as the API, so apply Alembic migrations before starting it. If `/admin` shows views but they're empty / error, check:
 
 ```bash
 cd backend
