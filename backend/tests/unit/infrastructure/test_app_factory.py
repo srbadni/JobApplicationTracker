@@ -10,3 +10,4 @@ def test_swagger_ui_copies_csrf_cookie_to_header_for_unsafe_requests() -> None:
     assert 'request.headers["X-CSRF-Token"]' in html
     assert '["POST", "PUT", "PATCH", "DELETE"]' in html
     assert 'request.credentials = "same-origin"' in html
+    assert int(response.headers["content-length"]) == len(response.body)
