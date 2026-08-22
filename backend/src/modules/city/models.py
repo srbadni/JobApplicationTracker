@@ -6,6 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ...infrastructure.database import Base
 
 if TYPE_CHECKING:
+    from ..job_posting.models import JobPosting
     from ..province.models import Province
 
 
@@ -18,3 +19,8 @@ class City(Base):
 
     province_id: Mapped[int] = mapped_column(Integer, ForeignKey("provinces.id"))
     province: Mapped["Province"] = relationship("Province", back_populates="cities", init=False)
+    job_postings: Mapped["JobPosting"] = relationship(
+        "JobPosting",
+        init=False,
+        back_populates="city"
+    )
