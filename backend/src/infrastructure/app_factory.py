@@ -7,11 +7,10 @@ from typing import Any
 
 import anyio
 import fastapi
-from fastapi import APIRouter, Depends, FastAPI
+from fastapi import APIRouter, Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
-from fastapi.openapi.utils import get_openapi
 from fastapi.responses import HTMLResponse
 
 from ..modules.common.utils.error_handler import register_exception_handlers
@@ -61,7 +60,8 @@ requestInterceptor: (request) => {
 },
 """
     html = html.replace('"dom_id": "#swagger-ui",', f'"dom_id": "#swagger-ui",\n{request_interceptor}', 1)
-    return HTMLResponse(content=html, headers=dict(response.headers), status_code=response.status_code)
+    headers = {key: value for key, value in response.headers.items() if key.lower() != "content-length"}
+    return HTMLResponse(content=html, headers=headers, status_code=response.status_code)
 
 
 async def set_threadpool_tokens(number_of_tokens: int = 100) -> None:
@@ -353,21 +353,18 @@ def create_application(
             docs_router = APIRouter(dependencies=[Depends(dependency_to_apply)])
 
         @docs_router.get(_docs_url, include_in_schema=False)
-        async def get_swagger_documentation() -> fastapi.responses.HTMLResponse:
-            return get_csrf_aware_swagger_ui_html(openapi_url=_openapi_url, title="docs")
+        async def get_swagger_documentation(request: Request) -> fastapi.responses.HTMLResponse:
+            openapi_url = request.scope.get("root_path", "") + _openapi_url
+            return get_csrf_aware_swagger_ui_html(openapi_url=openapi_url, title="docs")
 
         @docs_router.get(_redoc_url, include_in_schema=False)
-        async def get_redoc_documentation() -> fastapi.responses.HTMLResponse:
-            return get_redoc_html(openapi_url=_openapi_url, title="redoc")
+        async def get_redoc_documentation(request: Request) -> fastapi.responses.HTMLResponse:
+            openapi_url = request.scope.get("root_path", "") + _openapi_url
+            return get_redoc_html(openapi_url=openapi_url, title="redoc")
 
         @docs_router.get(_openapi_url, include_in_schema=False)
         async def openapi() -> dict[str, Any]:
-            return get_openapi(
-                title=metadata.get("title", "API"),
-                version=metadata.get("version", "0.1.0"),
-                description=metadata.get("description", ""),
-                routes=application.routes,
-            )
+            return application.openapi()
 
         application.include_router(docs_router)
 
