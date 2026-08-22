@@ -4,7 +4,7 @@ from ...infrastructure.dependencies import AsyncSessionDep, CurrentUserDep, CSRF
 from .dependencies import JobPostingServiceDep
 from .schemas import JobPostingRequest, JobPostingResponse
 
-router = APIRouter(tags=["JobPostings"])
+router = APIRouter(tags=["Job Postings"])
 
 @router.post(
     "",
@@ -20,6 +20,6 @@ async def create_job_posting(
 ):
     return await service.create_job_posting(
         db=db,
-        employer_id=current_user["id"],
+        user_id=current_user["id"],
         post=post,
     )

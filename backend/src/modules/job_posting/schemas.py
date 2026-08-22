@@ -27,6 +27,8 @@ class JobPostingRequest(BaseModel):
         min_length=1,
     )
 
+    job_category_id: int = Field()
+
     employment_type: EmploymentType
 
     work_mode: WorkMode
@@ -54,6 +56,7 @@ class JobPostingResponse(BaseModel):
 
     id: int
     company_id: int
+    job_category_id: int
 
     job_title: str
     job_description: str

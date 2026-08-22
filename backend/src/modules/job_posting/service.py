@@ -11,11 +11,11 @@ class JobPostingService:
             self,
             post: JobPostingRequest,
             db: AsyncSession,
-            employer_id: int
+            user_id: int
     ) -> JobPosting:
         company_membership: CompanyMembership | None = await db.scalar(
             select(CompanyMembership).where(
-                CompanyMembership.user_id == employer_id
+                CompanyMembership.user_id == user_id
             )
         )
 
@@ -26,6 +26,7 @@ class JobPostingService:
 
         job_posting = JobPosting(
             **post.model_dump(),
+            created_by_id=user_id,
             company_id=company_id,
         )
 
