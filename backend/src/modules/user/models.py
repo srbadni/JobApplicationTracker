@@ -10,6 +10,7 @@ from .enums import UserType
 
 if TYPE_CHECKING:
     from ..company_membership.model import CompanyMembership
+    from ..job_posting.models import JobPosting
     from ..tier.models import Tier
 
 
@@ -115,6 +116,13 @@ class User(Base, TimestampMixin, SoftDeleteMixin):
         back_populates="user",
         init=False,
         uselist=False,
+    )
+
+    job_postings: Mapped[list["JobPosting"]] = relationship(
+        "JobPosting",
+        back_populates="user",
+        lazy="selectin",
+        init=False,
     )
 
     @property

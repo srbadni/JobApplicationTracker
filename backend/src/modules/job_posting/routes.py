@@ -1,11 +1,10 @@
 from fastapi import APIRouter, status
 
-from ...infrastructure.dependencies import AsyncSessionDep, CSRFTokenHeaderDep, CurrentUserDep
+from ...infrastructure.dependencies import AsyncSessionDep, CurrentUserDep, CSRFTokenHeaderDep
 from .dependencies import JobPostingServiceDep
 from .schemas import JobPostingRequest, JobPostingResponse
 
-router = APIRouter()
-
+router = APIRouter(tags=["Job Postings"])
 
 @router.post(
     "",
@@ -13,7 +12,6 @@ router = APIRouter()
     response_model=JobPostingResponse,
 )
 async def create_job_posting(
-    company_id: int,
     post: JobPostingRequest,
     db: AsyncSessionDep,
     current_user: CurrentUserDep,
@@ -22,7 +20,6 @@ async def create_job_posting(
 ):
     return await service.create_job_posting(
         db=db,
-        company_id=company_id,
         user_id=current_user["id"],
         post=post,
     )
