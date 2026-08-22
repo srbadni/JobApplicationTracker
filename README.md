@@ -56,7 +56,6 @@ uv run taskiq worker infrastructure.taskiq.worker:default_broker
 ```bash
 uv run job-tracker deploy generate prod --workers 8
 uv run job-tracker env validate
-cd backend && uv run pytest
 ```
 
 ## Database rename note

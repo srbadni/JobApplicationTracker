@@ -294,48 +294,6 @@ if post["author_id"] != current_user["id"]:
 
 The global handler is already defensive about this — it returns generic messages and writes the real error to logs with a `support_id`. The `support_id` is your handle for grep'ing logs when a user reports an issue.
 
-## Testing Exceptions
-
-The codebase uses `pytest-asyncio` and FastAPI's `TestClient` for route tests:
-
-```python
-@pytest.mark.asyncio
-async def test_user_not_found(client: AsyncClient):
-    resp = await client.get("/api/v1/users/not-a-user")
-    assert resp.status_code == 404
-    body = resp.json()
-    assert body["detail"]
-    assert "support_id" in body
-
-
-@pytest.mark.asyncio
-async def test_duplicate_email(client: AsyncClient):
-    payload = {
-        "name": "Test User",
-        "username": "test1",
-        "email": "test@example.com",
-        "password": "Password123!",
-    }
-    await client.post("/api/v1/users/", json=payload)
-
-    payload["username"] = "test2"  # different username, same email
-    resp = await client.post("/api/v1/users/", json=payload)
-    assert resp.status_code == 409
-```
-
-For service-level tests, just assert the right `DomainError` is raised:
-
-```python
-@pytest.mark.asyncio
-async def test_create_duplicate_user_raises(db_session, existing_user):
-    service = UserService()
-    with pytest.raises(UserExistsError):
-        await service.create(
-            UserCreate(name="...", username=existing_user["username"], email="x@x.com", password="..."),
-            db_session,
-        )
-```
-
 ## What's Next
 
 - **[Versioning](versioning.md)** — Versioning strategy

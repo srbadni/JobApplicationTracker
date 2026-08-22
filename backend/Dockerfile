@@ -24,7 +24,7 @@ FROM python:3.11-slim AS base
 
 WORKDIR /app
 
-# Install uv for fast, secure package installation  
+# Install uv for fast, secure package installation
 COPY --from=ghcr.io/astral-sh/uv:0.9.9 /uv /usr/local/bin/uv
 
 # Install system dependencies needed for Python packages
@@ -55,9 +55,6 @@ COPY --from=requirements-stage /tmp/requirements-dev.txt .
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv pip install --system -r requirements-dev.txt && \
     rm requirements-dev.txt
-
-# Copy test files for development
-COPY tests ./tests
 
 # Create non-root user for security (same as production)
 RUN groupadd -r appuser && useradd -r -m -g appuser appuser
@@ -103,4 +100,4 @@ USER appuser
 
 # Production command with FastAPI CLI and configurable workers
 ENV WORKERS=1
-CMD ["sh", "-c", "fastapi run interfaces/main.py --host 0.0.0.0 --port 8000 --workers $WORKERS"] 
+CMD ["sh", "-c", "fastapi run interfaces/main.py --host 0.0.0.0 --port 8000 --workers $WORKERS"]
