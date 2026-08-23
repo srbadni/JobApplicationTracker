@@ -369,6 +369,15 @@ class TaskiqSettings(BaseSettings):
             raise ValueError(f"Unsupported broker type: {self.TASKIQ_BROKER_TYPE}")
 
 
+class StorageSettings(BaseSettings):
+    """File-storage settings."""
+
+    STORAGE_UPLOAD_DIR: str = config(
+        "STORAGE_UPLOAD_DIR",
+        default=os.path.join(project_root, "backend", "storage", "uploads"),
+    )
+
+
 class Settings(
     EnvironmentSettings,
     DatabaseSettings,
@@ -385,6 +394,7 @@ class Settings(
     SecuritySettings,
     LoggingSettings,
     TaskiqSettings,
+    StorageSettings,
 ):
     """Main settings class that combines all setting categories."""
 
