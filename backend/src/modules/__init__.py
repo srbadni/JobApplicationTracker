@@ -11,6 +11,8 @@ from .user.models import User
 from .province.models import Province
 from .city.models import City
 from .user.models import User
+from .salary_range.model import SalaryRange
+from .company_activity.models import CompanyActivity
 
 __all__ = [
     "User",
@@ -25,4 +27,6 @@ __all__ = [
     "JobCategory",
     "Province",
     "City",
+    "SalaryRange",
+    "CompanyActivity",
 ]

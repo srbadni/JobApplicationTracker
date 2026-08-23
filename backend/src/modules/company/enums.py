@@ -1,0 +1,10 @@
+from enum import StrEnum
+
+
+class EmployeeCount(StrEnum):
+    TWO_TO_TEN = "2_10"
+    ELEVEN_TO_FIFTY = "11_50"
+    FIFTY_ONE_TO_TWO_HUNDRED = "51_200"
+    TWO_HUNDRED_ONE_TO_FIVE_HUNDRED = "201_500"
+    FIVE_HUNDRED_ONE_TO_ONE_THOUSAND = "501_1000"
+    MORE_THAN_ONE_THOUSAND = "1000_PLUS"

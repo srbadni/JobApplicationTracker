@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
-    BigInteger,
     Boolean,
     Enum,
     ForeignKey,
@@ -19,7 +18,7 @@ from .enums import (
     MilitaryServiceStatus,
     MinimumEducationLevel,
     RelevantWorkExperience,
-    WorkMode,
+    WorkMode, JobPostingStatus,
 )
 
 if TYPE_CHECKING:
@@ -28,6 +27,7 @@ if TYPE_CHECKING:
     from ..user.models import User
     from ..province.models import Province
     from ..city.models import City
+    from ..salary_range.model import SalaryRange
 
 
 class JobPosting(Base, TimestampMixin):
@@ -91,14 +91,27 @@ class JobPosting(Base, TimestampMixin):
         nullable=False,
     )
 
-    minimum_salary: Mapped[int | None] = mapped_column(
-        BigInteger,
-        nullable=True,
+    salary_range_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("salary_ranges.id"),
+        nullable=False
     )
+
+    salary_range: Mapped["SalaryRange"] = relationship("SalaryRange", back_populates="job_postings", init=False)
 
     is_latin_text: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,
+    )
+
+    status: Mapped[JobPostingStatus] = mapped_column(
+        Enum(
+            JobPostingStatus,
+            values_callable=lambda enum: [item.value for item in enum],
+        ),
+        default=JobPostingStatus.NEEDS_REVIEW,
+        server_default=JobPostingStatus.NEEDS_REVIEW.value,
+        init=False
     )
 
     work_experience: Mapped[RelevantWorkExperience] = mapped_column(

@@ -3,13 +3,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..company_membership.model import CompanyMembership
 from .models import JobPosting
-from .schemas import JobPostingRequest
+from .schemas import JobPostingCreate
 
 
 class JobPostingService:
     async def create_job_posting(
             self,
-            post: JobPostingRequest,
+            post: JobPostingCreate,
             db: AsyncSession,
             user_id: int
     ) -> JobPosting:
