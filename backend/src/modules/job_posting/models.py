@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from ..province.models import Province
     from ..city.models import City
     from ..salary_range.model import SalaryRange
+    from ..job_application.models import JobApplication
 
 
 class JobPosting(Base, TimestampMixin):
@@ -180,4 +181,10 @@ class JobPosting(Base, TimestampMixin):
         "City",
         init=False,
         back_populates="job_postings"
+    )
+
+    job_applications: Mapped[list["JobApplication"]] = relationship(
+        "JobApplication",
+        back_populates="job_posting",
+        init=False
     )
