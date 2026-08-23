@@ -10,7 +10,7 @@ from .enums import (
 )
 
 
-class JobPostingRequest(BaseModel):
+class JobPostingCreate(BaseModel):
     job_title: str = Field(
         ...,
         min_length=1,

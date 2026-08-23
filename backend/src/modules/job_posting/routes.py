@@ -2,7 +2,7 @@ from fastapi import APIRouter, status
 
 from ...infrastructure.dependencies import AsyncSessionDep, CSRFTokenHeaderDep, CurrentUserDep
 from .dependencies import JobPostingServiceDep
-from .schemas import JobPostingRequest, JobPostingResponse
+from .schemas import JobPostingCreate, JobPostingResponse
 
 router = APIRouter()
 
@@ -12,7 +12,7 @@ router = APIRouter()
     response_model=JobPostingResponse,
 )
 async def create_job_posting(
-    post: JobPostingRequest,
+    post: JobPostingCreate,
     db: AsyncSessionDep,
     current_user: CurrentUserDep,
     service: JobPostingServiceDep,

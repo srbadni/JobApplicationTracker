@@ -37,3 +37,10 @@ class MilitaryServiceStatus(StrEnum):
     COMPLETED = "completed"
     EDUCATIONAL_EXEMPTION = "educational_exemption"
     PERMANENT_EXEMPTION = "permanent_exemption"
+
+class JobPostingStatus(StrEnum):
+    ACTIVE = "active"
+    NEEDS_REVIEW = "needs_review"
+    DRAFT = "draft"
+    CLOSED = "closed"
+    ARCHIVED = "archived"
