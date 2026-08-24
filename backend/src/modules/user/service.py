@@ -3,9 +3,10 @@ from typing import Any, cast
 from crudauth import get_password_hash
 from fastcrud import JoinConfig
 from fastcrud.types import GetMultiResponseDict
-from sqlalchemy.exc import MultipleResultsFound, NoResultFound
+from sqlalchemy.exc import MultipleResultsFound, NoResultFound, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..applicant_profile.models import ApplicantProfile
 from ...infrastructure.logging import get_logger
 from ..common.exceptions import PermissionDeniedError, TierNotFoundError, UserExistsError, UserNotFoundError, ValidationError
 from ..rate_limit.models import RateLimit
@@ -41,49 +42,33 @@ class UserService:
     """
 
     async def create(self, user: UserCreate, db: AsyncSession) -> dict[str, Any]:
-        """Create a new user account.
-
-        Creates a new user with unique email validation. Automatically
-        hashes the password and stores user credentials securely.
-
-        Args:
-            user: User creation data including email, phone number, and password.
-            db: Database session for the operation.
-
-        Returns:
-            The created user data dictionary.
-
-        Raises:
-            UserExistsError: If the email already exists.
-
-        Note:
-            Passwords are automatically hashed using secure password hashing.
-            Email must be unique across the system.
-
-        Example:
-            ```python
-            user_data = UserCreate(
-                email="user@example.com",
-                phone_number="09123456789",
-                password="securepassword123"
-            )
-            created_user = await service.create(user_data, db)
-            ```
-        """
         email_exists = await crud_users.exists(db=db, email=user.email)
         if email_exists:
             raise UserExistsError("Email already registered")
 
-        user_internal_dict = user.model_dump()
-        user_internal_dict["user_type"] = UserType.APPLICANT.value
-        user_internal_dict["hashed_password"] = get_password_hash(password=user_internal_dict["password"])
-        del user_internal_dict["password"]
+        user_data = user.model_dump(exclude={"password"})
+        applicant = User(
+            **user_data,
+            user_type=UserType.APPLICANT.value,
+            hashed_password=get_password_hash(password=user.password),
+        )
 
-        user_internal = UserCreateInternal(**user_internal_dict)
-        created_user = await crud_users.create(db=db, object=user_internal, schema_to_select=UserRead)
-        if not created_user:
-            raise UserExistsError("Failed to create user")
-        return created_user
+        try:
+            db.add(applicant)
+            await db.flush()
+
+            db.add(ApplicantProfile(applicant_id=applicant.id))
+            await db.flush()
+
+            created_user = UserRead.model_validate(applicant).model_dump()
+            await db.commit()
+            return created_user
+        except IntegrityError as error:
+            await db.rollback()
+            raise UserExistsError("Email already registered") from error
+        except Exception:
+            await db.rollback()
+            raise
 
     async def get_paginated(self, db: AsyncSession, skip: int = 0, limit: int = 100) -> GetMultiResponseDict:
         """Retrieve a paginated list of users.
