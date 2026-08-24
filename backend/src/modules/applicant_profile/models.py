@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, Integer, String
+from sqlalchemy import ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .enums import Gender, MartialStatus
@@ -10,6 +10,7 @@ from ...infrastructure.database.models import TimestampMixin
 
 if TYPE_CHECKING:
     from ..user.models import User
+    from ..applicant_skill.models import ApplicantSkill
 
 
 class ApplicantProfile(Base, TimestampMixin):
@@ -29,7 +30,10 @@ class ApplicantProfile(Base, TimestampMixin):
     military_status: Mapped[MilitaryServiceStatus | None] = mapped_column(String(50), init=False)
     martial_status: Mapped[MartialStatus | None] = mapped_column(String(20), init=False)
     province: Mapped[str | None] = mapped_column(String(50), init=False)
-    address: Mapped[str | None] = mapped_column(String, init=False)
-    about: Mapped[str | None] = mapped_column(String, init=False)
+    address: Mapped[str | None] = mapped_column(Text, init=False)
+    about: Mapped[str | None] = mapped_column(Text, init=False)
+
+    skills: Mapped[list["ApplicantSkill"]] = relationship("ApplicantSkill", cascade="all, delete-orphan",
+                                                          back_populates="applicant_profile", init=False)
 
     applicant: Mapped["User"] = relationship("User", back_populates="applicant_profile", init=False)

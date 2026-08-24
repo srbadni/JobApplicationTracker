@@ -14,6 +14,7 @@ from .company_activity.models import CompanyActivity
 from .applicant_profile.models import ApplicantProfile
 from .job_applications_folder.models import JobApplicationsFolder
 from .job_application.models import JobApplication
+from .applicant_skill.models import ApplicantSkill
 
 __all__ = [
     "User",
@@ -33,4 +34,5 @@ __all__ = [
     "ApplicantProfile",
     "JobApplicationsFolder",
     "JobApplication",
+    "ApplicantSkill",
 ]
