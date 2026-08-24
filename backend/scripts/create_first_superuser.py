@@ -58,7 +58,13 @@ async def create_first_superuser() -> None:
             except UserNotFoundError:
                 logger.info(f"No user found with email {email}, creating a new superuser")
 
-            user_data = UserCreate(name=name, email=email, phone_number=phone_number, password=password)
+            user_data = UserCreate(
+                name=name,
+                last_name=name,
+                email=email,
+                phone_number=phone_number,
+                password=password,
+            )
 
             user = await user_service.create(user_data, session)
 
