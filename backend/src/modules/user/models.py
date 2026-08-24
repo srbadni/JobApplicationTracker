@@ -9,8 +9,9 @@ from ...infrastructure.database.session import Base
 from .enums import UserType
 
 if TYPE_CHECKING:
+    from ..applicant_profile.models import ApplicantProfile
     from ..company_membership.model import CompanyMembership
-    from ..job_posting.models import JobPosting
+    from ..job_application.models import JobApplication
     from ..tier.models import Tier
 
 
@@ -18,9 +19,7 @@ class User(Base, TimestampMixin, SoftDeleteMixin):
     """User model representing application users."""
 
     __tablename__ = "user"
-    __table_args__ = (
-        CheckConstraint("user_type IN ('applicant', 'employer')", name="ck_user_user_type"),
-    )
+    __table_args__ = (CheckConstraint("user_type IN ('applicant', 'employer')", name="ck_user_user_type"),)
 
     id: Mapped[int] = mapped_column(
         "id",
@@ -32,6 +31,10 @@ class User(Base, TimestampMixin, SoftDeleteMixin):
     )
 
     name: Mapped[str] = mapped_column(
+        String(30),
+    )
+
+    last_name: Mapped[str] = mapped_column(
         String(30),
     )
 
@@ -111,6 +114,13 @@ class User(Base, TimestampMixin, SoftDeleteMixin):
         init=False,
     )
 
+    applicant_profile: Mapped["ApplicantProfile | None"] = relationship(
+        "ApplicantProfile",
+        back_populates="applicant",
+        init=False,
+        uselist=False,
+    )
+
     company_membership: Mapped["CompanyMembership | None"] = relationship(
         "CompanyMembership",
         back_populates="user",
@@ -118,12 +128,7 @@ class User(Base, TimestampMixin, SoftDeleteMixin):
         uselist=False,
     )
 
-    job_postings: Mapped[list["JobPosting"]] = relationship(
-        "JobPosting",
-        back_populates="user",
-        lazy="selectin",
-        init=False,
-    )
+    job_applications: Mapped[list["JobApplication"]] = relationship("JobApplication", back_populates="applicant", init=False)
 
     @property
     def is_active(self) -> bool:

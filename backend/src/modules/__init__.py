@@ -1,5 +1,3 @@
-"""Initialize all modules and models to ensure SQLAlchemy registration."""
-
 from .api_keys.models import APIKey, KeyPermission, KeyUsage
 from .company.models import Company
 from .company_membership.model import CompanyMembership
@@ -13,6 +11,10 @@ from .city.models import City
 from .user.models import User
 from .salary_range.model import SalaryRange
 from .company_activity.models import CompanyActivity
+from .applicant_profile.models import ApplicantProfile
+from .job_applications_folder.models import JobApplicationsFolder
+from .job_application.models import JobApplication
+from .applicant_skill.models import ApplicantSkill
 
 __all__ = [
     "User",
@@ -29,4 +31,8 @@ __all__ = [
     "City",
     "SalaryRange",
     "CompanyActivity",
+    "ApplicantProfile",
+    "JobApplicationsFolder",
+    "JobApplication",
+    "ApplicantSkill",
 ]

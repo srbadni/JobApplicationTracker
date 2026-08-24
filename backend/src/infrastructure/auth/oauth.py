@@ -41,5 +41,7 @@ oauth_state_storage = get_session_storage(
 
 oauth_account_service = OAuthAccountService(
     repo=auth.repo,
-    new_user_fields=lambda ctx: {"name": ctx.suggested_name},
+    # OAuth only exposes a single display name consistently. Preserve it in both
+    # required name columns so provider-based registrations remain compatible.
+    new_user_fields=lambda ctx: {"name": ctx.suggested_name, "last_name": ctx.suggested_name},
 )

@@ -7,8 +7,8 @@ from ...infrastructure.database import Base
 
 if TYPE_CHECKING:
     from ..city.models import City
-    from ..job_posting.models import JobPosting
     from ..company.models import Company
+    from ..job_posting.models import JobPosting
 
 
 class Province(Base):
@@ -18,6 +18,6 @@ class Province(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     english_name: Mapped[str] = mapped_column(String, nullable=False)
 
-    cities: Mapped["City"] = relationship("City", init=False, back_populates="province")
-    job_postings: Mapped["JobPosting"] = relationship("JobPosting", init=False, back_populates="province")
-    companies: Mapped["Company"] = relationship("Company", init=False, back_populates="province")
+    cities: Mapped[list["City"]] = relationship("City", init=False, back_populates="province")
+    job_postings: Mapped[list["JobPosting"]] = relationship("JobPosting", init=False, back_populates="province")
+    companies: Mapped[list["Company"]] = relationship("Company", init=False, back_populates="province")

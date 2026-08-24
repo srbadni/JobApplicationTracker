@@ -17,4 +17,4 @@ class SalaryRange(Base):
     min_salary: Mapped[int | None] = mapped_column(Integer, default=None)
     max_salary: Mapped[int | None] = mapped_column(Integer, default=None)
 
-    job_postings: Mapped["JobPosting"] = relationship("JobPosting", back_populates="salary_range", init=False)
+    job_postings: Mapped[list["JobPosting"]] = relationship("JobPosting", back_populates="salary_range", init=False)
