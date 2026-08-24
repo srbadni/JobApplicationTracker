@@ -24,7 +24,6 @@ from .enums import (
 if TYPE_CHECKING:
     from ..company.models import Company
     from ..job_categories.models import JobCategory
-    from ..user.models import User
     from ..province.models import Province
     from ..city.models import City
     from ..salary_range.model import SalaryRange
@@ -38,11 +37,6 @@ class JobPosting(Base, TimestampMixin):
 
     company_id: Mapped[int] = mapped_column(
         ForeignKey("companies.id"),
-        nullable=False,
-    )
-
-    created_by_id: Mapped[int] = mapped_column(
-        ForeignKey("user.id"),
         nullable=False,
     )
 
@@ -155,12 +149,6 @@ class JobPosting(Base, TimestampMixin):
 
     company: Mapped["Company"] = relationship(
         "Company",
-        back_populates="job_postings",
-        init=False
-    )
-
-    user: Mapped["User"] = relationship(
-        "User",
         back_populates="job_postings",
         init=False
     )

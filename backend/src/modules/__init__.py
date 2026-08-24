@@ -11,8 +11,8 @@ from .city.models import City
 from .user.models import User
 from .salary_range.model import SalaryRange
 from .company_activity.models import CompanyActivity
-from .resume.models import Resume
-from .company_folder.models import CompanyFolder
+from .applicant_profile.models import ApplicantProfile
+from .job_applications_folder.models import JobApplicationsFolder
 from .job_application.models import JobApplication
 
 __all__ = [
@@ -30,7 +30,7 @@ __all__ = [
     "City",
     "SalaryRange",
     "CompanyActivity",
-    "Resume",
-    "CompanyFolder",
+    "ApplicantProfile",
+    "JobApplicationsFolder",
     "JobApplication",
 ]

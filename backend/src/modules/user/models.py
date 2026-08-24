@@ -10,9 +10,8 @@ from .enums import UserType
 
 if TYPE_CHECKING:
     from ..company_membership.model import CompanyMembership
-    from ..job_posting.models import JobPosting
     from ..tier.models import Tier
-    from ..resume.models import Resume
+    from ..applicant_profile.models import ApplicantProfile
     from ..job_application.models import JobApplication
 
 
@@ -113,8 +112,8 @@ class User(Base, TimestampMixin, SoftDeleteMixin):
         init=False,
     )
 
-    resumes: Mapped[list[Resume]] = relationship(
-        "Resume",
+    applicant_profile: Mapped[list[ApplicantProfile]] = relationship(
+        "ApplicantProfile",
         back_populates="applicant",
         init=False
     )
@@ -124,13 +123,6 @@ class User(Base, TimestampMixin, SoftDeleteMixin):
         back_populates="user",
         init=False,
         uselist=False,
-    )
-
-    job_postings: Mapped[list["JobPosting"]] = relationship(
-        "JobPosting",
-        back_populates="user",
-        lazy="selectin",
-        init=False,
     )
 
     job_applications: Mapped[list["JobApplication"]] = relationship(
