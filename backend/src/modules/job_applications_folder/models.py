@@ -8,4 +8,4 @@ class JobApplicationsFolder(Base):
     __tablename__ = "job_applications_folder"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    title: Mapped[int] = mapped_column(String(120), nullable=False)
+    title: Mapped[str] = mapped_column(String(120), nullable=False)
