@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from ..applicant_profile.models import ApplicantProfile
     from ..company_membership.model import CompanyMembership
     from ..job_application.models import JobApplication
+    from ..media.models import Media
     from ..tier.models import Tier
 
 
@@ -129,6 +130,13 @@ class User(Base, TimestampMixin, SoftDeleteMixin):
     )
 
     job_applications: Mapped[list["JobApplication"]] = relationship("JobApplication", back_populates="applicant", init=False)
+
+    media_files: Mapped[list["Media"]] = relationship(
+        "Media",
+        back_populates="owner",
+        passive_deletes=True,
+        init=False,
+    )
 
     @property
     def is_active(self) -> bool:
