@@ -1,8 +1,8 @@
 """initial migration
 
-Revision ID: 6741b09613f6
+Revision ID: 5a135fbf35d9
 Revises: 
-Create Date: 2026-08-24 17:46:34.499642
+Create Date: 2026-08-24 21:57:07.122220
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '6741b09613f6'
+revision: str = '5a135fbf35d9'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -194,6 +194,20 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('user_id')
     )
+    op.create_table('educations',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('profile_id', sa.Integer(), nullable=False),
+    sa.Column('institution_name', sa.String(length=200), nullable=False),
+    sa.Column('field_of_study', sa.String(length=200), nullable=False),
+    sa.Column('education_level', sa.Enum('DIPLOMA', 'ASSOCIATE', 'BACHELOR', 'MASTER', 'PHD', 'OTHER', name='educationlevel'), nullable=False),
+    sa.Column('start_year', sa.Integer(), nullable=False),
+    sa.Column('end_year', sa.Integer(), nullable=True),
+    sa.Column('is_currently_studying', sa.Boolean(), nullable=False),
+    sa.Column('description', sa.Text(), nullable=True),
+    sa.CheckConstraint('(is_currently_studying = true AND end_year IS NULL) OR (is_currently_studying = false AND end_year IS NOT NULL)', name='ck_education_current_status'),
+    sa.ForeignKeyConstraint(['profile_id'], ['applicant_profiles.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('job_postings',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=False),
@@ -221,6 +235,16 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['province_id'], ['provinces.id'], ),
     sa.ForeignKeyConstraint(['salary_range_id'], ['salary_ranges.id'], ),
     sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('job_preferences',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('profile_id', sa.Integer(), nullable=False),
+    sa.Column('minimum_salary_range_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['minimum_salary_range_id'], ['salary_ranges.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['profile_id'], ['applicant_profiles.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('profile_id'),
+    sa.UniqueConstraint('profile_id', name='uq_job_preferences_profile_id')
     )
     op.create_table('key_permissions',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
@@ -267,6 +291,29 @@ def upgrade() -> None:
     op.create_index(op.f('ix_key_usage_endpoint'), 'key_usage', ['endpoint'], unique=False)
     op.create_index(op.f('ix_key_usage_status_code'), 'key_usage', ['status_code'], unique=False)
     op.create_index(op.f('ix_key_usage_user_id'), 'key_usage', ['user_id'], unique=False)
+    op.create_table('language_skills',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('profile_id', sa.Integer(), nullable=False),
+    sa.Column('language_name', sa.String(length=100), nullable=False),
+    sa.Column('level', sa.Enum('BEGINNER', 'INTERMEDIATE', 'PROFESSIONAL', 'NATIVE', name='languagelevel'), nullable=False),
+    sa.ForeignKeyConstraint(['profile_id'], ['applicant_profiles.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('work_experiences',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('profile_id', sa.Integer(), nullable=False),
+    sa.Column('position_title', sa.String(length=200), nullable=False),
+    sa.Column('workplace_name', sa.String(), nullable=False),
+    sa.Column('start_month', sa.Integer(), nullable=False),
+    sa.Column('start_year', sa.Integer(), nullable=False),
+    sa.Column('end_month', sa.Integer(), nullable=True),
+    sa.Column('end_year', sa.Integer(), nullable=True),
+    sa.Column('is_current', sa.Boolean(), nullable=True),
+    sa.Column('experience_description', sa.Text(), nullable=True),
+    sa.CheckConstraint('(is_current = true AND end_month IS NULL AND end_year IS NULL) OR (is_current = false AND end_month IS NOT NULL AND end_year IS NOT NULL) OR (is_current IS NULL)', name='ck_work_experience_end_date_consistency'),
+    sa.ForeignKeyConstraint(['profile_id'], ['applicant_profiles.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('job_applications',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('applicant_id', sa.Integer(), nullable=False),
@@ -276,13 +323,52 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['job_posting_id'], ['job_postings.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('job_preference_benefits',
+    sa.Column('job_preference_id', sa.Integer(), nullable=False),
+    sa.Column('benefit', sa.Enum('promotion_opportunity', 'insurance', 'training_courses', 'commuting_service', 'company_meal', 'flexible_working_hours', name='preferred_job_benefit'), nullable=False),
+    sa.ForeignKeyConstraint(['job_preference_id'], ['job_preferences.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('job_preference_id', 'benefit')
+    )
+    op.create_table('job_preference_employment_types',
+    sa.Column('job_preference_id', sa.Integer(), nullable=False),
+    sa.Column('employment_type', sa.Enum('full_time', 'part_time', 'remote', 'internship', name='preferred_employment_type'), nullable=False),
+    sa.ForeignKeyConstraint(['job_preference_id'], ['job_preferences.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('job_preference_id', 'employment_type')
+    )
+    op.create_table('job_preference_job_categories',
+    sa.Column('job_preference_id', sa.Integer(), nullable=False),
+    sa.Column('job_category_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['job_category_id'], ['job_categories.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['job_preference_id'], ['job_preferences.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('job_preference_id', 'job_category_id')
+    )
+    op.create_table('job_preference_provinces',
+    sa.Column('job_preference_id', sa.Integer(), nullable=False),
+    sa.Column('province_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['job_preference_id'], ['job_preferences.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['province_id'], ['provinces.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('job_preference_id', 'province_id')
+    )
+    op.create_table('job_preference_seniority_levels',
+    sa.Column('job_preference_id', sa.Integer(), nullable=False),
+    sa.Column('seniority_level', sa.Enum('entry_level', 'specialist', 'manager', 'senior_manager', name='preferred_seniority_level'), nullable=False),
+    sa.ForeignKeyConstraint(['job_preference_id'], ['job_preferences.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('job_preference_id', 'seniority_level')
+    )
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_table('job_preference_seniority_levels')
+    op.drop_table('job_preference_provinces')
+    op.drop_table('job_preference_job_categories')
+    op.drop_table('job_preference_employment_types')
+    op.drop_table('job_preference_benefits')
     op.drop_table('job_applications')
+    op.drop_table('work_experiences')
+    op.drop_table('language_skills')
     op.drop_index(op.f('ix_key_usage_user_id'), table_name='key_usage')
     op.drop_index(op.f('ix_key_usage_status_code'), table_name='key_usage')
     op.drop_index(op.f('ix_key_usage_endpoint'), table_name='key_usage')
@@ -298,7 +384,9 @@ def downgrade() -> None:
     op.drop_index('idx_key_permissions_resource_action', table_name='key_permissions')
     op.drop_index('idx_key_permissions_key_resource', table_name='key_permissions')
     op.drop_table('key_permissions')
+    op.drop_table('job_preferences')
     op.drop_table('job_postings')
+    op.drop_table('educations')
     op.drop_table('company_memberships')
     op.drop_table('applicant_skills')
     op.drop_table('companies')

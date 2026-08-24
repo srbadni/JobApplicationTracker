@@ -15,6 +15,10 @@ from .applicant_profile.models import ApplicantProfile
 from .job_applications_folder.models import JobApplicationsFolder
 from .job_application.models import JobApplication
 from .applicant_skill.models import ApplicantSkill
+from .applicant_work_experience.models import WorkExperience
+from .applicant_education_history.models import Education
+from .applicant_language.models import LanguageSkill
+from .job_preference.models import JobPreference
 
 __all__ = [
     "User",
@@ -35,4 +39,8 @@ __all__ = [
     "JobApplicationsFolder",
     "JobApplication",
     "ApplicantSkill",
+    "WorkExperience",
+    "Education",
+    "LanguageSkill",
+    "JobPreference",
 ]
