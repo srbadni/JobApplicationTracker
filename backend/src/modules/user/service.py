@@ -3,10 +3,11 @@ from typing import Any, cast
 from crudauth import get_password_hash
 from fastcrud import JoinConfig
 from fastcrud.types import GetMultiResponseDict
-from sqlalchemy.exc import MultipleResultsFound, NoResultFound
+from sqlalchemy.exc import IntegrityError, MultipleResultsFound, NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...infrastructure.logging import get_logger
+from ..applicant_profile.models import ApplicantProfile
 from ..common.exceptions import PermissionDeniedError, TierNotFoundError, UserExistsError, UserNotFoundError, ValidationError
 from ..rate_limit.models import RateLimit
 from ..rate_limit.schemas import RateLimitRead
@@ -22,7 +23,6 @@ from .schemas import (
 from .schemas import (
     UserAnonymize,
     UserCreate,
-    UserCreateInternal,
     UserRead,
     UserTierUpdate,
     UserUpdate,
@@ -37,16 +37,29 @@ class UserService:
         if email_exists:
             raise UserExistsError("Email already registered")
 
-        user_internal_dict = user.model_dump()
-        user_internal_dict["user_type"] = UserType.APPLICANT.value
-        user_internal_dict["hashed_password"] = get_password_hash(password=user_internal_dict["password"])
-        del user_internal_dict["password"]
+        user_data = user.model_dump(exclude={"password"})
+        applicant = User(
+            **user_data,
+            hashed_password=get_password_hash(password=user.password),
+            user_type=UserType.APPLICANT.value,
+        )
 
-        user_internal = UserCreateInternal(**user_internal_dict)
-        created_user = await crud_users.create(db=db, object=user_internal, schema_to_select=UserRead)
-        if not created_user:
-            raise UserExistsError("Failed to create user")
-        return created_user
+        try:
+            db.add(applicant)
+            await db.flush()
+
+            db.add(ApplicantProfile(applicant_id=applicant.id))
+            await db.flush()
+
+            created_user = UserRead.model_validate(applicant).model_dump()
+            await db.commit()
+            return created_user
+        except IntegrityError as error:
+            await db.rollback()
+            raise UserExistsError("Email already registered") from error
+        except Exception:
+            await db.rollback()
+            raise
 
     async def get_paginated(self, db: AsyncSession, skip: int = 0, limit: int = 100) -> GetMultiResponseDict:
         if db is None:
