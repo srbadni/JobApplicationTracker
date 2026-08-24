@@ -1,7 +1,7 @@
 from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from ...infrastructure.database import Base
+from ...infrastructure.database.session import Base
 
 
 class JobApplicationsFolder(Base):
