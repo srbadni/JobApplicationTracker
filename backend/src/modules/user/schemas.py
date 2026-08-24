@@ -9,6 +9,7 @@ from .enums import UserType
 
 class UserBase(BaseModel):
     name: Annotated[str, Field(min_length=2, max_length=30, examples=["User Userson"])]
+    last_name: Annotated[str, Field(min_length=2, max_length=30, examples=["Userson"])]
     phone_number: Annotated[
         str,
         Field(
@@ -50,6 +51,7 @@ class UserRead(BaseModel):
 
     id: int
     name: Annotated[str, Field(min_length=2, max_length=30, examples=["User Userson"])]
+    last_name: Annotated[str, Field(min_length=2, max_length=30, examples=["Userson"])]
     phone_number: Annotated[
         str,
         Field(
@@ -115,6 +117,10 @@ class UserUpdate(BaseModel):
         str | None,
         Field(min_length=2, max_length=30, examples=["User Userberg"], default=None),
     ]
+    last_name: Annotated[
+        str | None,
+        Field(min_length=2, max_length=30, examples=["Userberg"], default=None),
+    ]
     phone_number: Annotated[
         str | None,
         Field(pattern=r"^09\d{9}$", examples=["09123456789"], default=None),
@@ -166,6 +172,7 @@ class UserAnonymize(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str
+    last_name: str
     phone_number: str
     hashed_password: str | None = None
     profile_image_url: str | None = None

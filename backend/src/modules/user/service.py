@@ -3,11 +3,11 @@ from typing import Any, cast
 from crudauth import get_password_hash
 from fastcrud import JoinConfig
 from fastcrud.types import GetMultiResponseDict
-from sqlalchemy.exc import MultipleResultsFound, NoResultFound, IntegrityError
+from sqlalchemy.exc import IntegrityError, MultipleResultsFound, NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..applicant_profile.models import ApplicantProfile
 from ...infrastructure.logging import get_logger
+from ..applicant_profile.models import ApplicantProfile
 from ..common.exceptions import PermissionDeniedError, TierNotFoundError, UserExistsError, UserNotFoundError, ValidationError
 from ..rate_limit.models import RateLimit
 from ..rate_limit.schemas import RateLimitRead
@@ -23,7 +23,6 @@ from .schemas import (
 from .schemas import (
     UserAnonymize,
     UserCreate,
-    UserCreateInternal,
     UserRead,
     UserTierUpdate,
     UserUpdate,
@@ -374,6 +373,7 @@ class UserService:
 
             anonymize_data = UserAnonymize(
                 name="[DELETED]",
+                last_name="[DELETED]",
                 phone_number=f"090{user_id % 100_000_000:08d}",
                 hashed_password="DELETED_INVALID_HASH",
                 profile_image_url="https://deleted.com/deleted.jpg",
