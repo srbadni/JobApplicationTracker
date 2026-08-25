@@ -1,10 +1,9 @@
-from typing import Sequence
+from collections.abc import Sequence
 
-from fastapi import Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..job_posting.models import WorkMode, RelevantWorkExperience, JobPosting
+from ..job_posting.models import JobPosting, RelevantWorkExperience, WorkMode
 
 
 class JobsSearchService:
@@ -20,7 +19,22 @@ class JobsSearchService:
             work_experiences: list[RelevantWorkExperience] | None = None,
             salary_range_ids: list[int] | None = None,
     ):
-        stmt = select(JobPosting)
+        filters = []
+
+        if keywords:
+            filters.append(JobPosting.job_title.ilike(f"%{keywords}%"))
+        if province_ids:
+            filters.append(JobPosting.province_id.in_(province_ids))
+        if job_category_ids:
+            filters.append(JobPosting.job_category_id.in_(job_category_ids))
+        if work_modes:
+            filters.append(JobPosting.work_mode.in_(work_modes))
+        if work_experiences:
+            filters.append(JobPosting.work_experience.in_(work_experiences))
+        if salary_range_ids:
+            filters.append(JobPosting.salary_range_id.in_(salary_range_ids))
+
+        stmt = select(JobPosting).where(*filters)
         result = await self.db.execute(stmt)
         job_postings: Sequence[JobPosting] = result.scalars().all()
         return job_postings
