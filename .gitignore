@@ -136,10 +136,6 @@ cython_debug/
 
 .vscode/
 
-# Runtime-uploaded files. Keep only the directory placeholder in git.
-backend/storage/uploads/*
-!backend/storage/uploads/.gitkeep
-
 # Config files:
 src/.env
 
@@ -149,3 +145,4 @@ src/.env
 
 # Don't ignore files inside of script folder:
 !scripts/*
+
