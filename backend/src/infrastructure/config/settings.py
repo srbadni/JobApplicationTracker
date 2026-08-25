@@ -6,12 +6,13 @@ from pydantic import Field
 from pydantic_settings import BaseSettings
 from starlette.config import Config
 
-from .enums import CacheBackend, LogFormat, LogLevel, SessionBackend, TaskiqBrokerType
+from .enums import CacheBackend, LogFormat, LogLevel, SessionBackend, StorageBackend, TaskiqBrokerType
 
 logger = logging.getLogger(__name__)
 
 current_file_dir = os.path.dirname(os.path.realpath(__file__))
 project_root = os.path.abspath(os.path.join(current_file_dir, "..", "..", "..", ".."))
+backend_root = os.path.abspath(os.path.join(current_file_dir, "..", "..", ".."))
 
 env_paths = [
     "/app/.env",
@@ -205,6 +206,17 @@ class CompressionSettings(BaseSettings):
     GZIP_MINIMUM_SIZE: int = config("GZIP_MINIMUM_SIZE", default=1000, cast=int)
 
 
+class StorageSettings(BaseSettings):
+    """File/object storage settings."""
+
+    STORAGE_BACKEND: str = config("STORAGE_BACKEND", default=StorageBackend.LOCAL.value)
+    LOCAL_STORAGE_ROOT: str = config(
+        "LOCAL_STORAGE_ROOT",
+        default=os.path.join(backend_root, "storage", "uploads"),
+    )
+    STORAGE_CHUNK_SIZE_BYTES: int = config("STORAGE_CHUNK_SIZE_BYTES", default=1024 * 1024, cast=int)
+
+
 class APIDocSettings(BaseSettings):
     """API documentation settings."""
 
@@ -376,6 +388,7 @@ class Settings(
     RateLimiterSettings,
     CORSSettings,
     CompressionSettings,
+    StorageSettings,
     APIDocSettings,
     AuthSettings,
     APISettings,

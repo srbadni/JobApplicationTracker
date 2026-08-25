@@ -34,6 +34,12 @@ class TaskiqBrokerType(StrEnum):
     RABBITMQ = "rabbitmq"
 
 
+class StorageBackend(StrEnum):
+    """Supported object-storage backends."""
+
+    LOCAL = "local"
+
+
 class LogLevel(StrEnum):
     """Log level types.
 
