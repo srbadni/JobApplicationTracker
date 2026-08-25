@@ -25,21 +25,18 @@ async def create_first_superuser() -> None:
     This script uses environment variables for configuration:
     - ADMIN_NAME: The admin's full name
     - ADMIN_EMAIL: The admin's email address
-    - ADMIN_PHONE_NUMBER: The admin's Iranian mobile number
     - ADMIN_PASSWORD: The admin's password
     """
     try:
         name = settings.ADMIN_NAME
         email = settings.ADMIN_EMAIL
-        phone_number = settings.ADMIN_PHONE_NUMBER
         password = settings.ADMIN_PASSWORD
 
-        if not all([name, email, phone_number, password]):
+        if not all([name, email, password]):
             logger.error("Admin configuration is incomplete. Please check environment variables.")
             logger.info("Using default admin credentials for testing")
             name = "Admin User"
             email = "admin@example.com"
-            phone_number = "09123456789"
             password = "adminpassword"
 
         async with local_session() as session:
@@ -62,7 +59,6 @@ async def create_first_superuser() -> None:
                 name=name,
                 last_name=name,
                 email=email,
-                phone_number=phone_number,
                 password=password,
             )
 

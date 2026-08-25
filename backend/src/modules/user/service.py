@@ -374,7 +374,7 @@ class UserService:
             anonymize_data = UserAnonymize(
                 name="[DELETED]",
                 last_name="[DELETED]",
-                phone_number=f"090{user_id % 100_000_000:08d}",
+                phone_number=None,
                 hashed_password="DELETED_INVALID_HASH",
                 profile_image_url="https://deleted.com/deleted.jpg",
                 tier_id=None,

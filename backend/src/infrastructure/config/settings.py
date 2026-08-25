@@ -292,7 +292,6 @@ class AdminSettings(BaseSettings):
 
     ADMIN_NAME: str = config("ADMIN_NAME", default="")
     ADMIN_EMAIL: str = config("ADMIN_EMAIL", default="")
-    ADMIN_PHONE_NUMBER: str = config("ADMIN_PHONE_NUMBER", default="")
     ADMIN_PASSWORD: str = config("ADMIN_PASSWORD", default="")
     DEFAULT_TIER_NAME: str = config("DEFAULT_TIER_NAME", default="free")
 

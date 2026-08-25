@@ -39,8 +39,9 @@ class User(Base, TimestampMixin, SoftDeleteMixin):
         String(30),
     )
 
-    phone_number: Mapped[str] = mapped_column(
+    phone_number: Mapped[str | None] = mapped_column(
         String(11),
+        nullable=True,
     )
 
     email: Mapped[str] = mapped_column(

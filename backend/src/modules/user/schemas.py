@@ -11,13 +11,13 @@ class UserBase(BaseModel):
     name: Annotated[str, Field(min_length=2, max_length=30, examples=["User Userson"])]
     last_name: Annotated[str, Field(min_length=2, max_length=30, examples=["Userson"])]
     phone_number: Annotated[
-        str,
+        str | None,
         Field(
             pattern=r"^09\d{9}$",
             examples=["09123456789"],
             description="Iranian mobile number in 09XXXXXXXXX format",
         ),
-    ]
+    ] = None
     email: Annotated[EmailStr, Field(examples=["user.userson@example.com"])]
 
 
@@ -53,13 +53,13 @@ class UserRead(BaseModel):
     name: Annotated[str, Field(min_length=2, max_length=30, examples=["User Userson"])]
     last_name: Annotated[str, Field(min_length=2, max_length=30, examples=["Userson"])]
     phone_number: Annotated[
-        str,
+        str | None,
         Field(
             pattern=r"^09\d{9}$",
             examples=["09123456789"],
             description="Iranian mobile number in 09XXXXXXXXX format",
         ),
-    ]
+    ] = None
     email: Annotated[EmailStr, Field(examples=["user.userson@example.com"])]
     profile_image_url: str
     is_deleted: bool = False
@@ -173,7 +173,7 @@ class UserAnonymize(BaseModel):
 
     name: str
     last_name: str
-    phone_number: str
+    phone_number: str | None = None
     hashed_password: str | None = None
     profile_image_url: str | None = None
     tier_id: int | None = None

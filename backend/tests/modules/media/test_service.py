@@ -53,7 +53,6 @@ class MediaServiceTests(unittest.IsolatedAsyncioTestCase):
             applicant = User(
                 name="Applicant",
                 last_name="User",
-                phone_number="09123456789",
                 email="applicant@example.com",
                 hashed_password="not-used-in-this-test",
                 user_type=UserType.APPLICANT.value,

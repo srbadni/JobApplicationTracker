@@ -45,12 +45,22 @@ class UserAdmin(DataclassModelMixin, ModelView, model=User):
     form_overrides = {"oauth_provider": SelectField}
     form_args = {"oauth_provider": {"choices": OAUTH_PROVIDER_CHOICES}}
 
-    async def on_model_change(self, data: dict[str, Any], model: Any, is_created: bool, request: Request) -> None:
-        """Hash the password before saving."""
+    async def on_model_change(
+            self,
+            data: dict[str, Any],
+            model: Any,
+            is_created: bool,
+            request: Request,
+    ) -> None:
+        """Hash password and normalize nullable fields before saving."""
         if is_created and "hashed_password" in data and data["hashed_password"]:
             data["hashed_password"] = get_password_hash(data["hashed_password"])
-        if "oauth_provider" in data and data["oauth_provider"] == "":
+
+        if data.get("oauth_provider") == "":
             data["oauth_provider"] = None
+
+        if data.get("phone_number") == "":
+            data["phone_number"] = None
 
     async def delete_model(self, request: Request, pk: str) -> None:
         """Override delete to anonymize user instead of removing.

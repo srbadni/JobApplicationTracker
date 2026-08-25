@@ -1,8 +1,8 @@
 """initial migration
 
-Revision ID: 5a135fbf35d9
+Revision ID: a841adf9060f
 Revises: 
-Create Date: 2026-08-24 21:57:07.122220
+Create Date: 2026-08-25 13:11:13.093208
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '5a135fbf35d9'
+revision: str = 'a841adf9060f'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -90,7 +90,7 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(length=30), nullable=False),
     sa.Column('last_name', sa.String(length=30), nullable=False),
-    sa.Column('phone_number', sa.String(length=11), nullable=False),
+    sa.Column('phone_number', sa.String(length=11), nullable=True),
     sa.Column('email', sa.String(length=50), nullable=False),
     sa.Column('hashed_password', sa.String(length=100), nullable=False),
     sa.Column('profile_image_url', sa.String(), nullable=False),
@@ -140,23 +140,6 @@ def upgrade() -> None:
     op.create_index(op.f('ix_api_keys_key_hash'), 'api_keys', ['key_hash'], unique=True)
     op.create_index(op.f('ix_api_keys_key_prefix'), 'api_keys', ['key_prefix'], unique=False)
     op.create_index(op.f('ix_api_keys_user_id'), 'api_keys', ['user_id'], unique=False)
-    op.create_table('applicant_profiles',
-    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('applicant_id', sa.Integer(), nullable=False),
-    sa.Column('specialization', sa.String(length=100), nullable=True),
-    sa.Column('birth_year', sa.Integer(), nullable=True),
-    sa.Column('gender', sa.String(length=20), nullable=True),
-    sa.Column('military_status', sa.String(length=50), nullable=True),
-    sa.Column('martial_status', sa.String(length=20), nullable=True),
-    sa.Column('province', sa.String(length=50), nullable=True),
-    sa.Column('address', sa.Text(), nullable=True),
-    sa.Column('about', sa.Text(), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
-    sa.ForeignKeyConstraint(['applicant_id'], ['user.id'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('applicant_id')
-    )
     op.create_table('companies',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(length=120), nullable=False),
@@ -176,13 +159,44 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['province_id'], ['provinces.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('applicant_skills',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('applicant_profile_id', sa.Integer(), nullable=False),
-    sa.Column('title', sa.String(length=90), nullable=False),
-    sa.ForeignKeyConstraint(['applicant_profile_id'], ['applicant_profiles.id'], ),
+    op.create_table('media',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('owner_id', sa.Integer(), nullable=False),
+    sa.Column('category', sa.String(length=32), nullable=False),
+    sa.Column('original_name', sa.String(length=255), nullable=False),
+    sa.Column('storage_key', sa.String(length=255), nullable=False),
+    sa.Column('mime_type', sa.String(length=127), nullable=False),
+    sa.Column('size_bytes', sa.BigInteger(), nullable=False),
+    sa.Column('checksum_sha256', sa.String(length=64), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+    sa.CheckConstraint("category IN ('company_logo', 'user_avatar', 'resume', 'attachment')", name='ck_media_category'),
+    sa.CheckConstraint('size_bytes > 0', name='ck_media_size_bytes_positive'),
+    sa.ForeignKeyConstraint(['owner_id'], ['user.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_media_category'), 'media', ['category'], unique=False)
+    op.create_index(op.f('ix_media_owner_id'), 'media', ['owner_id'], unique=False)
+    op.create_index(op.f('ix_media_storage_key'), 'media', ['storage_key'], unique=True)
+    op.create_table('applicant_profiles',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('applicant_id', sa.Integer(), nullable=False),
+    sa.Column('attached_resume_id', sa.Integer(), nullable=True),
+    sa.Column('specialization', sa.String(length=100), nullable=True),
+    sa.Column('birth_year', sa.Integer(), nullable=True),
+    sa.Column('gender', sa.String(length=20), nullable=True),
+    sa.Column('military_status', sa.String(length=50), nullable=True),
+    sa.Column('martial_status', sa.String(length=20), nullable=True),
+    sa.Column('province', sa.String(length=50), nullable=True),
+    sa.Column('address', sa.Text(), nullable=True),
+    sa.Column('about', sa.Text(), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+    sa.ForeignKeyConstraint(['applicant_id'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['attached_resume_id'], ['media.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('applicant_profile_id', 'title')
+    sa.UniqueConstraint('applicant_id'),
+    sa.UniqueConstraint('attached_resume_id')
     )
     op.create_table('company_memberships',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
@@ -193,20 +207,6 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('user_id')
-    )
-    op.create_table('educations',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('profile_id', sa.Integer(), nullable=False),
-    sa.Column('institution_name', sa.String(length=200), nullable=False),
-    sa.Column('field_of_study', sa.String(length=200), nullable=False),
-    sa.Column('education_level', sa.Enum('DIPLOMA', 'ASSOCIATE', 'BACHELOR', 'MASTER', 'PHD', 'OTHER', name='educationlevel'), nullable=False),
-    sa.Column('start_year', sa.Integer(), nullable=False),
-    sa.Column('end_year', sa.Integer(), nullable=True),
-    sa.Column('is_currently_studying', sa.Boolean(), nullable=False),
-    sa.Column('description', sa.Text(), nullable=True),
-    sa.CheckConstraint('(is_currently_studying = true AND end_year IS NULL) OR (is_currently_studying = false AND end_year IS NOT NULL)', name='ck_education_current_status'),
-    sa.ForeignKeyConstraint(['profile_id'], ['applicant_profiles.id'], ),
-    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('job_postings',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
@@ -235,16 +235,6 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['province_id'], ['provinces.id'], ),
     sa.ForeignKeyConstraint(['salary_range_id'], ['salary_ranges.id'], ),
     sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('job_preferences',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('profile_id', sa.Integer(), nullable=False),
-    sa.Column('minimum_salary_range_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['minimum_salary_range_id'], ['salary_ranges.id'], ondelete='SET NULL'),
-    sa.ForeignKeyConstraint(['profile_id'], ['applicant_profiles.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('profile_id'),
-    sa.UniqueConstraint('profile_id', name='uq_job_preferences_profile_id')
     )
     op.create_table('key_permissions',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
@@ -291,6 +281,49 @@ def upgrade() -> None:
     op.create_index(op.f('ix_key_usage_endpoint'), 'key_usage', ['endpoint'], unique=False)
     op.create_index(op.f('ix_key_usage_status_code'), 'key_usage', ['status_code'], unique=False)
     op.create_index(op.f('ix_key_usage_user_id'), 'key_usage', ['user_id'], unique=False)
+    op.create_table('applicant_skills',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('applicant_profile_id', sa.Integer(), nullable=False),
+    sa.Column('title', sa.String(length=90), nullable=False),
+    sa.ForeignKeyConstraint(['applicant_profile_id'], ['applicant_profiles.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('applicant_profile_id', 'title')
+    )
+    op.create_table('educations',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('profile_id', sa.Integer(), nullable=False),
+    sa.Column('institution_name', sa.String(length=200), nullable=False),
+    sa.Column('field_of_study', sa.String(length=200), nullable=False),
+    sa.Column('education_level', sa.Enum('DIPLOMA', 'ASSOCIATE', 'BACHELOR', 'MASTER', 'PHD', 'OTHER', name='educationlevel'), nullable=False),
+    sa.Column('start_year', sa.Integer(), nullable=False),
+    sa.Column('end_year', sa.Integer(), nullable=True),
+    sa.Column('is_currently_studying', sa.Boolean(), nullable=False),
+    sa.Column('description', sa.Text(), nullable=True),
+    sa.CheckConstraint('(is_currently_studying = true AND end_year IS NULL) OR (is_currently_studying = false AND end_year IS NOT NULL)', name='ck_education_current_status'),
+    sa.ForeignKeyConstraint(['profile_id'], ['applicant_profiles.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('job_applications',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('folder_id', sa.Integer(), nullable=True),
+    sa.Column('applicant_id', sa.Integer(), nullable=False),
+    sa.Column('job_posting_id', sa.Integer(), nullable=False),
+    sa.Column('status', sa.String(length=50), nullable=False),
+    sa.ForeignKeyConstraint(['applicant_id'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['folder_id'], ['job_applications_folder.id'], ),
+    sa.ForeignKeyConstraint(['job_posting_id'], ['job_postings.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('job_preferences',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('profile_id', sa.Integer(), nullable=False),
+    sa.Column('minimum_salary_range_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['minimum_salary_range_id'], ['salary_ranges.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['profile_id'], ['applicant_profiles.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('profile_id'),
+    sa.UniqueConstraint('profile_id', name='uq_job_preferences_profile_id')
+    )
     op.create_table('language_skills',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('profile_id', sa.Integer(), nullable=False),
@@ -312,15 +345,6 @@ def upgrade() -> None:
     sa.Column('experience_description', sa.Text(), nullable=True),
     sa.CheckConstraint('(is_current = true AND end_month IS NULL AND end_year IS NULL) OR (is_current = false AND end_month IS NOT NULL AND end_year IS NOT NULL) OR (is_current IS NULL)', name='ck_work_experience_end_date_consistency'),
     sa.ForeignKeyConstraint(['profile_id'], ['applicant_profiles.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('job_applications',
-    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('applicant_id', sa.Integer(), nullable=False),
-    sa.Column('job_posting_id', sa.Integer(), nullable=False),
-    sa.Column('status', sa.String(length=50), nullable=False),
-    sa.ForeignKeyConstraint(['applicant_id'], ['user.id'], ),
-    sa.ForeignKeyConstraint(['job_posting_id'], ['job_postings.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('job_preference_benefits',
@@ -366,9 +390,12 @@ def downgrade() -> None:
     op.drop_table('job_preference_job_categories')
     op.drop_table('job_preference_employment_types')
     op.drop_table('job_preference_benefits')
-    op.drop_table('job_applications')
     op.drop_table('work_experiences')
     op.drop_table('language_skills')
+    op.drop_table('job_preferences')
+    op.drop_table('job_applications')
+    op.drop_table('educations')
+    op.drop_table('applicant_skills')
     op.drop_index(op.f('ix_key_usage_user_id'), table_name='key_usage')
     op.drop_index(op.f('ix_key_usage_status_code'), table_name='key_usage')
     op.drop_index(op.f('ix_key_usage_endpoint'), table_name='key_usage')
@@ -384,13 +411,14 @@ def downgrade() -> None:
     op.drop_index('idx_key_permissions_resource_action', table_name='key_permissions')
     op.drop_index('idx_key_permissions_key_resource', table_name='key_permissions')
     op.drop_table('key_permissions')
-    op.drop_table('job_preferences')
     op.drop_table('job_postings')
-    op.drop_table('educations')
     op.drop_table('company_memberships')
-    op.drop_table('applicant_skills')
-    op.drop_table('companies')
     op.drop_table('applicant_profiles')
+    op.drop_index(op.f('ix_media_storage_key'), table_name='media')
+    op.drop_index(op.f('ix_media_owner_id'), table_name='media')
+    op.drop_index(op.f('ix_media_category'), table_name='media')
+    op.drop_table('media')
+    op.drop_table('companies')
     op.drop_index(op.f('ix_api_keys_user_id'), table_name='api_keys')
     op.drop_index(op.f('ix_api_keys_key_prefix'), table_name='api_keys')
     op.drop_index(op.f('ix_api_keys_key_hash'), table_name='api_keys')
