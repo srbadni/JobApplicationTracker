@@ -55,13 +55,9 @@ class JobPostingBase(BaseModel):
     id: int
 
     job_title: str
-    job_description: str
-    company_overview: str
 
     employment_type: EmploymentType
     work_mode: WorkMode
-
-    is_latin_text: bool
 
     work_experience: RelevantWorkExperience
     minimum_education: MinimumEducationLevel
@@ -76,3 +72,7 @@ class JobPostingRead(JobPostingBase):
     province_id: int
     salary_range_id: int
     city_id: int
+
+    job_description: str
+    company_overview: str
+    is_latin_text: bool

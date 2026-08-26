@@ -41,7 +41,9 @@ class JobsSearchService:
         stmt = (
             select(
                 *JobPosting.__table__.c,
-                Company.name.label("company_title"),
+                Company.persian_name.label("company_title"),
+                Company.name.label("company_english_title"),
+                Company.logo_path.label("company_logo"),
                 JobCategory.title.label("job_category_title"),
                 Province.name.label("province_title"),
                 SalaryRange.title.label("salary_range_title"),
