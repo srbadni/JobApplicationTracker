@@ -49,15 +49,10 @@ class JobPostingCreate(BaseModel):
     post_notifications: bool = True
 
 
-class JobPostingResponse(BaseModel):
+class JobPostingBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    company_id: int
-    job_category_id: int
-    province_id: int
-    salary_range_id: int
-    city_id: int
 
     job_title: str
     job_description: str
@@ -74,3 +69,10 @@ class JobPostingResponse(BaseModel):
     military_status: MilitaryServiceStatus
 
     post_notifications: bool
+
+class JobPostingRead(JobPostingBase):
+    company_id: int
+    job_category_id: int
+    province_id: int
+    salary_range_id: int
+    city_id: int
