@@ -5,10 +5,13 @@ from fastapi import APIRouter, HTTPException, status
 from ...infrastructure.dependencies import AsyncSessionDep
 from ..common.exceptions import ResourceNotFoundError
 from ..common.utils.error_handler import handle_exception
+from ..job_posting.routes import router as job_postings_router
 from .dependencies import CompanyServiceDep
 from .schemas import CompanyRead
 
 router = APIRouter(tags=["Companies"])
+router.include_router(job_postings_router, prefix="/job-postings")
+
 
 @router.get("/{company_id}", response_model=CompanyRead)
 async def get_company(
