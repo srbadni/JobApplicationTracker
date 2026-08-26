@@ -10,15 +10,14 @@ from .schemas import CompanyRead
 
 router = APIRouter(tags=["Companies"])
 
-@router.get("/{company_id}", response_model=CompanyRead)
-async def get_company(
-    company_id: int,
+@router.get("/{company_title}", response_model=CompanyRead)
+async def get_company_by_title(
+    company_title: str,
     db: AsyncSessionDep,
     company_service: CompanyServiceDep,
 ) -> dict[str, Any]:
-    """Return a company profile by its system-generated ID."""
     try:
-        return await company_service.get_by_id(company_id, db)
+        return await company_service.get_by_title(company_title, db)
     except ResourceNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Company not found")
     except Exception as error:

@@ -4,8 +4,7 @@ from ..company.schemas import CompanyCreate, CompanyRead
 from ..user.schemas import UserCreate, UserRead
 
 
-class EmployerRegistration(BaseModel):
-    """Employer and company registration payload."""
+class CompanyAdminRegistration(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
@@ -13,8 +12,7 @@ class EmployerRegistration(BaseModel):
     company: CompanyCreate
 
 
-class EmployerRegistrationRead(BaseModel):
-    """The three records atomically created for a new employer."""
+class CompanyAdminRegistrationRead(BaseModel):
 
     user: UserRead
     company: CompanyRead

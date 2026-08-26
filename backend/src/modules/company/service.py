@@ -8,11 +8,9 @@ from .schemas import CompanyRead
 
 
 class CompanyService:
-    """Coordinate company persistence and domain-level errors."""
 
-    async def get_by_id(self, company_id: int, db: AsyncSession) -> dict[str, Any]:
-        """Return a company profile by its system-generated ID."""
-        company = await crud_companies.get(db=db, id=company_id, schema_to_select=CompanyRead)
+    async def get_by_title(self, company_title: str, db: AsyncSession) -> dict[str, Any]:
+        company = await crud_companies.get(db=db, name=company_title, schema_to_select=CompanyRead)
         if not company:
-            raise ResourceNotFoundError(f"Company with ID {company_id} not found")
+            raise ResourceNotFoundError(f"Company with title {company_title} not found")
         return company
