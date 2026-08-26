@@ -7,6 +7,7 @@ from ....modules.company.routes import router as companies_router
 from ....modules.company_activity.router import router as company_activity_router
 from ....modules.employer.route import router as employers_router
 from ....modules.job_categories.route import router as job_categories_router
+from ....modules.job_posting.routes import router as job_postings_router
 from ....modules.jobs_search.routes import router as jobs_router
 from ....modules.media.routes import router as media_router
 from ....modules.province.routes import router as provinces_router
@@ -23,6 +24,7 @@ router.include_router(auth_router, prefix="/auth")
 router.include_router(api_keys_router, prefix="/api-keys")
 router.include_router(companies_router, prefix="/companies")
 router.include_router(employers_router, prefix="/employers")
+router.include_router(job_postings_router, prefix="/companies/job-postings", tags=["Companies"])
 router.include_router(job_categories_router, prefix="/job-categories")
 router.include_router(provinces_router, prefix="/provinces")
 router.include_router(cities_router, prefix="/cities")
