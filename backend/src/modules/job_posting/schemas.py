@@ -30,15 +30,11 @@ class JobPostingCreate(BaseModel):
     job_category_id: int = Field()
     province_id: int = Field()
     city_id: int = Field()
+    salary_range_id: int = Field()
 
     employment_type: EmploymentType
 
     work_mode: WorkMode
-
-    minimum_salary: int | None = Field(
-        default=None,
-        ge=0,
-    )
 
     is_latin_text: bool
 
@@ -60,6 +56,7 @@ class JobPostingResponse(BaseModel):
     company_id: int
     job_category_id: int
     province_id: int
+    salary_range_id: int
     city_id: int
 
     job_title: str
@@ -69,7 +66,6 @@ class JobPostingResponse(BaseModel):
     employment_type: EmploymentType
     work_mode: WorkMode
 
-    minimum_salary: int | None
     is_latin_text: bool
 
     work_experience: RelevantWorkExperience
