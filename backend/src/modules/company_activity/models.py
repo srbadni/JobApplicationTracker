@@ -13,6 +13,7 @@ class CompanyActivity(Base):
     __tablename__ = "company_activities"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    code: Mapped[str] = mapped_column(String, nullable=False)
     title: Mapped[str] = mapped_column(String, nullable=False)
 
     companies: Mapped[list["Company"]] = relationship("Company", back_populates="activity", init=False)
