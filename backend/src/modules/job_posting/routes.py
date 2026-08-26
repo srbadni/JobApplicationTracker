@@ -2,14 +2,14 @@ from fastapi import APIRouter, status
 
 from ...infrastructure.dependencies import AsyncSessionDep, CSRFTokenHeaderDep, CurrentUserDep
 from .dependencies import JobPostingServiceDep
-from .schemas import JobPostingCreate, JobPostingResponse
+from .schemas import JobPostingCreate, JobPostingRead
 
 router = APIRouter()
 
 @router.post(
     "",
     status_code=status.HTTP_201_CREATED,
-    response_model=JobPostingResponse,
+    response_model=JobPostingRead,
 )
 async def create_job_posting(
     post: JobPostingCreate,
