@@ -8,8 +8,7 @@ from ..common.utils.error_handler import handle_exception
 from .dependencies import CompanyServiceDep
 from .schemas import CompanyRead
 
-router = APIRouter()
-
+router = APIRouter(tags=["Companies"])
 
 @router.get("/{company_id}", response_model=CompanyRead)
 async def get_company(
