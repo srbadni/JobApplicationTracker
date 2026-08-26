@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 class SalaryRange(Base):
     __tablename__ = "salary_ranges"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True, init=False)
     title: Mapped[str] = mapped_column(String, nullable=False)
     min_salary: Mapped[int | None] = mapped_column(Integer, default=None)
     max_salary: Mapped[int | None] = mapped_column(Integer, default=None)
