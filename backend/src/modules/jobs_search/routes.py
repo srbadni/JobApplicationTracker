@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Query
 
 from .dependencies import JobsSearchServiceDep
+from .schemas import JobSearchRead
 from ..job_posting.enums import WorkMode, RelevantWorkExperience
-from ..job_posting.schemas import JobPostingResponse
 
 router = APIRouter(tags=["Jobs Search"])
 
 
-@router.get("/", response_model=list[JobPostingResponse])
+@router.get("/", response_model=list[JobSearchRead])
 async def get_jobs(
         service: JobsSearchServiceDep,
         keywords: str | None = None,
