@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 class CompanyActivity(Base):
     __tablename__ = "company_activities"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True, init=False)
     code: Mapped[str] = mapped_column(String, nullable=False)
     title: Mapped[str] = mapped_column(String, nullable=False)
 
