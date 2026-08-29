@@ -7,16 +7,16 @@ from typing import cast
 from sqlalchemy import Table, func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-import src.modules  # noqa: F401 - register every relationship target before mapper configuration
-from src.infrastructure.database.session import Base
-from src.infrastructure.storage import LocalStorage
-from src.modules.applicant_profile.models import ApplicantProfile
-from src.modules.media.enums import MediaCategory
-from src.modules.media.exceptions import MediaAccessDeniedError
-from src.modules.media.models import Media
-from src.modules.media.service import MediaService
-from src.modules.user.enums import UserType
-from src.modules.user.models import User
+import src.interface_adapters.modules  # noqa: F401 - register every relationship target before mapper configuration
+from src.frameworks.database.session import Base
+from src.frameworks.storage import LocalStorage
+from src.interface_adapters.modules.applicant_profile.models import ApplicantProfile
+from src.interface_adapters.modules.media.enums import MediaCategory
+from src.interface_adapters.modules.media.exceptions import MediaAccessDeniedError
+from src.interface_adapters.modules.media.models import Media
+from src.interface_adapters.modules.media.service import MediaService
+from src.interface_adapters.modules.user.enums import UserType
+from src.interface_adapters.modules.user.models import User
 
 
 class UploadStub:

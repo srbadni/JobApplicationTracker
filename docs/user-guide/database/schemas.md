@@ -7,14 +7,14 @@ Pydantic schemas handle three things in this codebase: **input validation**, **o
 Each module owns its schemas, colocated with the model and CRUD:
 
 ```text
-backend/src/modules/
+backend/src/interface_adapters/modules/
 ├── user/schemas.py            # UserCreate, UserRead, UserUpdate, UserAnonymize, ...
 ├── tier/schemas.py            # TierCreate, TierRead, TierUpdate
 ├── rate_limit/schemas.py      # RateLimitCreate, RateLimitRead, RateLimitUpdate
 └── api_keys/schemas.py        # APIKeyCreate, APIKeyRead, APIKeyUpdate, KeyUsageRead
 ```
 
-Cross-module shared schemas (timestamp/soft-delete mixins, common error shapes) live in `backend/src/modules/common/schemas.py`.
+Cross-module shared schemas (timestamp/soft-delete mixins, common error shapes) live in `backend/src/interface_adapters/modules/common/schemas.py`.
 
 ## Common Mixin Schemas
 
@@ -320,13 +320,13 @@ async def me(current_user: Annotated[dict[str, Any], Depends(get_current_user)])
 
 ## Adding Schemas for a New Module
 
-1. **Create the schema file**: `backend/src/modules/widgets/schemas.py`
+1. **Create the schema file**: `backend/src/interface_adapters/modules/widgets/schemas.py`
 2. **Define a `WidgetBase`** with the fields shared by create/update/read
 3. **Add `WidgetCreate`, `WidgetRead`, `WidgetUpdate`** (and any internal variants you need)
 4. **Wire them up** in the module's `routes.py` and `service.py`
 
 ```python
-# backend/src/modules/widgets/schemas.py
+# backend/src/interface_adapters/modules/widgets/schemas.py
 from datetime import datetime
 from typing import Annotated
 from pydantic import BaseModel, ConfigDict, Field

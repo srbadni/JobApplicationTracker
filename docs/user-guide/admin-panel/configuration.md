@@ -16,18 +16,18 @@ ADMIN_PASSWORD=your-secure-password
 SECRET_KEY=<openssl rand -hex 32>
 ```
 
-That's the whole admin-specific config. Everything else (engine, models, mount path) is hardcoded in `src/interfaces/admin/initialize.py` for simplicity.
+That's the whole admin-specific config. Everything else (engine, models, mount path) is hardcoded in `src/interface_adapters/admin/initialize.py` for simplicity.
 
 ### Backing Settings Classes
 
-The variables map to two settings classes in `src/infrastructure/config/settings.py`:
+The variables map to two settings classes in `src/frameworks/config/settings.py`:
 
 - **`AdminSettings`** — `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `DEFAULT_TIER_NAME`. Used by both the admin panel login *and* `scripts/setup_initial_data.py` to bootstrap the first superuser.
 - **`SQLAdminSettings`** — `ADMIN_ENABLED`. Single toggle for the admin panel.
 
 ## What Happens at Startup
 
-1. `interfaces/main.py` calls `create_admin_interface(app)` from `interfaces/admin/initialize.py`
+1. `interface_adapters/main.py` calls `create_admin_interface(app)` from `interface_adapters/admin/initialize.py`
 2. If `ADMIN_ENABLED=false`, the function returns `None` and the admin panel is **not mounted**
 3. Otherwise, an `AdminAuth` backend is constructed using `SECRET_KEY`
 4. A SQLAdmin `Admin` instance is created against the app's existing database `engine`
@@ -36,7 +36,7 @@ The variables map to two settings classes in `src/infrastructure/config/settings
 
 ## Login Authentication
 
-Login flow (in `interfaces/admin/auth.py`):
+Login flow (in `interface_adapters/admin/auth.py`):
 
 ```python
 class AdminAuth(AuthenticationBackend):
@@ -63,7 +63,7 @@ If you need multiple admin operators, see [User Management](user-management.md) 
 
 ## Mount Path
 
-The admin panel is hardcoded at `/admin` (defined when `Admin(...)` is instantiated). To change the path, edit `src/interfaces/admin/initialize.py`:
+The admin panel is hardcoded at `/admin` (defined when `Admin(...)` is instantiated). To change the path, edit `src/interface_adapters/admin/initialize.py`:
 
 ```python
 admin = Admin(
@@ -79,11 +79,11 @@ If you change it, also update any internal links in your frontend or operational
 
 ## Database Connection
 
-SQLAdmin reuses the **same SQLAlchemy engine** the rest of the app uses (imported from `infrastructure/database/session.py`). There's no separate admin database connection or pool to configure.
+SQLAdmin reuses the **same SQLAlchemy engine** the rest of the app uses (imported from `frameworks/database/session.py`). There's no separate admin database connection or pool to configure.
 
 ## Session Cookies
 
-The admin login uses Starlette's `SessionMiddleware`, which is added to the FastAPI app in `src/interfaces/main.py`:
+The admin login uses Starlette's `SessionMiddleware`, which is added to the FastAPI app in `src/interface_adapters/main.py`:
 
 ```python
 app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
@@ -136,14 +136,14 @@ Three options, ordered by aggressiveness:
     - Rotate periodically
     - Use a long, high-entropy password (the production security validator will refuse to start the app if `SECRET_KEY` is the placeholder, but it doesn't validate `ADMIN_PASSWORD`)
 
-The Production Security Validator (`infrastructure/security/`) checks several things at startup when `ENVIRONMENT=production`, but admin credentials aren't currently in the validation list. Be deliberate about what you set.
+The Production Security Validator (`frameworks/security/`) checks several things at startup when `ENVIRONMENT=production`, but admin credentials aren't currently in the validation list. Be deliberate about what you set.
 
 ## Environment Detection
 
 The admin panel itself doesn't change behavior between `local` / `development` / `staging` / `production` — it's the same SQLAdmin app. What changes is the surrounding environment:
 
 - **Cookie security**: derived from your reverse proxy / TLS setup, not from the `ENVIRONMENT` setting
-- **Logging**: admin actions go through the same logger configured by `infrastructure/logging/`
+- **Logging**: admin actions go through the same logger configured by `frameworks/logging/`
 - **Session backend**: Starlette's `SessionMiddleware` is in-memory + cookie-based, not the same as the API's `SESSION_BACKEND` (Redis/memory). Restart-resilience for the *admin* login isn't relevant — admins re-log-in fine.
 
 ## Troubleshooting
@@ -162,7 +162,7 @@ uv run python -c "from src.infrastructure.config.settings import get_settings; p
 - If running in Docker, confirm the env vars are actually reaching the container (`docker compose exec app env | grep ADMIN_`)
 
 ### Admin session keeps logging out
-The Starlette `SessionMiddleware` cookie's lifetime is controlled by the browser (it's a session cookie). For longer-lived admin sessions, edit the middleware setup in `src/interfaces/main.py` to pass `max_age=...`:
+The Starlette `SessionMiddleware` cookie's lifetime is controlled by the browser (it's a session cookie). For longer-lived admin sessions, edit the middleware setup in `src/interface_adapters/main.py` to pass `max_age=...`:
 
 ```python
 app.add_middleware(

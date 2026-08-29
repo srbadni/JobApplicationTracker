@@ -8,7 +8,7 @@ For the full range of options, see the [SQLAdmin documentation](https://github.c
 
 SQLAdmin's default insert flow creates an empty model instance, then sets attributes one by one. That breaks dataclass models with required fields that have no defaults.
 
-The project solves this with `DataclassModelMixin` (`backend/src/interfaces/admin/mixins.py`) — it constructs the model with all the form data at once.
+The project solves this with `DataclassModelMixin` (`backend/src/interface_adapters/admin/mixins.py`) — it constructs the model with all the form data at once.
 
 ```python
 from ..mixins import DataclassModelMixin
@@ -24,7 +24,7 @@ class MyModelAdmin(DataclassModelMixin, ModelView, model=MyModel):
 ### 1. Create the View File
 
 ```python
-# backend/src/interfaces/admin/views/widgets.py
+# backend/src/interface_adapters/admin/views/widgets.py
 from sqladmin import ModelView
 
 from ....modules.widgets.models import Widget
@@ -62,7 +62,7 @@ class WidgetAdmin(DataclassModelMixin, ModelView, model=Widget):
 ### 2. Register It
 
 ```python
-# backend/src/interfaces/admin/views/__init__.py
+# backend/src/interface_adapters/admin/views/__init__.py
 from sqladmin import Admin
 
 from .tiers import TierAdmin
@@ -302,7 +302,7 @@ class WidgetAdmin(DataclassModelMixin, ModelView, model=Widget):
 Notes:
 
 - Selected IDs come from `request.query_params["pks"]` as a comma-separated string
-- `local_session()` is the project's session-maker — import it from `infrastructure/database/session.py`
+- `local_session()` is the project's session-maker — import it from `frameworks/database/session.py`
 - Always commit before redirecting, otherwise the change reverts when the request ends
 
 ## Icons
@@ -347,17 +347,17 @@ The project ships two admin views — read them as reference implementations:
 
 | File | What it shows |
 |------|---------------|
-| `backend/src/interfaces/admin/views/users.py` | `on_model_change` for password hashing, OAuth-provider select field, relationship in `column_list`, custom `column_labels` |
-| `backend/src/interfaces/admin/views/tiers.py` | `delete_model` override that calls a service method, schema-driven form rules |
+| `backend/src/interface_adapters/admin/views/users.py` | `on_model_change` for password hashing, OAuth-provider select field, relationship in `column_list`, custom `column_labels` |
+| `backend/src/interface_adapters/admin/views/tiers.py` | `delete_model` override that calls a service method, schema-driven form rules |
 
 ## Key Files
 
 | Component | Location |
 |-----------|----------|
-| Dataclass mixin | `backend/src/interfaces/admin/mixins.py` |
-| View registry | `backend/src/interfaces/admin/views/__init__.py` |
-| Example views | `backend/src/interfaces/admin/views/*.py` |
-| Auth backend | `backend/src/interfaces/admin/auth.py` |
+| Dataclass mixin | `backend/src/interface_adapters/admin/mixins.py` |
+| View registry | `backend/src/interface_adapters/admin/views/__init__.py` |
+| Example views | `backend/src/interface_adapters/admin/views/*.py` |
+| Auth backend | `backend/src/interface_adapters/admin/auth.py` |
 
 ## Next Steps
 

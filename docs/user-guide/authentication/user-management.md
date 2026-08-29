@@ -84,7 +84,7 @@ class UserCreate(UserBase):
 
 ## Authentication
 
-Authentication happens via `POST /api/v1/auth/login`. See [Sessions](sessions.md) for the full flow. The credential check itself now lives inside the `crudauth` library — the login route delegates to the `auth` singleton (`infrastructure/auth/setup.py`), which looks the user up, verifies the password, and creates the session. The project no longer ships an `authenticate_user` helper.
+Authentication happens via `POST /api/v1/auth/login`. See [Sessions](sessions.md) for the full flow. The credential check itself now lives inside the `crudauth` library — the login route delegates to the `auth` singleton (`frameworks/auth/setup.py`), which looks the user up, verifies the password, and creates the session. The project no longer ships an `authenticate_user` helper.
 
 Two things to note about the login behavior:
 
@@ -331,7 +331,7 @@ class User(Base, TimestampMixin, SoftDeleteMixin):
         return not self.is_deleted
 ```
 
-Mixins from `infrastructure/database/models`:
+Mixins from `frameworks/database/models`:
 
 - `TimestampMixin` — `created_at`, `updated_at`
 - `SoftDeleteMixin` — `is_deleted`, `deleted_at`

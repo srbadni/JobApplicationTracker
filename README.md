@@ -41,7 +41,7 @@ Without Docker, provide PostgreSQL and Redis, then run:
 cd backend
 uv run alembic upgrade head
 uv run python -m scripts.setup_initial_data
-uv run fastapi dev src/interfaces/main.py
+uv run fastapi dev src/interface_adapters/main.py
 ```
 
 Alembic is the only schema-management mechanism. The initial-data command is

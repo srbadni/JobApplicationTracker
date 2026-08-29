@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from src.infrastructure.storage import InvalidStorageKeyError, LocalStorage, StorageLimitExceededError
+from src.frameworks.storage import InvalidStorageKeyError, LocalStorage, StorageLimitExceededError
 
 
 class AsyncBytesReader:

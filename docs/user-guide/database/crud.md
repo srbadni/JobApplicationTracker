@@ -17,7 +17,7 @@ The project uses **FastCRUD** for all database access. It gives you:
 Each module owns its own FastCRUD instance, kept tiny and predictable:
 
 ```python
-# backend/src/modules/user/crud.py
+# backend/src/interface_adapters/modules/user/crud.py
 from fastcrud import FastCRUD
 
 from .models import User
@@ -26,7 +26,7 @@ crud_users: FastCRUD = FastCRUD(User)
 ```
 
 ```python
-# backend/src/modules/tier/crud.py
+# backend/src/interface_adapters/modules/tier/crud.py
 from fastcrud import FastCRUD
 
 from .models import Tier

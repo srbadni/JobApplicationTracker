@@ -4,7 +4,7 @@ This page is the production hardening checklist for a job-tracker deployment. It
 
 ## The Production Validator
 
-When `ENVIRONMENT=production`, `infrastructure/security/production_validator.py` runs at startup and refuses to boot the app on critical issues. Two tiers:
+When `ENVIRONMENT=production`, `frameworks/security/production_validator.py` runs at startup and refuses to boot the app on critical issues. Two tiers:
 
 ### Critical (raises `ProductionSecurityError`, app exits)
 
@@ -156,7 +156,7 @@ docker run --rm \
 The `prod` stage's `CMD` is:
 
 ```dockerfile
-CMD ["sh", "-c", "fastapi run interfaces/main.py --host 0.0.0.0 --port 8000 --workers $WORKERS"]
+CMD ["sh", "-c", "fastapi run interface_adapters/main.py --host 0.0.0.0 --port 8000 --workers $WORKERS"]
 ```
 
 `fastapi run` is FastAPI's production-friendly equivalent to `uvicorn` — it sets sane defaults (no `--reload`, properly configured logging, etc.) and is what the framework itself recommends. Override the worker count with `WORKERS` (defaults to 1):
@@ -248,7 +248,7 @@ LOG_LEVEL=INFO
 LOG_FORMAT=json
 ```
 
-The project's logger (`infrastructure/logging/`) attaches a correlation ID per request — it appears in every log line for that request, including downstream Taskiq tasks if you propagate it. Useful for tying together "user X reported error Y" with the actual server-side trace.
+The project's logger (`frameworks/logging/`) attaches a correlation ID per request — it appears in every log line for that request, including downstream Taskiq tasks if you propagate it. Useful for tying together "user X reported error Y" with the actual server-side trace.
 
 For lower-noise production logs:
 
@@ -357,11 +357,11 @@ The worker process isn't running, isn't pointed at the same Redis, or hasn't imp
 
 | Component                         | Location                                                          |
 |-----------------------------------|-------------------------------------------------------------------|
-| Production validator              | `backend/src/infrastructure/security/production_validator.py`     |
+| Production validator              | `backend/src/frameworks/security/production_validator.py`     |
 | Migration validator               | `backend/migrations/env.py:validate_production_migration`         |
 | Multi-stage Dockerfile            | `backend/Dockerfile`                                              |
-| Settings                          | `backend/src/infrastructure/config/settings.py`                   |
-| App factory / lifespan            | `backend/src/infrastructure/app_factory.py`                       |
+| Settings                          | `backend/src/frameworks/config/settings.py`                   |
+| App factory / lifespan            | `backend/src/frameworks/app_factory.py`                       |
 
 ## Next Steps
 

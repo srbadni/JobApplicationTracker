@@ -210,7 +210,7 @@ uv run taskiq worker infrastructure.taskiq.worker:default_broker
 
 ## Adding Your First Feature Module
 
-The codebase uses **vertical-slice modules** — each feature owns its models, schemas, CRUD, service, and routes in one folder under `backend/src/modules/`.
+The codebase uses **vertical-slice modules** — each feature owns its models, schemas, CRUD, service, and routes in one folder under `backend/src/interface_adapters/modules/`.
 
 For a step-by-step walkthrough of adding a new module, see the [Development Guide](../user-guide/development.md).
 

@@ -160,7 +160,7 @@ For development on your host machine. You provide PostgreSQL and Redis yourself.
 7. **Start the app**:
 
     ```bash
-    uv run fastapi dev src/interfaces/main.py
+    uv run fastapi dev src/interface_adapters/main.py
     ```
 
 8. **(Optional) Start a Taskiq worker** (in a second terminal):

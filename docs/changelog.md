@@ -12,9 +12,9 @@ ___
 
 Three changes since v0.18.0: route dependency injection moved to centralized `Annotated[...]` type aliases ([#261](https://github.com/job-tracker/job-tracker/pull/261)), the app metadata (`APP_NAME` / `APP_DESCRIPTION` / `VERSION`) became environment-configurable, and — the headline — the vendored authentication stack was replaced with the [`crudauth`](https://pypi.org/project/crudauth/) library.
 
-**The crudauth migration.** The vendored authentication stack — the in-tree `SessionManager`, its storage backends, the OAuth provider framework, and the token/password utilities — has been replaced with crudauth. The project now keeps only the wiring: a single `auth = CRUDAuth(...)` singleton in `infrastructure/auth/setup.py`, the FastAPI dependencies that wrap it, the OAuth building blocks, and the route handlers. Session validation, CSRF, login lockout, and session storage all live in the library.
+**The crudauth migration.** The vendored authentication stack — the in-tree `SessionManager`, its storage backends, the OAuth provider framework, and the token/password utilities — has been replaced with crudauth. The project now keeps only the wiring: a single `auth = CRUDAuth(...)` singleton in `frameworks/auth/setup.py`, the FastAPI dependencies that wrap it, the OAuth building blocks, and the route handlers. Session validation, CSRF, login lockout, and session storage all live in the library.
 
-**Annotated type-alias DI** ([#261](https://github.com/job-tracker/job-tracker/pull/261), by [@emiliano-gandini-outeda](https://github.com/emiliano-gandini-outeda)). Route signatures moved from inline `Depends(...)` to centralized `Annotated[..., Depends(...)]` aliases in `infrastructure/dependencies.py`, with per-module `dependencies.py` files holding the service aliases for `user`, `tier`, `rate_limit`, and `api_keys`.
+**Annotated type-alias DI** ([#261](https://github.com/job-tracker/job-tracker/pull/261), by [@emiliano-gandini-outeda](https://github.com/emiliano-gandini-outeda)). Route signatures moved from inline `Depends(...)` to centralized `Annotated[..., Depends(...)]` aliases in `frameworks/dependencies.py`, with per-module `dependencies.py` files holding the service aliases for `user`, `tier`, `rate_limit`, and `api_keys`.
 
 This is a **breaking** change for anyone importing from the old auth modules or relying on the removed settings. See Breaking Changes below for the migration.
 
@@ -23,18 +23,18 @@ This is a **breaking** change for anyone importing from the old auth modules or 
 #### Added
 
 - **`crudauth` library integration** by [@igorbenav](https://github.com/igorbenav)
-  - `auth = CRUDAuth(...)` composition root in `infrastructure/auth/setup.py`; the app lifespan calls `auth.initialize()` / `auth.shutdown()`
+  - `auth = CRUDAuth(...)` composition root in `frameworks/auth/setup.py`; the app lifespan calls `auth.initialize()` / `auth.shutdown()`
   - New `Principal`-based dependencies `get_current_principal` / `get_optional_principal` alongside the dict-returning `get_current_user` / `get_optional_user` / `get_current_superuser`
 - **`TRUSTED_PROXY_HOPS` setting** (default `0`) — number of trusted reverse proxies in front of the app, used by crudauth to resolve the real client IP for login lockout. Set `1` behind a single nginx/Caddy.
 - **`User.is_active` property** — derived from `not is_deleted`; crudauth reads it during login so soft-deleted users can't authenticate.
-- **Annotated type-alias dependency injection** ([#261](https://github.com/job-tracker/job-tracker/pull/261)) by [@emiliano-gandini-outeda](https://github.com/emiliano-gandini-outeda) — centralized `Annotated[..., Depends(...)]` aliases in `infrastructure/dependencies.py` and per-module `dependencies.py` (`user`, `tier`, `rate_limit`, `api_keys`) with service aliases; route signatures migrated to use them.
+- **Annotated type-alias dependency injection** ([#261](https://github.com/job-tracker/job-tracker/pull/261)) by [@emiliano-gandini-outeda](https://github.com/emiliano-gandini-outeda) — centralized `Annotated[..., Depends(...)]` aliases in `frameworks/dependencies.py` and per-module `dependencies.py` (`user`, `tier`, `rate_limit`, `api_keys`) with service aliases; route signatures migrated to use them.
 
 #### Changed
 
 - Auth dependencies now import from `infrastructure.auth.dependencies` (was `infrastructure.auth.session.dependencies`).
 - `get_password_hash` / `verify_password` now come `from crudauth` (was `infrastructure.auth.utils`).
 - Login lockout now returns **`429 Too Many Requests` with a `Retry-After` header** (was a generic `401`). It is throttled internally by crudauth (escalating per-IP / per-identifier), not via env vars.
-- OAuth providers are now registered via crudauth's `OAuthProviderFactory` in `infrastructure/auth/oauth.py` rather than as separate `oauth/providers/<name>.py` files. Google remains wired.
+- OAuth providers are now registered via crudauth's `OAuthProviderFactory` in `frameworks/auth/oauth.py` rather than as separate `oauth/providers/<name>.py` files. Google remains wired.
 - `APP_NAME`, `APP_DESCRIPTION`, and `VERSION` are now environment-configurable (read via `config(...)`; previously hardcoded).
 - `/check-auth` now answers anonymous callers with `{"authenticated": false}` instead of raising `401` ([#261](https://github.com/job-tracker/job-tracker/pull/261)).
 
@@ -76,7 +76,7 @@ The trade-off is that job-tracker carries a lot of stuff this project's audience
 
 **So this release is job-tracker minus the SaaS/AI parts, plus a plugin system that job-tracker doesn't have.** What's left is the structural skeleton; the parts that any FastAPI app needs and that we've watched hold up in real use:
 
-- The three-layer split (`interfaces/`, `infrastructure/`, `modules/`)
+- The three-layer split (`interfaces/`, `frameworks/`, `modules/`)
 - Vertical-slice modules (`user/`, `tier/`, `api_keys/`, `rate_limit/`)
 - Server-side sessions + CSRF, OAuth (Google wired, GitHub scaffolded)
 - SQLAdmin, Taskiq, swappable cache/session/rate-limit backends
@@ -171,7 +171,7 @@ For the full migration guide and per-section detail, see the [full release notes
   - Deploy via `.github/workflows/docs.yml` to GitHub Pages
 
 - **Settings layout** by [@igorbenav](https://github.com/igorbenav)
-  - Composed setting groups (`AuthSettings`, `CacheSettings`, `RateLimiterSettings`, etc.) in `infrastructure/config/settings.py`
+  - Composed setting groups (`AuthSettings`, `CacheSettings`, `RateLimiterSettings`, etc.) in `frameworks/config/settings.py`
   - `get_settings()` returns the composed `Settings` instance
   - Most env var names stable; a few moved between groups
 

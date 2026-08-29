@@ -11,10 +11,10 @@ Learn how to build REST APIs with the job-tracker. This section covers everythin
 
 ## Quick Overview
 
-Routes are defined in each module's `routes.py`. The aggregator at `interfaces/api/v1/__init__.py` mounts each module's router under `/api/v1`.
+Routes are defined in each module's `routes.py`. The aggregator at `interface_adapters/api/v1/__init__.py` mounts each module's router under `/api/v1`.
 
 ```python
-# backend/src/modules/user/routes.py
+# backend/src/interface_adapters/modules/user/routes.py
 from typing import Annotated, Any
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -42,7 +42,7 @@ async def create_user(
 The aggregator wires it up:
 
 ```python
-# backend/src/interfaces/api/v1/__init__.py
+# backend/src/interface_adapters/api/v1/__init__.py
 from fastapi import APIRouter
 
 from ....modules.user.routes import router as users_router
@@ -57,7 +57,7 @@ Final URL: `POST /api/v1/users/`.
 
 ### Built-in Authentication
 
-Session-based auth with HTTP-only cookies. Pull the current user from `infrastructure/auth/dependencies`:
+Session-based auth with HTTP-only cookies. Pull the current user from `frameworks/auth/dependencies`:
 
 ```python
 from ...infrastructure.auth.dependencies import get_current_user
@@ -164,7 +164,7 @@ backend/src/
 │       ├── __init__.py            # mounts /api
 │       └── v1/
 │           └── __init__.py        # mounts /v1 + every module's router
-├── infrastructure/
+├── frameworks/
 │   └── auth/
 │       └── routes.py              # /api/v1/auth/* (login, OAuth, check-auth)
 └── modules/
@@ -174,7 +174,7 @@ backend/src/
     └── api_keys/routes.py         # /api/v1/api-keys/*
 ```
 
-Auth lives in `infrastructure/auth/routes.py` instead of in a feature module because authentication is structural — every other feature depends on it.
+Auth lives in `frameworks/auth/routes.py` instead of in a feature module because authentication is structural — every other feature depends on it.
 
 ## Mounted Endpoints
 
@@ -185,10 +185,10 @@ What ships out of the box (40 total routes):
 | `POST/GET/PATCH/DELETE /api/v1/users/*` | `modules/user/routes.py` | Open create, session/superuser-gated reads/updates |
 | `GET /api/v1/tiers/*` | `modules/tier/routes.py` | Public list + lookup by name |
 | `GET/PATCH/DELETE /api/v1/rate-limits/*` | `modules/rate_limit/routes.py` | List/get public; PATCH/DELETE require superuser |
-| `POST /api/v1/auth/login`, `logout`, `refresh-csrf`, `check-auth` | `infrastructure/auth/routes.py` | Session auth |
-| `GET /api/v1/auth/oauth/google`, `oauth/callback/google` | `infrastructure/auth/routes.py` | Google OAuth |
+| `POST /api/v1/auth/login`, `logout`, `refresh-csrf`, `check-auth` | `frameworks/auth/routes.py` | Session auth |
+| `GET /api/v1/auth/oauth/google`, `oauth/callback/google` | `frameworks/auth/routes.py` | Google OAuth |
 | `POST/GET/PATCH/DELETE /api/v1/api-keys/*` | `modules/api_keys/routes.py` | Authenticated key management |
-| `GET /admin/*` | `interfaces/admin/initialize.py` | SQLAdmin UI |
+| `GET /admin/*` | `interface_adapters/admin/initialize.py` | SQLAdmin UI |
 | `GET /docs`, `/redoc`, `/openapi.json` | FastAPI built-ins | Disabled in production unless `ENABLE_DOCS_IN_PRODUCTION=true` |
 | `GET /health` | App factory | Liveness check |
 

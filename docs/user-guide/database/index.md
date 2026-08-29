@@ -73,7 +73,7 @@ class User(Base, TimestampMixin, SoftDeleteMixin):
     hashed_password: Mapped[str] = mapped_column(String(100))
 ```
 
-Available mixins from `infrastructure/database/models.py`:
+Available mixins from `frameworks/database/models.py`:
 
 - `TimestampMixin` — adds `created_at` and `updated_at`
 - `SoftDeleteMixin` — adds `is_deleted` and `deleted_at`
@@ -178,7 +178,7 @@ The `DATABASE_URL` property on `DatabaseSettings` is computed from these. If you
 
 ### Connection Management
 
-The session dependency lives in `infrastructure/database/session.py`:
+The session dependency lives in `frameworks/database/session.py`:
 
 ```python
 from collections.abc import AsyncGenerator
@@ -240,7 +240,7 @@ Each feature owns its data stack:
 
 ```text
 backend/src/
-├── infrastructure/
+├── frameworks/
 │   └── database/
 │       ├── session.py        # engine, async_session dep, Base class, create_tables
 │       └── models.py         # TimestampMixin, SoftDeleteMixin, UUIDMixin
@@ -256,7 +256,7 @@ backend/src/
     └── api_keys/
 ```
 
-The shared `Base` and mixins are in `infrastructure/database/`. Everything feature-specific is colocated under the module.
+The shared `Base` and mixins are in `frameworks/database/`. Everything feature-specific is colocated under the module.
 
 ## Common Patterns
 

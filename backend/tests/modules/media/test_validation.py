@@ -1,9 +1,9 @@
 import io
 import unittest
 
-from src.modules.media.enums import MediaCategory
-from src.modules.media.exceptions import MediaValidationError
-from src.modules.media.validation import validate_upload
+from src.interface_adapters.modules.media.enums import MediaCategory
+from src.interface_adapters.modules.media.exceptions import MediaValidationError
+from src.interface_adapters.modules.media.validation import validate_upload
 
 
 class UploadStub:

@@ -140,7 +140,7 @@ class MyFeature(Feature):
             template_context={"project_name": project.repo_root.name, **params},
             files=(
                 FileOp(template="my_module.py.j2",
-                       target=project.backend_dir / "src/modules/my_feature/__init__.py"),
+                       target=project.backend_dir / "src/interface_adapters/modules/my_feature/__init__.py"),
                 # ... more files ...
             ),
         )
@@ -224,7 +224,7 @@ class AuditLogFeature(Feature):
         templates_root = Path(__file__).parent / "templates"
         module_path = (
             project.backend_dir
-            / "src/modules/audit_log/models.py"
+            / "src/interface_adapters/modules/audit_log/models.py"
         )
         return FeaturePlan(
             manifest=self.manifest(),
@@ -242,7 +242,7 @@ class AuditLogFeature(Feature):
 feature = AuditLogFeature()
 ```
 
-A feature plugin writes into a directory that still exists in the layout — that's why this example targets `src/modules/<name>/` rather than the old `auth/oauth/providers/` path. OAuth providers are no longer separate files: they're registered with crudauth's `OAuthProviderFactory` in `infrastructure/auth/oauth.py`, so an "add an OAuth provider" plugin would edit that file (e.g. via an idempotent patch op) instead of dropping in a new module.
+A feature plugin writes into a directory that still exists in the layout — that's why this example targets `src/interface_adapters/modules/<name>/` rather than the old `auth/oauth/providers/` path. OAuth providers are no longer separate files: they're registered with crudauth's `OAuthProviderFactory` in `frameworks/auth/oauth.py`, so an "add an OAuth provider" plugin would edit that file (e.g. via an idempotent patch op) instead of dropping in a new module.
 
 #### 3. `pyproject.toml` — declare the entry point
 
@@ -328,7 +328,7 @@ Set `include-package-data = true` in `pyproject.toml` and add a `package-data` g
 ## Roadmap
 
 - **`job-tracker feature {list,add,remove,info}`** — user-facing surface for the feature framework. Currently the registry exists; the commands don't.
-- **Codemod execution** — apply AST-aware edits declared in `FeaturePlan.codemods`. Useful for "drop a module + register its router in `interfaces/main.py`" kinds of features.
+- **Codemod execution** — apply AST-aware edits declared in `FeaturePlan.codemods`. Useful for "drop a module + register its router in `interface_adapters/main.py`" kinds of features.
 - **Post-install hooks** — execute commands declared in `FeaturePlan.hooks`. Useful for "after writing the migration, run `alembic upgrade head`" kinds of features.
 
 The contracts (`Codemod`, `Hook`) are already in `cli.features.base` so plugin authors can declare them today without breaking the schema later.

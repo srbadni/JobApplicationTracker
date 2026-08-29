@@ -35,7 +35,7 @@ async def list_items(
     ...
 ```
 
-The project pre-defines aliases for every shared dependency in `infrastructure/dependencies.py`:
+The project pre-defines aliases for every shared dependency in `frameworks/dependencies.py`:
 
 | Alias | Resolves to |
 |---|---|
@@ -61,7 +61,7 @@ Both styles produce the same runtime behavior. The alias form reduces repetition
 A typical endpoint lives in `modules/<feature>/routes.py` and delegates work to a service:
 
 ```python
-# backend/src/modules/widgets/routes.py
+# backend/src/interface_adapters/modules/widgets/routes.py
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends
@@ -101,7 +101,7 @@ async def get_widget(
         raise HTTPException(status_code=500, detail="An unexpected error occurred")
 ```
 
-Register the router in `interfaces/api/v1/__init__.py`:
+Register the router in `interface_adapters/api/v1/__init__.py`:
 
 ```python
 from ....modules.widgets.routes import router as widgets_router
@@ -234,7 +234,7 @@ async def delete_widget(
 
 ## Authentication
 
-All session-based auth dependencies live in `infrastructure/auth/dependencies`.
+All session-based auth dependencies live in `frameworks/auth/dependencies`.
 
 ### Require Login
 
@@ -349,7 +349,7 @@ Service methods raise these — they don't know about HTTP.
 
 ### HTTP exceptions (routes)
 
-Re-exported from FastCRUD in `infrastructure/auth/http_exceptions.py`:
+Re-exported from FastCRUD in `frameworks/auth/http_exceptions.py`:
 
 - `HTTPException` (the FastAPI base)
 - `BadRequestException` — 400
@@ -427,8 +427,8 @@ The full flow for adding `widgets`:
 ### 1. Create the Module
 
 ```bash
-mkdir -p backend/src/modules/widgets
-touch backend/src/modules/widgets/__init__.py
+mkdir -p backend/src/interface_adapters/modules/widgets
+touch backend/src/interface_adapters/modules/widgets/__init__.py
 ```
 
 ### 2. Add the Stack
@@ -443,7 +443,7 @@ touch backend/src/modules/widgets/__init__.py
 
 ### 3. Register the Model
 
-In `backend/src/modules/__init__.py`:
+In `backend/src/interface_adapters/modules/__init__.py`:
 
 ```python
 from .widgets.models import Widget
@@ -453,7 +453,7 @@ __all__ = [..., "Widget"]
 
 ### 4. Mount the Router
 
-In `backend/src/interfaces/api/v1/__init__.py`:
+In `backend/src/interface_adapters/api/v1/__init__.py`:
 
 ```python
 from ....modules.widgets.routes import router as widgets_router

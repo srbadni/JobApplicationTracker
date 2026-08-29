@@ -4,27 +4,27 @@ This page covers how SQLAlchemy 2.0 models are organized in the project, the pat
 
 ## Where Models Live
 
-Models live in **`backend/src/modules/<feature>/models.py`** — colocated with that feature's schemas, CRUD, service, and routes:
+Models live in **`backend/src/interface_adapters/modules/<feature>/models.py`** — colocated with that feature's schemas, CRUD, service, and routes:
 
 ```text
-backend/src/modules/
+backend/src/interface_adapters/modules/
 ├── user/models.py          # User
 ├── tier/models.py          # Tier
 ├── rate_limit/models.py    # RateLimit
 └── api_keys/models.py      # APIKey, KeyUsage, KeyPermission
 ```
 
-The shared base class and reusable mixins live in `backend/src/infrastructure/database/`:
+The shared base class and reusable mixins live in `backend/src/frameworks/database/`:
 
 ```text
-backend/src/infrastructure/database/
+backend/src/frameworks/database/
 ├── session.py              # Base, async_session, create_tables
 └── models.py               # TimestampMixin, SoftDeleteMixin, UUIDMixin
 ```
 
 ## The Base Class
 
-All models inherit from `Base` defined in `infrastructure/database/session.py`:
+All models inherit from `Base` defined in `frameworks/database/session.py`:
 
 ```python
 from sqlalchemy.orm import DeclarativeBase, MappedAsDataclass
@@ -39,7 +39,7 @@ Combining `DeclarativeBase` with `MappedAsDataclass` means each model behaves li
 
 ## Reusable Mixins
 
-The project ships three mixins in `infrastructure/database/models.py`. Compose them onto your model:
+The project ships three mixins in `frameworks/database/models.py`. Compose them onto your model:
 
 ```python
 from ...infrastructure.database.models import (
@@ -60,7 +60,7 @@ class MyModel(Base, TimestampMixin, SoftDeleteMixin):
 
 ## Auto-Discovery for Alembic
 
-Each module's models are imported in `backend/src/modules/__init__.py`:
+Each module's models are imported in `backend/src/interface_adapters/modules/__init__.py`:
 
 ```python
 from .api_keys.models import APIKey, KeyPermission, KeyUsage
@@ -236,7 +236,7 @@ await crud_users.get_multi(db=db, is_deleted=False)
 
 ### Step-by-step
 
-1. **Create the module folder** (if it doesn't exist): `mkdir -p backend/src/modules/widgets`
+1. **Create the module folder** (if it doesn't exist): `mkdir -p backend/src/interface_adapters/modules/widgets`
 2. **Define the model** in `modules/widgets/models.py`
 3. **Register it** in `modules/__init__.py` so Alembic sees it
 4. **Generate a migration**: `cd backend && uv run alembic revision --autogenerate -m "add widgets"`
@@ -246,7 +246,7 @@ await crud_users.get_multi(db=db, is_deleted=False)
 ### Example: a `Widget` model
 
 ```python
-# backend/src/modules/widgets/models.py
+# backend/src/interface_adapters/modules/widgets/models.py
 from sqlalchemy import ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -266,7 +266,7 @@ class Widget(Base, TimestampMixin, SoftDeleteMixin):
     owner_id: Mapped[int] = mapped_column(ForeignKey("user.id"), index=True)
 ```
 
-Then add to `backend/src/modules/__init__.py`:
+Then add to `backend/src/interface_adapters/modules/__init__.py`:
 
 ```python
 from .widgets.models import Widget

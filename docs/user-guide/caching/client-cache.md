@@ -5,9 +5,9 @@ Client-side caching uses HTTP `Cache-Control` headers to tell browsers (and inte
 ## What's Built In
 
 ```text
-infrastructure/middleware.py        ClientCacheMiddleware
-infrastructure/app_factory.py       Wires it into the app at startup
-infrastructure/config/settings.py   CLIENT_CACHE_ENABLED, CLIENT_CACHE_MAX_AGE
+frameworks/middleware.py        ClientCacheMiddleware
+frameworks/app_factory.py       Wires it into the app at startup
+frameworks/config/settings.py   CLIENT_CACHE_ENABLED, CLIENT_CACHE_MAX_AGE
 ```
 
 That's the entire surface area. There's no per-route configuration, no path table, no ETag handling out of the box. The middleware is intentionally tiny — anything more nuanced you handle in your route handlers.
@@ -15,7 +15,7 @@ That's the entire surface area. There's no per-route configuration, no path tabl
 ## How It Works
 
 ```python
-# infrastructure/middleware.py
+# frameworks/middleware.py
 class ClientCacheMiddleware(BaseHTTPMiddleware):
     def __init__(self, app: ASGIApp, max_age: int = 60) -> None:
         super().__init__(app)
@@ -52,7 +52,7 @@ CLIENT_CACHE_ENABLED=true
 CLIENT_CACHE_MAX_AGE=60
 ```
 
-The middleware is added to the FastAPI app only when **both** `CACHE_ENABLED` and `CLIENT_CACHE_ENABLED` are true (`infrastructure/app_factory.py`). If you've already disabled the server-side cache, the client-cache middleware also goes away.
+The middleware is added to the FastAPI app only when **both** `CACHE_ENABLED` and `CLIENT_CACHE_ENABLED` are true (`frameworks/app_factory.py`). If you've already disabled the server-side cache, the client-cache middleware also goes away.
 
 When `CLIENT_CACHE_ENABLED=false`, no `Cache-Control` header is set by middleware — your routes (or your reverse proxy) are responsible for it.
 
@@ -181,9 +181,9 @@ Raise `CLIENT_CACHE_MAX_AGE`, or set per-asset headers in the handler / proxy. B
 
 | Component             | Location                                              |
 |-----------------------|-------------------------------------------------------|
-| Middleware            | `backend/src/infrastructure/middleware.py`            |
-| Wiring                | `backend/src/infrastructure/app_factory.py`           |
-| Settings              | `backend/src/infrastructure/config/settings.py` (`CacheSettings`) |
+| Middleware            | `backend/src/frameworks/middleware.py`            |
+| Wiring                | `backend/src/frameworks/app_factory.py`           |
+| Settings              | `backend/src/frameworks/config/settings.py` (`CacheSettings`) |
 
 ## Next Steps
 

@@ -6,7 +6,7 @@ This page covers the trade-offs, hardening options, and what to do if you need s
 
 ## How It Works
 
-The admin login (`interfaces/admin/auth.py`) compares submitted credentials against `ADMIN_USERNAME` and `ADMIN_PASSWORD`:
+The admin login (`interface_adapters/admin/auth.py`) compares submitted credentials against `ADMIN_USERNAME` and `ADMIN_PASSWORD`:
 
 ```python
 class AdminAuth(AuthenticationBackend):
@@ -93,7 +93,7 @@ If you need `/admin` reachable from the internet:
 - Enable secure cookies if you serve over HTTPS — see [Configuration](configuration.md#session-cookies)
 - Rotate the password periodically (requires a deploy)
 
-The production security validator (`infrastructure/security/`) does **not** check admin credentials specifically — it only catches the placeholder `SECRET_KEY`, `DEBUG=true`, and `CORS_ORIGINS=*`. You're responsible for the strength of `ADMIN_PASSWORD`.
+The production security validator (`frameworks/security/`) does **not** check admin credentials specifically — it only catches the placeholder `SECRET_KEY`, `DEBUG=true`, and `CORS_ORIGINS=*`. You're responsible for the strength of `ADMIN_PASSWORD`.
 
 ## Recovering from a Lost Admin Password
 
@@ -113,7 +113,7 @@ The single-credential design works for small teams or solo deployments. If you n
 Skip the SQLAdmin login entirely. Restrict `/admin` access to authenticated app users with `is_superuser=true` by writing a custom `AuthenticationBackend`:
 
 ```python
-# interfaces/admin/auth.py
+# interface_adapters/admin/auth.py
 from sqladmin.authentication import AuthenticationBackend
 from starlette.requests import Request
 
@@ -145,7 +145,7 @@ None of these are wired up in the project — pick the one that fits your enviro
 
 The admin panel doesn't log every action by default. If you need an audit trail:
 
-- The project's logging infrastructure (`infrastructure/logging/`) gives you correlation IDs out of the box. SQLAdmin requests pass through it like any other.
+- The project's logging infrastructure (`frameworks/logging/`) gives you correlation IDs out of the box. SQLAdmin requests pass through it like any other.
 - Override `on_model_change` / `after_model_change` / `delete_model` in your views to log explicitly:
 
 ```python
@@ -166,9 +166,9 @@ For richer auditing, write to a dedicated log stream or push events to a SIEM.
 
 | Component | Location |
 |-----------|----------|
-| Admin auth backend | `backend/src/interfaces/admin/auth.py` |
-| Admin app factory | `backend/src/interfaces/admin/initialize.py` |
-| Settings classes | `backend/src/infrastructure/config/settings.py` (`AdminSettings`, `SQLAdminSettings`) |
+| Admin auth backend | `backend/src/interface_adapters/admin/auth.py` |
+| Admin app factory | `backend/src/interface_adapters/admin/initialize.py` |
+| Settings classes | `backend/src/frameworks/config/settings.py` (`AdminSettings`, `SQLAdminSettings`) |
 | Initial data script | `backend/scripts/setup_initial_data.py` |
 
 ## Next Steps

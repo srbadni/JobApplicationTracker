@@ -104,7 +104,7 @@ async def update_user_profile(
         # ...proceed with update...
 ```
 
-The exception flows up to the global handler (registered in `infrastructure/app_factory.py`) which translates it via the `EXCEPTION_MAPPING` table — `PermissionDeniedError` → `ForbiddenException` (403). See [Exceptions](../api/exceptions.md) for the full mapping pipeline.
+The exception flows up to the global handler (registered in `frameworks/app_factory.py`) which translates it via the `EXCEPTION_MAPPING` table — `PermissionDeniedError` → `ForbiddenException` (403). See [Exceptions](../api/exceptions.md) for the full mapping pipeline.
 
 ### Generic Ownership Pattern
 
@@ -168,7 +168,7 @@ This works for "binary" features. For more complex models (per-feature quotas, m
 
 ### Tier-Based Rate Limits
 
-Rate limiting *is* built-in: each `RateLimit` row binds a tier to a path with a `limit` and `period`. The middleware in `infrastructure/rate_limit/middleware.py` enforces these per request. See [Rate Limiting](../rate-limiting/index.md).
+Rate limiting *is* built-in: each `RateLimit` row binds a tier to a path with a `limit` and `period`. The middleware in `frameworks/rate_limit/middleware.py` enforces these per request. See [Rate Limiting](../rate-limiting/index.md).
 
 To configure rate limits for a tier:
 

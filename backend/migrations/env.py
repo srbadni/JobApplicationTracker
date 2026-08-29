@@ -9,8 +9,8 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-from src.infrastructure.config.settings import settings
-from src.infrastructure.database.session import Base
+from src.frameworks.config.settings import settings
+from src.frameworks.database.session import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -67,7 +67,7 @@ def import_models(package_name):
 
 
 # Import all models to ensure they're registered with SQLAlchemy
-import_models("src.modules")
+import_models("src.interface_adapters.modules")
 target_metadata = Base.metadata
 
 

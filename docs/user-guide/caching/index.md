@@ -61,11 +61,11 @@ When the cache hits, the handler doesn't run at all — the cached value is retu
 
 | Component | Purpose | Location |
 |-----------|---------|----------|
-| `@cache` decorator | Endpoint-level caching with auto-invalidation | `infrastructure/cache/decorator.py` |
-| Provider API | Direct cache ops (`get`, `set`, `delete`, …) | `infrastructure/cache/provider.py` |
-| Redis backend | Pattern matching, persistence, rich types | `infrastructure/cache/backends/redis.py` |
-| Memcached backend | Lightweight, key/value only | `infrastructure/cache/backends/memcached.py` |
-| `ClientCacheMiddleware` | Adds `Cache-Control` headers | `infrastructure/middleware.py` |
+| `@cache` decorator | Endpoint-level caching with auto-invalidation | `frameworks/cache/decorator.py` |
+| Provider API | Direct cache ops (`get`, `set`, `delete`, …) | `frameworks/cache/provider.py` |
+| Redis backend | Pattern matching, persistence, rich types | `frameworks/cache/backends/redis.py` |
+| Memcached backend | Lightweight, key/value only | `frameworks/cache/backends/memcached.py` |
+| `ClientCacheMiddleware` | Adds `Cache-Control` headers | `frameworks/middleware.py` |
 
 ## Configuration
 
@@ -126,11 +126,11 @@ If the cache backend becomes unavailable, the decorator catches the error and fa
 
 | Component | Location |
 |-----------|----------|
-| Decorator | `backend/src/infrastructure/cache/decorator.py` |
-| Provider API | `backend/src/infrastructure/cache/provider.py` |
-| Backends | `backend/src/infrastructure/cache/backends/` |
-| Settings | `backend/src/infrastructure/config/settings.py` (`CacheSettings`) |
-| Client-cache middleware | `backend/src/infrastructure/middleware.py` |
+| Decorator | `backend/src/frameworks/cache/decorator.py` |
+| Provider API | `backend/src/frameworks/cache/provider.py` |
+| Backends | `backend/src/frameworks/cache/backends/` |
+| Settings | `backend/src/frameworks/config/settings.py` (`CacheSettings`) |
+| Client-cache middleware | `backend/src/frameworks/middleware.py` |
 
 ## Next Steps
 
