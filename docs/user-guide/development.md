@@ -15,7 +15,7 @@ This page is the meta-guide that ties them together.
 
 ```bash
 cd backend
-uv run fastapi dev src/interfaces/main.py
+uv run fastapi dev src/interface_adapters/main.py
 ```
 
 `--reload` watches the filesystem and restarts on Python file changes. Use it for development; **never** in production.
@@ -82,10 +82,10 @@ pre-commit run --all-files
 
 ## Adding a New Module
 
-The project organizes domain code under `backend/src/modules/<name>/` with a vertical-slice layout. To add a `widgets` module:
+The project organizes domain code under `backend/src/interface_adapters/modules/<name>/` with a vertical-slice layout. To add a `widgets` module:
 
 ```text
-backend/src/modules/widgets/
+backend/src/interface_adapters/modules/widgets/
 ├── __init__.py
 ├── models.py        # SQLAlchemy model (Base + dataclass)
 ├── schemas.py       # Pydantic request/response models
@@ -106,7 +106,7 @@ The full pattern (with concrete code) is in [Database → Models](database/model
    ```
 4. **Implement the service** in `service.py` with class methods that call `crud_widgets`, raise `DomainError` subclasses on bad state.
 5. **Define routes** in `routes.py`. Wrap the service, catch domain exceptions via `handle_exception`, return dicts (FastAPI serializes through `response_model=WidgetRead`).
-6. **Register the router** in `interfaces/main.py` (or wherever your top-level routers are aggregated):
+6. **Register the router** in `interface_adapters/main.py` (or wherever your top-level routers are aggregated):
    ```python
    from src.modules.widgets.routes import router as widgets_router
    api_v1.include_router(widgets_router, prefix="/widgets")
@@ -124,7 +124,7 @@ The Alembic env (`backend/migrations/env.py`) auto-discovers models via `import_
 
 ## Adding Custom Middleware
 
-Middleware lives at `backend/src/infrastructure/middleware.py` (or a peer file you create). The pattern:
+Middleware lives at `backend/src/frameworks/middleware.py` (or a peer file you create). The pattern:
 
 ```python
 import time
@@ -143,7 +143,7 @@ class TimingMiddleware(BaseHTTPMiddleware):
         return response
 ```
 
-Register in `infrastructure/app_factory.py` (or your overridden `create_application`):
+Register in `frameworks/app_factory.py` (or your overridden `create_application`):
 
 ```python
 application.add_middleware(TimingMiddleware)
@@ -153,7 +153,7 @@ Order matters — middleware added later runs **earlier** in the request path. T
 
 ## Adding a Custom Dependency
 
-Dependencies belong with the feature they serve. For session-aware dependencies, look at `infrastructure/auth/dependencies.py:get_current_user` for a template.
+Dependencies belong with the feature they serve. For session-aware dependencies, look at `frameworks/auth/dependencies.py:get_current_user` for a template.
 
 ### Define the factory
 
@@ -245,7 +245,7 @@ See [Authentication → Sessions](authentication/sessions.md) for full details.
 
 ### Production validators
 
-When `ENVIRONMENT=production`, `infrastructure/security/` runs validators at startup that fail loudly on:
+When `ENVIRONMENT=production`, `frameworks/security/` runs validators at startup that fail loudly on:
 
 - Placeholder `SECRET_KEY`
 - `DEBUG=true`
@@ -255,7 +255,7 @@ If your prod boot is failing with one of those, that's your hint — don't bypas
 
 ## Customizing the Settings
 
-Settings live in `backend/src/infrastructure/config/settings.py`. To add a new env-driven value:
+Settings live in `backend/src/frameworks/config/settings.py`. To add a new env-driven value:
 
 1. Add the field to the relevant settings class (or create a new one):
    ```python
@@ -310,11 +310,11 @@ The `@cache` decorator inspects `request.method` to decide read vs invalidate. T
 
 | Component                    | Location                                                    |
 |------------------------------|-------------------------------------------------------------|
-| App factory / middleware order | `backend/src/infrastructure/app_factory.py`              |
-| Settings                     | `backend/src/infrastructure/config/settings.py`             |
-| Lifespan / startup           | `backend/src/infrastructure/app_factory.py:lifespan_factory`|
-| Database session             | `backend/src/infrastructure/database/session.py`            |
-| Module template (reference)  | `backend/src/modules/user/`                                 |
+| App factory / middleware order | `backend/src/frameworks/app_factory.py`              |
+| Settings                     | `backend/src/frameworks/config/settings.py`             |
+| Lifespan / startup           | `backend/src/frameworks/app_factory.py:lifespan_factory`|
+| Database session             | `backend/src/frameworks/database/session.py`            |
+| Module template (reference)  | `backend/src/interface_adapters/modules/user/`                                 |
 | Pre-commit                   | `.pre-commit-config.yaml`                                   |
 | pyproject (lint / type / test) | `backend/pyproject.toml`                                  |
 

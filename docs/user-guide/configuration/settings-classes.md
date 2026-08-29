@@ -1,11 +1,11 @@
 # Settings Classes
 
-Settings live in `backend/src/infrastructure/config/settings.py` and are organized as Pydantic `BaseSettings` classes — each class groups related variables, and a single `Settings` class composes them all. Defaults come from `backend/.env` via Starlette's `Config()` loader.
+Settings live in `backend/src/frameworks/config/settings.py` and are organized as Pydantic `BaseSettings` classes — each class groups related variables, and a single `Settings` class composes them all. Defaults come from `backend/.env` via Starlette's `Config()` loader.
 
 ## Settings Architecture
 
 ```python
-# src/infrastructure/config/settings.py
+# src/frameworks/config/settings.py
 from pydantic_settings import BaseSettings
 from starlette.config import Config
 
@@ -52,7 +52,7 @@ print(settings.APP_NAME)
 
 ## Built-in Settings Groups
 
-The actual classes that ship with the project, all in `src/infrastructure/config/settings.py`:
+The actual classes that ship with the project, all in `src/frameworks/config/settings.py`:
 
 | Class | Covers |
 |-------|--------|
@@ -116,7 +116,7 @@ Key points:
 ### Basic Custom Group
 
 ```python
-# backend/src/infrastructure/config/settings.py
+# backend/src/frameworks/config/settings.py
 
 class StorageSettings(BaseSettings):
     """File-storage settings."""
@@ -197,7 +197,7 @@ Validators run when `Settings()` is instantiated at startup, so misconfiguration
 
 ## Enums for Constrained Values
 
-For options with a fixed set of valid values, define a `StrEnum` in `src/infrastructure/config/enums.py` and use it as the default:
+For options with a fixed set of valid values, define a `StrEnum` in `src/frameworks/config/enums.py` and use it as the default:
 
 ```python
 # enums.py
@@ -243,7 +243,7 @@ You'll also want to:
 
 - Remove the now-orphan code that depends on those settings (e.g. cache decorator, taskiq broker, rate limiter middleware)
 - Drop the corresponding env vars from `.env.example`
-- Disable startup of those subsystems in `infrastructure/app_factory.py`
+- Disable startup of those subsystems in `frameworks/app_factory.py`
 
 ## Best Practices
 

@@ -43,7 +43,7 @@ Pick whichever workflow fits you:
     ### 4. Run the Server
 
     ```bash
-    uv run fastapi dev src/interfaces/main.py
+    uv run fastapi dev src/interface_adapters/main.py
     ```
 
 === "Docker Compose"

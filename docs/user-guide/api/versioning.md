@@ -5,13 +5,13 @@ The project ships a `v1` namespace under `/api/v1/`. This page documents the act
 ## How It's Wired Today
 
 ```text
-backend/src/interfaces/api/
+backend/src/interface_adapters/api/
 ├── __init__.py            # mounts /api → v1
 └── v1/
     └── __init__.py        # mounts /v1 + each module's router
 ```
 
-`interfaces/api/__init__.py`:
+`interface_adapters/api/__init__.py`:
 
 ```python
 from fastapi import APIRouter
@@ -22,7 +22,7 @@ router = APIRouter(prefix="/api")
 router.include_router(v1_router)
 ```
 
-`interfaces/api/v1/__init__.py`:
+`interface_adapters/api/v1/__init__.py`:
 
 ```python
 from fastapi import APIRouter
@@ -43,7 +43,7 @@ router.include_router(api_keys_router, prefix="/api-keys")
 
 The aggregator is the **only** place that knows about every module's router. Each module exposes a single `router` from its `routes.py`, and v1 mounts them all under their respective prefixes.
 
-`interfaces/main.py` then mounts the API tree:
+`interface_adapters/main.py` then mounts the API tree:
 
 ```python
 from ..interfaces.api import router
@@ -60,7 +60,7 @@ So `users_router → /users → /v1/users → /api/v1/users → /api/v1/users/me
 | `/api/v1/users/*` | `modules/user/routes.py` |
 | `/api/v1/tiers/*` | `modules/tier/routes.py` |
 | `/api/v1/rate-limits/*` | `modules/rate_limit/routes.py` |
-| `/api/v1/auth/*` | `infrastructure/auth/routes.py` |
+| `/api/v1/auth/*` | `frameworks/auth/routes.py` |
 | `/api/v1/api-keys/*` | `modules/api_keys/routes.py` |
 
 ## Adding `v2`
@@ -70,12 +70,12 @@ When you need to make breaking changes — new response shapes, removed fields, 
 ### Step 1: Create the v2 Aggregator
 
 ```bash
-mkdir backend/src/interfaces/api/v2
-touch backend/src/interfaces/api/v2/__init__.py
+mkdir backend/src/interface_adapters/api/v2
+touch backend/src/interface_adapters/api/v2/__init__.py
 ```
 
 ```python
-# backend/src/interfaces/api/v2/__init__.py
+# backend/src/interface_adapters/api/v2/__init__.py
 from fastapi import APIRouter
 
 # Import the v2-flavored route modules — see Step 2 below
@@ -96,7 +96,7 @@ Two patterns work, pick the one that fits the change:
 **Pattern A: a separate `routes_v2.py`** — when v2's routes are different enough that mixing them in `routes.py` would be confusing.
 
 ```python
-# backend/src/modules/user/routes_v2.py
+# backend/src/interface_adapters/modules/user/routes_v2.py
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends
@@ -131,7 +131,7 @@ async def list_users(
 **Pattern B: alias the existing router** — when v2's behavior is identical and only the URL prefix needs to differ:
 
 ```python
-# backend/src/interfaces/api/v2/__init__.py
+# backend/src/interface_adapters/api/v2/__init__.py
 from ....modules.tier.routes import router as tiers_router
 
 router.include_router(tiers_router, prefix="/tiers")
@@ -140,7 +140,7 @@ router.include_router(tiers_router, prefix="/tiers")
 ### Step 3: Mount v2 Alongside v1
 
 ```python
-# backend/src/interfaces/api/__init__.py
+# backend/src/interface_adapters/api/__init__.py
 from fastapi import APIRouter
 
 from .v1 import router as v1_router
@@ -158,7 +158,7 @@ Both `/api/v1/users/` and `/api/v2/users/` are now live.
 Keep v1 schemas exactly as they are; add v2 schemas in a new file. Never edit a v1 schema in a way that changes the wire format — that's the whole point of having a v2.
 
 ```python
-# backend/src/modules/user/schemas.py — UNCHANGED
+# backend/src/interface_adapters/modules/user/schemas.py — UNCHANGED
 class UserRead(BaseModel):
     id: int
     name: str
@@ -171,7 +171,7 @@ class UserRead(BaseModel):
     oauth_provider: str | None = None
 
 
-# backend/src/modules/user/schemas_v2.py — NEW
+# backend/src/interface_adapters/modules/user/schemas_v2.py — NEW
 class UserReadV2(BaseModel):
     id: int
     name: str
@@ -232,17 +232,17 @@ If you have logging middleware or observability, slice request counts by `reques
 
 When the sunset date passes and traffic is gone:
 
-1. Delete `interfaces/api/v1/`
+1. Delete `interface_adapters/api/v1/`
 2. Delete the v1-only `schemas.py` blocks (or rename `schemas_v2.py` → `schemas.py`)
 3. Delete v1-only service methods
-4. Update `interfaces/api/__init__.py` to mount only v2
+4. Update `interface_adapters/api/__init__.py` to mount only v2
 
 ## Per-Version OpenAPI Documentation
 
 By default, `/docs` shows every route. To split docs per version, mount each version as a sub-app with its own `FastAPI()` instance:
 
 ```python
-# backend/src/interfaces/main.py — sketch
+# backend/src/interface_adapters/main.py — sketch
 from fastapi import FastAPI
 
 from .api.v1 import router as v1_router

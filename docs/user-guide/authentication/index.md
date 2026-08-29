@@ -1,6 +1,6 @@
 # Authentication & Security
 
-The project uses **server-side sessions with HTTP-only cookies** — not JWT. Auth is provided by the [`crudauth`](https://pypi.org/project/crudauth/) library: sessions are stored in Redis (or memory, configurable), CSRF-protected, and lockout-throttled at the login endpoint. The composition root is the `auth = CRUDAuth(...)` singleton in `infrastructure/auth/setup.py` (see [Sessions → Auth Architecture](sessions.md#auth-architecture)).
+The project uses **server-side sessions with HTTP-only cookies** — not JWT. Auth is provided by the [`crudauth`](https://pypi.org/project/crudauth/) library: sessions are stored in Redis (or memory, configurable), CSRF-protected, and lockout-throttled at the login endpoint. The composition root is the `auth = CRUDAuth(...)` singleton in `frameworks/auth/setup.py` (see [Sessions → Auth Architecture](sessions.md#auth-architecture)).
 
 For machine-to-machine clients, the project ships **API keys** with per-key permissions and usage tracking.
 
@@ -26,10 +26,10 @@ If you specifically need stateless tokens (e.g. for inter-service auth where you
 
 Cookies and CSRF are awkward for mobile apps, native clients, and CLIs. crudauth handles this with a **bearer (JWT) transport** that runs *alongside* sessions — the project just doesn't enable it by default. Both transports resolve to the same `Principal`, so your route protection (`CurrentUserDep`, `get_current_user`, etc.) doesn't change; only how the client authenticates does.
 
-To turn it on, add a `BearerTransport` to the `transports` list in `infrastructure/auth/setup.py` and mount crudauth's bearer router (which adds `POST /token` to log in and `POST /refresh` to mint a new access token):
+To turn it on, add a `BearerTransport` to the `transports` list in `frameworks/auth/setup.py` and mount crudauth's bearer router (which adds `POST /token` to log in and `POST /refresh` to mint a new access token):
 
 ```python
-# infrastructure/auth/setup.py
+# frameworks/auth/setup.py
 from crudauth import BearerTransport, CookieConfig, CRUDAuth, SessionTransport
 
 auth = CRUDAuth(
@@ -46,7 +46,7 @@ auth = CRUDAuth(
 ```
 
 ```python
-# wherever the auth router is included (e.g. interfaces/api/v1)
+# wherever the auth router is included (e.g. interface_adapters/api/v1)
 app.include_router(auth.bearer_router, prefix="/api/v1/auth")
 ```
 
@@ -91,7 +91,7 @@ curl http://localhost:8000/api/v1/auth/oauth/google
 # The server creates a session and either redirects or returns JSON.
 ```
 
-Only Google is wired (in the `oauth_providers` dict in `infrastructure/auth/oauth.py`), and the `User` model keeps `github_id` and `oauth_provider` columns. crudauth's `OAuthProviderFactory` already ships both `google` and `github` providers, so enabling **GitHub** is just adding a `"github"` entry to the `oauth_providers` dict and its two routes in `infrastructure/auth/routes.py` — no provider implementation needed. For a provider crudauth doesn't ship, register it with `OAuthProviderFactory` first, then wire the dict entry and routes the same way.
+Only Google is wired (in the `oauth_providers` dict in `frameworks/auth/oauth.py`), and the `User` model keeps `github_id` and `oauth_provider` columns. crudauth's `OAuthProviderFactory` already ships both `google` and `github` providers, so enabling **GitHub** is just adding a `"github"` entry to the `oauth_providers` dict and its two routes in `frameworks/auth/routes.py` — no provider implementation needed. For a provider crudauth doesn't ship, register it with `OAuthProviderFactory` first, then wire the dict entry and routes the same way.
 
 ### 3. API Keys (Machine-to-Machine)
 
@@ -139,7 +139,7 @@ The full key is returned only on creation. Each key has its own permissions, usa
 
 ## Authentication Patterns
 
-All auth deps live in `src/infrastructure/auth/dependencies.py` (they wrap the `crudauth` `auth` singleton).
+All auth deps live in `src/frameworks/auth/dependencies.py` (they wrap the `crudauth` `auth` singleton).
 
 ### Required Authentication
 

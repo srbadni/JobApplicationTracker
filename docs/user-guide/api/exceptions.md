@@ -3,13 +3,13 @@
 The project has a deliberate two-layer exception model:
 
 1. **Domain exceptions** raised by services (`modules/common/exceptions.py`)
-2. **HTTP exceptions** raised by routes (`infrastructure/auth/http_exceptions.py`)
+2. **HTTP exceptions** raised by routes (`frameworks/auth/http_exceptions.py`)
 
 Plus an automatic mapping layer that translates one to the other so routes don't have to know about specific HTTP status codes for every domain failure.
 
 ## Domain Exceptions
 
-Defined in `backend/src/modules/common/exceptions.py`. Services raise these — they describe *what went wrong*, not how to translate it to HTTP.
+Defined in `backend/src/interface_adapters/modules/common/exceptions.py`. Services raise these — they describe *what went wrong*, not how to translate it to HTTP.
 
 | Exception | Used when |
 |-----------|-----------|
@@ -41,7 +41,7 @@ The service doesn't know or care that this becomes a `409 Conflict` over HTTP �
 
 ## HTTP Exceptions
 
-Re-exported from FastCRUD in `backend/src/infrastructure/auth/http_exceptions.py`:
+Re-exported from FastCRUD in `backend/src/frameworks/auth/http_exceptions.py`:
 
 | Exception | Status |
 |-----------|--------|
@@ -74,7 +74,7 @@ async def get_tier_by_name(...):
 
 ### Global Handler (Automatic)
 
-`register_exception_handlers(app)` is called in `infrastructure/app_factory.py` at startup. It installs:
+`register_exception_handlers(app)` is called in `frameworks/app_factory.py` at startup. It installs:
 
 - A `RequestValidationError` handler (Pydantic 422s) → returns a generic `Invalid request` message + a `support_id`
 - A catch-all `DomainError` handler → maps to the right HTTP status via `EXCEPTION_MAPPING`, returns a **generic** message + `support_id`. The full details are logged server-side.
@@ -251,7 +251,7 @@ The global handler (and `handle_exception()`) picks up the new mapping automatic
 
 ## Adding a Custom HTTP Exception
 
-If you need an HTTP exception not already exported, define it in `infrastructure/auth/http_exceptions.py` like the existing `CSRFException`:
+If you need an HTTP exception not already exported, define it in `frameworks/auth/http_exceptions.py` like the existing `CSRFException`:
 
 ```python
 class PaymentRequiredException(HTTPException):
@@ -267,7 +267,7 @@ Then re-export it via `__all__` and import it where needed.
 
 ### Generic Messages for Auth
 
-The login flow in `infrastructure/auth/routes.py` delegates credential checking to the `crudauth` `auth` singleton. Its `authenticate_password` does a timing-equalized check and raises `UnauthorizedException("Incorrect username or password")` on bad credentials (and a `429` once the escalating lockout trips):
+The login flow in `frameworks/auth/routes.py` delegates credential checking to the `crudauth` `auth` singleton. Its `authenticate_password` does a timing-equalized check and raises `UnauthorizedException("Incorrect username or password")` on bad credentials (and a `429` once the escalating lockout trips):
 
 ```python
 # crudauth's hardened check: timing-equalized, disabled-account guard, escalating lockout

@@ -141,7 +141,7 @@ Test your downgrade in dev — it's the cheapest way to spot a missing `op.drop_
 1. **Create the module folder** with the model:
 
     ```python
-    # backend/src/modules/widgets/models.py
+    # backend/src/interface_adapters/modules/widgets/models.py
     from sqlalchemy import String
     from sqlalchemy.orm import Mapped, mapped_column
 

@@ -2,7 +2,7 @@
 
 This page is the complete reference for every environment variable the project reads. The source of truth is `backend/.env.example` — this page mirrors it with descriptions.
 
-All variables are loaded from `backend/.env` at application startup via Pydantic `BaseSettings` classes in `src/infrastructure/config/settings.py`.
+All variables are loaded from `backend/.env` at application startup via Pydantic `BaseSettings` classes in `src/frameworks/config/settings.py`.
 
 ## Environment
 

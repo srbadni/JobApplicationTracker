@@ -5,7 +5,7 @@ The project runs background work with [Taskiq](https://taskiq-python.github.io/)
 !!! tip "Building a full SaaS?"
     Background tasks are part of the free foundation. **[job-tracker](https://job-tracker.ai)** bundles them with Stripe payments, entitlements, transactional email, a frontend, and AI agents - all wired together and production-ready. [Ship your SaaS faster →](https://job-tracker.ai)
 
-This page covers the actual setup that ships in `backend/src/infrastructure/taskiq/`, how to write and enqueue tasks, and how to run a worker.
+This page covers the actual setup that ships in `backend/src/frameworks/taskiq/`, how to write and enqueue tasks, and how to run a worker.
 
 ## When to Use a Background Task
 
@@ -21,7 +21,7 @@ Don't reach for a task when the operation needs to surface a result to the user 
 ## What Ships Out of the Box
 
 ```text
-backend/src/infrastructure/taskiq/
+backend/src/frameworks/taskiq/
 ├── __init__.py        Exports default_broker, DBSession, register_task, task_registry
 ├── brokers.py         Builds the Redis or RabbitMQ broker from settings
 ├── app.py             Wires WORKER_STARTUP / WORKER_SHUTDOWN logging hooks
@@ -34,7 +34,7 @@ Importantly: **no example task ships in the project.** The infrastructure is wir
 
 ## Configuration
 
-The relevant settings live in `TaskiqSettings` (`infrastructure/config/settings.py`) and read from `backend/.env`:
+The relevant settings live in `TaskiqSettings` (`frameworks/config/settings.py`) and read from `backend/.env`:
 
 ```env
 # Toggle and broker selection
@@ -74,7 +74,7 @@ The project already ships it as a dependency, but the `aio_pika` import is gated
 Tasks live alongside the module they belong to, e.g. `modules/widgets/tasks.py`. The shape:
 
 ```python
-# backend/src/modules/widgets/tasks.py
+# backend/src/interface_adapters/modules/widgets/tasks.py
 import logging
 from typing import Any
 
@@ -106,7 +106,7 @@ A few things worth knowing:
 The Taskiq worker only knows about tasks whose modules have been imported. The cleanest pattern is to import every task module from a single entry point — usually wherever your `default_broker` lives or a dedicated `tasks/__init__.py`.
 
 ```python
-# backend/src/infrastructure/taskiq/__init__.py (or similar)
+# backend/src/frameworks/taskiq/__init__.py (or similar)
 from src.modules.widgets import tasks as _widget_tasks  # noqa: F401
 from src.modules.users import tasks as _user_tasks      # noqa: F401
 ```
@@ -186,7 +186,7 @@ Helpful in development. Don't run with `--reload` in production.
 
 ## Worker Lifecycle Hooks
 
-The project already wires Taskiq's `WORKER_STARTUP` and `WORKER_SHUTDOWN` events for logging in `infrastructure/taskiq/app.py`:
+The project already wires Taskiq's `WORKER_STARTUP` and `WORKER_SHUTDOWN` events for logging in `frameworks/taskiq/app.py`:
 
 ```python
 broker.add_event_handler(TaskiqEvents.WORKER_STARTUP, startup_taskiq_worker)
@@ -237,7 +237,7 @@ For finer control (exponential backoff, dead-letter queues), check the [Taskiq m
 
 Taskiq doesn't ship a Flower-style dashboard, but you have a few options:
 
-- **`task_registry`** (in `infrastructure/taskiq/registry.py`) is an in-process record of registered tasks for sanity-checking. Call `task_registry.get_tasks()` to list everything the worker knows about.
+- **`task_registry`** (in `frameworks/taskiq/registry.py`) is an in-process record of registered tasks for sanity-checking. Call `task_registry.get_tasks()` to list everything the worker knows about.
 - **Logs** — every task logs through your standard logger; flow them into your existing log aggregation.
 - **Result backend** — Redis stores task results for the configured TTL; you can read them back or scan with `redis-cli`.
 - **External tools** — Taskiq has community projects for Prometheus metrics and admin UIs; see the [Taskiq docs](https://taskiq-python.github.io/) for what's current.
@@ -329,12 +329,12 @@ async def rebuild_widget_index(owner_id: int, db: DBSession) -> dict[str, Any]:
 
 | Component             | Location                                                  |
 |-----------------------|-----------------------------------------------------------|
-| Broker factory        | `backend/src/infrastructure/taskiq/brokers.py`            |
-| Worker entry point    | `backend/src/infrastructure/taskiq/worker.py`             |
-| Lifecycle hooks       | `backend/src/infrastructure/taskiq/app.py`                |
-| DB dependency         | `backend/src/infrastructure/taskiq/deps.py`               |
-| Task registry         | `backend/src/infrastructure/taskiq/registry.py`           |
-| Settings              | `backend/src/infrastructure/config/settings.py` (`TaskiqSettings`) |
+| Broker factory        | `backend/src/frameworks/taskiq/brokers.py`            |
+| Worker entry point    | `backend/src/frameworks/taskiq/worker.py`             |
+| Lifecycle hooks       | `backend/src/frameworks/taskiq/app.py`                |
+| DB dependency         | `backend/src/frameworks/taskiq/deps.py`               |
+| Task registry         | `backend/src/frameworks/taskiq/registry.py`           |
+| Settings              | `backend/src/frameworks/config/settings.py` (`TaskiqSettings`) |
 
 ## Next Steps
 

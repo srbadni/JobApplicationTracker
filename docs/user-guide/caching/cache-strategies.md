@@ -217,9 +217,9 @@ Cache warming proactively populates the cache so the first user request after a 
 
 ### At Application Startup (in the lifespan)
 
-The project's `lifespan_factory` (in `infrastructure/app_factory.py`) is where the cache is initialized. Warming sits naturally just after that point — but only for genuinely **small** datasets (reference tables, tier definitions, top-N aggregates). Don't pull a million rows into Redis on every boot.
+The project's `lifespan_factory` (in `frameworks/app_factory.py`) is where the cache is initialized. Warming sits naturally just after that point — but only for genuinely **small** datasets (reference tables, tier definitions, top-N aggregates). Don't pull a million rows into Redis on every boot.
 
-The pattern, in your own `interfaces/main.py` setup:
+The pattern, in your own `interface_adapters/main.py` setup:
 
 ```python
 from contextlib import asynccontextmanager
@@ -254,7 +254,7 @@ Wire it by passing `lifespan=lifespan` to `create_application()`.
 For larger or periodic warming, use a Taskiq task on a schedule. See [Background Tasks](../background-tasks/index.md) for the worker setup; the warming logic is the same — fetch data, call `set()`.
 
 ```python
-# backend/src/modules/cache/tasks.py
+# backend/src/interface_adapters/modules/cache/tasks.py
 from ...infrastructure.cache import set
 from ...infrastructure.taskiq import default_broker
 
@@ -373,10 +373,10 @@ If your handler returns different bodies depending on auth state, headers, or qu
 
 | Component             | Location                                              |
 |-----------------------|-------------------------------------------------------|
-| Decorator             | `backend/src/infrastructure/cache/decorator.py`       |
-| Provider API          | `backend/src/infrastructure/cache/provider.py`        |
-| Backends              | `backend/src/infrastructure/cache/backends/`          |
-| Lifespan integration  | `backend/src/infrastructure/app_factory.py`           |
+| Decorator             | `backend/src/frameworks/cache/decorator.py`       |
+| Provider API          | `backend/src/frameworks/cache/provider.py`        |
+| Backends              | `backend/src/frameworks/cache/backends/`          |
+| Lifespan integration  | `backend/src/frameworks/app_factory.py`           |
 
 ## Next Steps
 

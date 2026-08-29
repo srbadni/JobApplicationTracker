@@ -8,7 +8,7 @@ The project ships a flexible rate limiter that supports per-tier, per-path limit
 ## What's Built In
 
 ```text
-backend/src/infrastructure/rate_limit/
+backend/src/frameworks/rate_limit/
 ├── base.py            RateLimiterBackend abstract base
 ├── backends/          Redis and Memcached implementations
 ├── exceptions.py      RateLimitException, RateLimiterBackendException
@@ -17,7 +17,7 @@ backend/src/infrastructure/rate_limit/
 ├── provider.py        increment_and_check, get_count, reset
 └── utils.py           sanitize_path
 
-backend/src/modules/rate_limit/
+backend/src/interface_adapters/modules/rate_limit/
 ├── models.py          RateLimit (tier_id, path, limit, period)
 ├── routes.py          GET / GET-by-name / PATCH / DELETE on /api/v1/rate-limits/
 ├── crud.py / service.py
@@ -128,7 +128,7 @@ else:
 
 A minimal middleware to bridge the two:
 
-Session validation now lives in the `crudauth` library — the `auth` singleton in `infrastructure/auth/setup.py` resolves the cookie (and enforces CSRF/lockout) and yields a `Principal`. The simplest way to bring the user into the rate limiter is at the route layer: depend on `get_optional_user` (from `infrastructure/auth/dependencies.py`) and stash the result on `request.state.user` before the limiter reads it.
+Session validation now lives in the `crudauth` library — the `auth` singleton in `frameworks/auth/setup.py` resolves the cookie (and enforces CSRF/lockout) and yields a `Principal`. The simplest way to bring the user into the rate limiter is at the route layer: depend on `get_optional_user` (from `frameworks/auth/dependencies.py`) and stash the result on `request.state.user` before the limiter reads it.
 
 ```python
 # a router-level dependency you can attach where tier limits matter
@@ -328,13 +328,13 @@ The Redis connection failed and `RATE_LIMITER_FAIL_OPEN=false`. Either fix Redis
 
 | Component             | Location                                                  |
 |-----------------------|-----------------------------------------------------------|
-| Middleware + dependency | `backend/src/infrastructure/rate_limit/middleware.py`   |
-| Provider API          | `backend/src/infrastructure/rate_limit/provider.py`       |
-| Backend implementations | `backend/src/infrastructure/rate_limit/backends/`       |
-| Path sanitization     | `backend/src/infrastructure/rate_limit/utils.py`          |
-| RateLimit model       | `backend/src/modules/rate_limit/models.py`                |
-| Rate-limit routes     | `backend/src/modules/rate_limit/routes.py`                |
-| Settings              | `backend/src/infrastructure/config/settings.py` (`RateLimiterSettings`) |
+| Middleware + dependency | `backend/src/frameworks/rate_limit/middleware.py`   |
+| Provider API          | `backend/src/frameworks/rate_limit/provider.py`       |
+| Backend implementations | `backend/src/frameworks/rate_limit/backends/`       |
+| Path sanitization     | `backend/src/frameworks/rate_limit/utils.py`          |
+| RateLimit model       | `backend/src/interface_adapters/modules/rate_limit/models.py`                |
+| Rate-limit routes     | `backend/src/interface_adapters/modules/rate_limit/routes.py`                |
+| Settings              | `backend/src/frameworks/config/settings.py` (`RateLimiterSettings`) |
 
 ## Next Steps
 

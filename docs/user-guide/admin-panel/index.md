@@ -31,7 +31,7 @@ Visit <http://localhost:8000/admin>, enter those credentials, and you're in.
 
 ## What's Included
 
-The project registers two model views out of the box (in `src/interfaces/admin/views/`):
+The project registers two model views out of the box (in `src/interface_adapters/admin/views/`):
 
 | View | Source | Notes |
 |------|--------|-------|
@@ -68,10 +68,10 @@ This is intentionally simpler than the main app's session system — the admin p
 
 ## How It's Wired
 
-The admin app is created in `src/interfaces/admin/initialize.py` and mounted in `src/interfaces/main.py` at startup:
+The admin app is created in `src/interface_adapters/admin/initialize.py` and mounted in `src/interface_adapters/main.py` at startup:
 
 ```python
-# interfaces/admin/initialize.py
+# interface_adapters/admin/initialize.py
 from sqladmin import Admin
 
 from ...infrastructure.config.settings import get_settings
@@ -111,12 +111,12 @@ Or keep it enabled but restrict network access at the load balancer / proxy leve
 
 | Component | Location |
 |-----------|----------|
-| Admin app factory | `backend/src/interfaces/admin/initialize.py` |
-| Authentication backend | `backend/src/interfaces/admin/auth.py` |
-| Dataclass-model mixin | `backend/src/interfaces/admin/mixins.py` |
-| User view | `backend/src/interfaces/admin/views/users.py` |
-| Tier view | `backend/src/interfaces/admin/views/tiers.py` |
-| View registry | `backend/src/interfaces/admin/views/__init__.py` |
+| Admin app factory | `backend/src/interface_adapters/admin/initialize.py` |
+| Authentication backend | `backend/src/interface_adapters/admin/auth.py` |
+| Dataclass-model mixin | `backend/src/interface_adapters/admin/mixins.py` |
+| User view | `backend/src/interface_adapters/admin/views/users.py` |
+| Tier view | `backend/src/interface_adapters/admin/views/tiers.py` |
+| View registry | `backend/src/interface_adapters/admin/views/__init__.py` |
 
 ## Next Steps
 

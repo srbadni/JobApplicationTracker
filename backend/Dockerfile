@@ -65,7 +65,7 @@ USER appuser
 ENV PYTHONUNBUFFERED=1
 
 # Development command with FastAPI CLI auto-reload
-CMD ["fastapi", "dev", "interfaces/main.py", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["fastapi", "dev", "interface_adapters/main.py", "--host", "0.0.0.0", "--port", "8000"]
 
 # ===================== Migration Stage =====================
 FROM base AS migrate
@@ -100,4 +100,4 @@ USER appuser
 
 # Production command with FastAPI CLI and configurable workers
 ENV WORKERS=1
-CMD ["sh", "-c", "fastapi run interfaces/main.py --host 0.0.0.0 --port 8000 --workers $WORKERS"]
+CMD ["sh", "-c", "fastapi run interface_adapters/main.py --host 0.0.0.0 --port 8000 --workers $WORKERS"]

@@ -28,7 +28,7 @@ The project already changes its own behavior based on `ENVIRONMENT`. You don't n
 | **Security validator** | Skipped | Skipped | Runs at startup if `PRODUCTION_SECURITY_VALIDATION_ENABLED=true` (default) |
 | **Docs at `/docs`** | Available | Available | Disabled unless `ENABLE_DOCS_IN_PRODUCTION=true` |
 
-The logging behavior is driven by `src/infrastructure/logging/config.py`. The security validator lives in `src/infrastructure/security/`.
+The logging behavior is driven by `src/frameworks/logging/config.py`. The security validator lives in `src/frameworks/security/`.
 
 ## Development
 
@@ -202,7 +202,7 @@ LOG_FILE_PATH=/var/log/app/app.log
 
 ## Detecting the Environment in Code
 
-`src/infrastructure/config/enums.py` defines `EnvironmentOption` so you don't have to compare against magic strings:
+`src/frameworks/config/enums.py` defines `EnvironmentOption` so you don't have to compare against magic strings:
 
 ```python
 from src.infrastructure.config.settings import EnvironmentOption, get_settings

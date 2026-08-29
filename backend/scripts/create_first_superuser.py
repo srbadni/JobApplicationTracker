@@ -7,13 +7,13 @@ sys.path.append(str(backend_dir))
 
 from sqlalchemy import update  # noqa: E402
 
-from src.infrastructure.config.settings import settings  # noqa: E402
-from src.infrastructure.database.session import local_session  # noqa: E402
-from src.infrastructure.logging import get_logger  # noqa: E402
-from src.modules.common.exceptions import UserNotFoundError  # noqa: E402
-from src.modules.user.models import User  # noqa: E402
-from src.modules.user.schemas import UserCreate  # noqa: E402
-from src.modules.user.service import UserService  # noqa: E402
+from src.frameworks.config.settings import settings  # noqa: E402
+from src.frameworks.database.session import local_session  # noqa: E402
+from src.frameworks.logging import get_logger  # noqa: E402
+from src.interface_adapters.modules.common.exceptions import UserNotFoundError  # noqa: E402
+from src.interface_adapters.modules.user.models import User  # noqa: E402
+from src.interface_adapters.modules.user.schemas import UserCreate  # noqa: E402
+from src.interface_adapters.modules.user.service import UserService  # noqa: E402
 
 logger = get_logger()
 

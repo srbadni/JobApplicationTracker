@@ -8,7 +8,7 @@ sys.path.append(str(backend_dir))
 from scripts.create_first_superuser import create_first_superuser  # noqa: E402
 from scripts.create_first_tier import create_first_tier  # noqa: E402
 from scripts.create_provinces_and_cities import create_provinces_and_cities  # noqa: E402
-from src.infrastructure.logging import get_logger  # noqa: E402
+from src.frameworks.logging import get_logger  # noqa: E402
 
 logger = get_logger()
 

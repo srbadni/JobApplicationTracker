@@ -70,7 +70,7 @@ CREATE_TABLES_ON_STARTUP=false
 cd backend
 uv run alembic upgrade head
 uv run python -m scripts.setup_initial_data   # first admin user + default tier
-uv run fastapi dev src/interfaces/main.py
+uv run fastapi dev src/interface_adapters/main.py
 ```
 
 Alembic reads the same `settings.DATABASE_URL` the app does (`backend/migrations/env.py`), so there's no second connection string to maintain.

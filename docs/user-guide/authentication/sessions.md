@@ -4,10 +4,10 @@ Sessions are the project's default authentication mechanism. All built-in API ro
 
 ## Auth Architecture
 
-Authentication is provided by the [`crudauth`](https://pypi.org/project/crudauth/) library. The composition root is a single singleton in `infrastructure/auth/setup.py`:
+Authentication is provided by the [`crudauth`](https://pypi.org/project/crudauth/) library. The composition root is a single singleton in `frameworks/auth/setup.py`:
 
 ```python
-# infrastructure/auth/setup.py
+# frameworks/auth/setup.py
 auth = CRUDAuth(session=async_session, user_model=User, SECRET_KEY=settings.SECRET_KEY, ...)
 ```
 
@@ -37,7 +37,7 @@ If the request doesn't have a valid session, the project returns `401 Unauthoriz
 
 ### Available Dependencies
 
-All from `src/infrastructure/auth/dependencies.py`. They wrap the `crudauth` `auth` singleton, so cookie validation, CSRF, and login lockout live in the library while your handlers keep working with plain user dicts.
+All from `src/frameworks/auth/dependencies.py`. They wrap the `crudauth` `auth` singleton, so cookie validation, CSRF, and login lockout live in the library while your handlers keep working with plain user dicts.
 
 **`get_current_user`** — Returns the authenticated user dict. Raises 401 if not authenticated.
 
@@ -241,12 +241,12 @@ Terminates the session and clears the cookies.
 
 | Component | Location |
 |-----------|----------|
-| `auth = CRUDAuth(...)` singleton | `backend/src/infrastructure/auth/setup.py` |
-| Dependencies | `backend/src/infrastructure/auth/dependencies.py` |
-| OAuth building blocks | `backend/src/infrastructure/auth/oauth.py` |
-| Login/logout/OAuth routes | `backend/src/infrastructure/auth/routes.py` |
-| HTTP exceptions (fastcrud re-export) | `backend/src/infrastructure/auth/http_exceptions.py` |
-| Auth settings | `backend/src/infrastructure/config/settings.py` (`AuthSettings`) |
+| `auth = CRUDAuth(...)` singleton | `backend/src/frameworks/auth/setup.py` |
+| Dependencies | `backend/src/frameworks/auth/dependencies.py` |
+| OAuth building blocks | `backend/src/frameworks/auth/oauth.py` |
+| Login/logout/OAuth routes | `backend/src/frameworks/auth/routes.py` |
+| HTTP exceptions (fastcrud re-export) | `backend/src/frameworks/auth/http_exceptions.py` |
+| Auth settings | `backend/src/frameworks/config/settings.py` (`AuthSettings`) |
 
 Session storage, CSRF, and lockout themselves live in the `crudauth` library, not the project.
 

@@ -316,11 +316,11 @@ You're keying by resource ID without including the user. See "Don't Cache Person
 
 | Component | Location |
 |-----------|----------|
-| Decorator | `backend/src/infrastructure/cache/decorator.py` |
-| Provider API | `backend/src/infrastructure/cache/provider.py` |
-| Redis backend | `backend/src/infrastructure/cache/backends/redis.py` |
-| Memcached backend | `backend/src/infrastructure/cache/backends/memcached.py` |
-| Settings | `backend/src/infrastructure/config/settings.py` (`CacheSettings`) |
+| Decorator | `backend/src/frameworks/cache/decorator.py` |
+| Provider API | `backend/src/frameworks/cache/provider.py` |
+| Redis backend | `backend/src/frameworks/cache/backends/redis.py` |
+| Memcached backend | `backend/src/frameworks/cache/backends/memcached.py` |
+| Settings | `backend/src/frameworks/config/settings.py` (`CacheSettings`) |
 
 ## Next Steps
 

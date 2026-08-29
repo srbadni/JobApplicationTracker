@@ -8,10 +8,10 @@ sys.path.append(str(backend_dir))
 
 from sqlalchemy import insert, select  # noqa: E402
 
-from src.infrastructure.database.session import local_session  # noqa: E402
-from src.infrastructure.logging import get_logger  # noqa: E402
-from src.modules.city.models import City  # noqa: E402
-from src.modules.province.models import Province  # noqa: E402
+from src.frameworks.database.session import local_session  # noqa: E402
+from src.frameworks.logging import get_logger  # noqa: E402
+from src.interface_adapters.modules.city.models import City  # noqa: E402
+from src.interface_adapters.modules.province.models import Province  # noqa: E402
 
 logger = get_logger()
 
