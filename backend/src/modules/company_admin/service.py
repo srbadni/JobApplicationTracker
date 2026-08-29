@@ -8,13 +8,12 @@ from ..company_membership.model import CompanyMembership
 from ..user.crud import crud_users
 from ..user.enums import UserType
 from ..user.models import User
-from .schemas import EmployerRegistration, EmployerRegistrationRead
+from .schemas import CompanyAdminRegistration, CompanyAdminRegistrationRead
 
 
-class EmployerRegistrationService:
-    """Create an employer, their company, and membership in one transaction."""
+class CompanyAdminRegistrationService:
 
-    async def create(self, payload: EmployerRegistration, db: AsyncSession) -> EmployerRegistrationRead:
+    async def create(self, payload: CompanyAdminRegistration, db: AsyncSession) -> CompanyAdminRegistrationRead:
         if await crud_users.exists(db=db, email=payload.user.email):
             raise UserExistsError("Email already registered")
 
@@ -38,7 +37,7 @@ class EmployerRegistrationService:
             db.add(membership)
             await db.flush()
 
-            result = EmployerRegistrationRead.model_validate(
+            result = CompanyAdminRegistrationRead.model_validate(
                 {"user": user, "company": company, "membership": membership}
             )
             await db.commit()
